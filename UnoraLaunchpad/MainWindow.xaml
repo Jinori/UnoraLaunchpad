@@ -1,11 +1,22 @@
 ﻿<Window x:Class="UnoraLaunchpad.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:UnoraLaunchpad"
         mc:Ignorable="d"
-        Title="Unora Launcher" Height="600" Width="1000" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" Loaded="Launcher_Loaded"
+        Title="Unora Launcher"
+        Height="600"
+        Width="1000"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Loaded="Launcher_Loaded"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        Background="White" BorderBrush="Black" BorderThickness="2"
+        Background="White"
+        BorderBrush="Black"
+        BorderThickness="2"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}">
@@ -13,20 +24,43 @@
     <Window.Resources>
         <!-- Data Template for Tiles -->
         <DataTemplate x:Key="GameUpdateTileTemplate">
-            <Border Background="#444" Margin="5" Padding="5" BorderBrush="#888" BorderThickness="1">
+            <Border Background="#444"
+                    Margin="5"
+                    Padding="5"
+                    BorderBrush="#888"
+                    BorderThickness="1">
                 <Border.InputBindings>
-                    <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.OpenGameUpdateCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                    <MouseBinding MouseAction="LeftClick"
+                                  Command="{Binding OpenGameUpdateCommand, RelativeSource={RelativeSource AncestorType={x:Type local:MainWindow}}}"
+                                  CommandParameter="{Binding}" />
                 </Border.InputBindings>
-                <StackPanel>
-                    <Viewbox Width="100" Height="100">
-                        <Image Source="{Binding Image}" Stretch="Uniform" d:DataContext="{d:DesignInstance }" />
+                <Grid>
+                    <!-- Image stretched to fill the entire Grid -->
+                    <Image Source="{Binding Image}"
+                           Stretch="UniformToFill"
+                           d:DataContext="{d:DesignInstance }" />
+
+                    <!-- Text overlay in a Viewbox -->
+                    <Viewbox HorizontalAlignment="Stretch"
+                             VerticalAlignment="Bottom"
+                             Margin="0"
+                             MaxHeight="40">
+                        <Label Padding="0"
+                               Margin="0"
+                               Content="{Binding Description}"
+                               FontFamily="Segue UI"
+                               FontSize="30"
+                               Foreground="White"
+                               HorizontalAlignment="Stretch"
+                               HorizontalContentAlignment="Center"
+                               Background="#AA000000"
+                               d:DataContext="{d:DesignInstance }" />
                     </Viewbox>
-                    <TextBlock Text="{Binding Title}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" Foreground="White" d:DataContext="{d:DesignInstance }" />
-                    <TextBlock Text="{Binding Description}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="10" Foreground="White" d:DataContext="{d:DesignInstance }" />
-                </StackPanel>
+                </Grid>
             </Border>
         </DataTemplate>
     </Window.Resources>
+
     <Grid Background="Black">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
@@ -38,52 +72,84 @@
         </Grid.RowDefinitions>
 
         <!-- Custom Title Bar -->
-        <Grid Grid.Row="0" Background="#333" MouseDown="TitleBar_MouseDown">
-            <Button HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="White" Background="Transparent" BorderBrush="Transparent" Padding="0" Margin="0, 0, 30, 0" Cursor="Hand" Click="CogButton_Click">
+        <Grid Grid.Row="0"
+              Background="#333"
+              MouseDown="TitleBar_MouseDown">
+            <Button HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Padding="0"
+                    Margin="0, 0, 30, 0"
+                    Cursor="Hand"
+                    Click="CogButton_Click">
                 <materialDesign:PackIcon Kind="Cog" />
             </Button>
-            <Button HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="White" Background="Transparent" BorderBrush="Transparent" Padding="0" Margin="5" Click="CloseButton_Click" Cursor="Hand">
+            <Button HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Padding="0"
+                    Margin="5"
+                    Click="CloseButton_Click"
+                    Cursor="Hand">
                 <materialDesign:PackIcon Kind="Close" />
             </Button>
-            <Image Source="favicon.ico" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0"/>
-            <Label Content="Unora Launcher" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="40,0,0,0"/>
+            <Image Source="favicon.ico"
+                   Width="20"
+                   Height="20"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Margin="10,0" />
+            <Label Content="Unora: Elemental Harmony"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center"
+                   Margin="40,0,0,0" />
         </Grid>
 
         <!-- Main Content -->
-        <Grid Grid.Row="1" Background="#444">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="153*"/>
-                <ColumnDefinition Width="13*"/>
-            </Grid.ColumnDefinitions>
-            <ItemsControl Name="GameUpdatesControl" ItemsSource="{Binding GameUpdates}" ItemTemplate="{StaticResource GameUpdateTileTemplate}" Grid.ColumnSpan="2">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Rows="3" Columns="3" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
+        <Grid Grid.Row="1"
+              Background="#444">
+            <!-- Wrap ItemsControl in a ScrollViewer -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          HorizontalAlignment="Stretch">
+                <ItemsControl Name="GameUpdatesControl"
+                              ItemsSource="{Binding GameUpdates}"
+                              ItemTemplate="{StaticResource GameUpdateTileTemplate}" />
+            </ScrollViewer>
         </Grid>
 
         <!-- Bottom Bar -->
-        <Grid Grid.Row="2" Background="#333">
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Label x:Name="ProgressLabel" HorizontalAlignment="Center" FontSize="10" Foreground="White" />
-                <ProgressBar
-                    x:Name="ProgressBar"
-                    materialDesign:TransitionAssist.DisableTransitions="True"
-                    Value="0" Width="400" Margin="10,0" />
+        <Grid Grid.Row="2"
+              Background="#333">
+            <StackPanel Orientation="Vertical"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <Label x:Name="ProgressLabel"
+                       HorizontalAlignment="Center"
+                       FontSize="10"
+                       Foreground="White" />
+                <ProgressBar x:Name="ProgressBar"
+                             materialDesign:TransitionAssist.DisableTransitions="True"
+                             Value="0"
+                             Width="400"
+                             Margin="10,0" />
             </StackPanel>
-            <Button
-                x:Name="LaunchBtn"
-                Click="LaunchBtn_OnClick"
-                Width="150"
-                Height="30"
-                materialDesign:ButtonAssist.CornerRadius="5"
-                HorizontalAlignment="Right" VerticalAlignment="Center"
-                Foreground="White" Background="#444"
-                Margin="0,0,20,0"
-                Style="{StaticResource MaterialDesignRaisedLightButton}"
-                ToolTip="Launch a client!">
+            <Button x:Name="LaunchBtn"
+                    Click="LaunchBtn_OnClick"
+                    Width="150"
+                    Height="30"
+                    materialDesign:ButtonAssist.CornerRadius="5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Background="#444"
+                    Margin="0,0,20,0"
+                    Style="{StaticResource MaterialDesignRaisedLightButton}"
+                    ToolTip="Launch a client!">
                 <TextBlock Text="Launch" />
             </Button>
         </Grid>

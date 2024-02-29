@@ -3,18 +3,11 @@ using System.Windows.Input;
 
 namespace UnoraLaunchpad;
 
-public sealed class RelayCommand<T> : ICommand
+public sealed class RelayCommand<T>(Action<T> execute, Predicate<T> canExecute = null) : ICommand
 {
-    private readonly Predicate<T> _canExecute;
-    private readonly Action<T> _execute;
+    private readonly Action<T> _execute = execute ?? throw new ArgumentNullException(nameof(execute));
 
-    public RelayCommand(Action<T> execute, Predicate<T> canExecute = null)
-    {
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-        _canExecute = canExecute;
-    }
-
-    public bool CanExecute(object parameter) => _canExecute?.Invoke((T)parameter) ?? true;
+    public bool CanExecute(object parameter) => canExecute?.Invoke((T)parameter) ?? true;
 
     public event EventHandler CanExecuteChanged
     {

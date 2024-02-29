@@ -1,13 +1,24 @@
 ﻿<Window x:Class="UnoraLaunchpad.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
-        Title="Unora Launcher" Height="300" Width="400" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Unora Launcher"
+        Height="300"
+        Width="400"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        Background="White" BorderBrush="Black" BorderThickness="2"
+        Background="White"
+        BorderBrush="Black"
+        BorderThickness="2"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
-        FontFamily="{materialDesign:MaterialDesignFont}" x:ClassModifier="internal">
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        x:ClassModifier="internal">
 
     <Grid Background="Black">
         <Grid.RowDefinitions>
@@ -17,34 +28,59 @@
         </Grid.RowDefinitions>
 
         <!-- Custom Title Bar -->
-        <Grid Grid.Row="0" Background="#333" MouseDown="TitleBar_MouseDown">
-            <Button HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="White" Background="Transparent" BorderBrush="Transparent" Padding="0" Margin="5" Cursor="Hand" Click="CloseButton_Click">
+        <Grid Grid.Row="0"
+              Background="#333"
+              MouseDown="TitleBar_MouseDown">
+            <Button HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Padding="0"
+                    Margin="5"
+                    Cursor="Hand"
+                    Click="CloseButton_Click">
                 <materialDesign:PackIcon Kind="Close" />
             </Button>
-            <Label Content="Settings" HorizontalAlignment="Left" VerticalAlignment="Center" />
+            <Label Content="Settings"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center" />
         </Grid>
 
         <!-- Main Content -->
-        <Grid Grid.Row="1" Background="#444">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <CheckBox x:Name="DawndCheckBox" Content="Use Dawnd Windower" IsChecked="{Binding UseDawndWindower}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                <CheckBox x:Name="LocalhostCheckBox" Margin="0,100, 0, 0" Content="Localhost" IsChecked="{Binding UseLocalhost}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <Grid Grid.Row="1"
+              Background="#444">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <CheckBox x:Name="DawndCheckBox"
+                          Content="Use Dawnd Windower"
+                          IsChecked="{Binding UseDawndWindower}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" />
+                <CheckBox x:Name="LocalhostCheckBox"
+                          Margin="0,100, 0, 0"
+                          Content="Localhost"
+                          IsChecked="{Binding UseLocalhost}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
 
         <!-- Bottom Bar -->
-        <Grid Grid.Row="2" Background="#333">
-            <Button
-                x:Name="SaveBtn"
-                Click="SaveBtn_Click"
-                Width="80"
-                Height="30"
-                materialDesign:ButtonAssist.CornerRadius="5"
-                HorizontalAlignment="Right" VerticalAlignment="Center"
-                Foreground="White" Background="#444"
-                Margin="0,0,20,0"
-                Style="{StaticResource MaterialDesignRaisedLightButton}"
-                ToolTip="Save the current selected settings!">
+        <Grid Grid.Row="2"
+              Background="#333">
+            <Button x:Name="SaveBtn"
+                    Click="SaveBtn_Click"
+                    Width="80"
+                    Height="30"
+                    materialDesign:ButtonAssist.CornerRadius="5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Background="#444"
+                    Margin="0,0,20,0"
+                    Style="{StaticResource MaterialDesignRaisedLightButton}"
+                    ToolTip="Save the current selected settings!">
                 <TextBlock Text="Save" />
             </Button>
         </Grid>

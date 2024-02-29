@@ -16,7 +16,6 @@ using Newtonsoft.Json;
 
 namespace UnoraLaunchpad;
 
-
 public sealed partial class MainWindow
 {
     private static readonly string LocalDirPath = AppDomain.CurrentDomain.BaseDirectory;
@@ -42,24 +41,6 @@ public sealed partial class MainWindow
         AppSettings = LoadAppSettingsFromResources();
     }
 
-    private AppSettings LoadAppSettingsFromResources()
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        const string RESOURCE_NAME = "UnoraLaunchpad.Resources.appsettings.json";
-
-        using var stream = assembly.GetManifestResourceStream(RESOURCE_NAME);
-
-        if (stream != null)
-        {
-            using var reader = new StreamReader(stream);
-
-            var json = reader.ReadToEnd();
-            return JsonConvert.DeserializeObject<AppSettings>(json);
-        }
-
-        return null;
-    }
-    
     public void ApplySettings()
     {
         var settings = _fileService.LoadSettings(LauncherSettings);
@@ -276,8 +257,7 @@ public sealed partial class MainWindow
                 var processPtr = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, process.ProcessId);
                 InjectDll(processPtr);
             }
-        } 
-        catch (Exception ex)
+        } catch (Exception ex)
         {
             // An error occured trying to patch the client
             Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
@@ -313,6 +293,25 @@ public sealed partial class MainWindow
         }
 
         return new AppSettings();
+    }
+
+    private AppSettings LoadAppSettingsFromResources()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        const string RESOURCE_NAME = "UnoraLaunchpad.Resources.appsettings.json";
+
+        using var stream = assembly.GetManifestResourceStream(RESOURCE_NAME);
+
+        if (stream != null)
+        {
+            using var reader = new StreamReader(stream);
+
+            var json = reader.ReadToEnd();
+
+            return JsonConvert.DeserializeObject<AppSettings>(json);
+        }
+
+        return null;
     }
 
     public static void LogException(Exception e)

@@ -242,8 +242,8 @@ public sealed partial class MainWindow
         }
         else
         {
-            ipAddress = ResolveHostname("unora.freeddns.org");
-            serverPort = 6969;
+            ipAddress = ResolveHostname("unoralauncher.duckdns.org");
+            serverPort = 6900;
         }
 
         using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Darkages.exe");
@@ -342,7 +342,7 @@ public sealed partial class MainWindow
 
         patcher.ApplyServerHostnamePatch(serverIPAddress);
         patcher.ApplyServerPortPatch(serverPort);
-        patcher.ApplySkipIntroVideoPatch();
+        //patcher.ApplySkipIntroVideoPatch();
         patcher.ApplyMultipleInstancesPatch();
     }
 

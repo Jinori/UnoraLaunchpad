@@ -57,6 +57,12 @@
                           IsChecked="{Binding UseDawndWindower}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center" />
+                <CheckBox x:Name="SkipIntroCheckBox"
+                          Content="Skip Intro"
+                          Margin="0,20, 0, 0"
+                          IsChecked="{Binding SkipIntro}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" />
                 <CheckBox x:Name="LocalhostCheckBox"
                           Margin="0,100, 0, 0"
                           Content="Localhost"

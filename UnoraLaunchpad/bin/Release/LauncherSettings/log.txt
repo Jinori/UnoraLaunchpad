@@ -1,0 +1,88 @@
+3/26/2024 6:54:17 AM: System.Net.Http.HttpRequestException: An error occurred while sending the request. ---> System.Net.WebException: Unable to connect to the remote server ---> System.Net.Sockets.SocketException: No connection could be made because the target machine actively refused it 69.174.170.84:5001
+   at System.Net.Sockets.Socket.InternalEndConnect(IAsyncResult asyncResult)
+   at System.Net.Sockets.Socket.EndConnect(IAsyncResult asyncResult)
+   at System.Net.ServicePoint.ConnectSocketInternal(Boolean connectFailure, Socket s4, Socket s6, Socket& socket, IPAddress& address, ConnectSocketState state, IAsyncResult asyncResult, Exception& exception)
+   --- End of inner exception stack trace ---
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.Http.HttpClientHandler.GetResponseCallback(IAsyncResult ar)
+   --- End of inner exception stack trace ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 17
+3/26/2024 6:54:17 AM: System.Net.Http.HttpRequestException: An error occurred while sending the request. ---> System.Net.WebException: Unable to connect to the remote server ---> System.Net.Sockets.SocketException: No connection could be made because the target machine actively refused it 69.174.170.84:5001
+   at System.Net.Sockets.Socket.InternalEndConnect(IAsyncResult asyncResult)
+   at System.Net.Sockets.Socket.EndConnect(IAsyncResult asyncResult)
+   at System.Net.ServicePoint.ConnectSocketInternal(Boolean connectFailure, Socket s4, Socket s6, Socket& socket, IPAddress& address, ConnectSocketState state, IAsyncResult asyncResult, Exception& exception)
+   --- End of inner exception stack trace ---
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.Http.HttpClientHandler.GetResponseCallback(IAsyncResult ar)
+   --- End of inner exception stack trace ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 24
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__33.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 83
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__41.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 274
+3/26/2024 8:02:01 AM: System.Net.Http.HttpRequestException: An error occurred while sending the request. ---> System.Net.WebException: The remote name could not be resolved: 'unoralauncher.duckdns.org'
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.Http.HttpClientHandler.GetResponseCallback(IAsyncResult ar)
+   --- End of inner exception stack trace ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<LoadGameUpdatesAsync>d__2.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 30
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<LoadAndBindGameUpdates>d__49.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 388
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__48.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 377
+3/26/2024 8:11:29 AM: System.Net.Http.HttpRequestException: An error occurred while sending the request. ---> System.Net.WebException: The remote name could not be resolved: 'unoralauncher.duckdns.org'
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.Http.HttpClientHandler.GetResponseCallback(IAsyncResult ar)
+   --- End of inner exception stack trace ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<LoadGameUpdatesAsync>d__2.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 30
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<LoadAndBindGameUpdates>d__46.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 355
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__45.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 344
+3/26/2024 8:16:43 AM: System.Net.Http.HttpRequestException: An error occurred while sending the request. ---> System.Net.WebException: The remote name could not be resolved: 'unoralauncher.duckdns.org'
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.Http.HttpClientHandler.GetResponseCallback(IAsyncResult ar)
+   --- End of inner exception stack trace ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<LoadGameUpdatesAsync>d__2.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 30
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<LoadAndBindGameUpdates>d__46.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 355
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__45.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 344

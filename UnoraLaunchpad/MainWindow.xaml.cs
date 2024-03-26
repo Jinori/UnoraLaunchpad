@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -11,8 +12,11 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
 using Newtonsoft.Json;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 
 namespace UnoraLaunchpad;
 
@@ -20,12 +24,13 @@ public sealed partial class MainWindow
 {
     private static readonly string LocalDirPath = AppDomain.CurrentDomain.BaseDirectory;
     private static readonly string LauncherSettings = AppDomain.CurrentDomain.BaseDirectory + "\\LauncherSettings\\settings.json";
-
     private readonly FileService _fileService = new();
     private readonly HttpService _httpService = new();
+    private NotifyIcon _notifyIcon;
     public AppSettings AppSettings { get; set; }
 
     public ObservableCollection<GameUpdate> GameUpdates { get; set; } = new();
+    public bool SkipIntro { get; set; }
     public bool UseDawndWindower { get; set; }
     public bool UseLocalhost { get; set; }
     public ICommand OpenGameUpdateCommand { get; }
@@ -34,6 +39,7 @@ public sealed partial class MainWindow
     public MainWindow()
     {
         InitializeComponent();
+        InitializeTrayIcon();
         OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate);
         DataContext = this;
 
@@ -46,6 +52,7 @@ public sealed partial class MainWindow
         var settings = _fileService.LoadSettings(LauncherSettings);
         UseDawndWindower = settings.UseDawndWindower;
         UseLocalhost = settings.UseLocalhost;
+        SkipIntro = settings.SkipIntro;
     }
 
     private string CalculateHash(string filePath)
@@ -61,13 +68,13 @@ public sealed partial class MainWindow
     {
         ApplySettings();
         LaunchBtn.IsEnabled = false;
+        EnsureUnoraFolderExists();
 
-        // List of folders containing files to be checked
         var additionalFolders = new List<string>
         {
-            "maps",
-            "npc"
-            // Add more folder paths as needed
+            Path.Combine("Unora", "maps"),
+            Path.Combine("Unora", "npc")
+            // Add more folder paths as needed, prefixed with "Unora"
         };
 
         // Combine the base URL with the API endpoint for all files
@@ -81,28 +88,52 @@ public sealed partial class MainWindow
         var serverFiles = await _httpService.GetFilesWithHashes(allFilesUrl);
         var localFiles = GetLocalFilesWithHashes();
 
-        var filesToUpdate = serverFiles.Where(
-                                           serverFile =>
-                                               !localFiles.ContainsKey(serverFile.FileName)
-                                               || (localFiles[serverFile.FileName] != serverFile.Hash)
-                                               || additionalFolders.Any(folder => IsFileInFolder(localFiles, folder, serverFile)))
-                                       .ToList();
+        var filesToUpdate = new List<FileDetail>();
+
+        foreach (var serverFile in serverFiles)
+        {
+            var updateRequired = false;
+
+            if (!localFiles.ContainsKey(serverFile.FileName))
+                updateRequired = true;
+            else if (localFiles[serverFile.FileName] != serverFile.Hash)
+                updateRequired = true;
+            else if (additionalFolders.Any(folder => IsFileInFolder(localFiles, folder, serverFile)))
+                updateRequired = true;
+
+            if (updateRequired)
+                filesToUpdate.Add(serverFile);
+        }
+
+        var tasks = new List<Task>();
 
         foreach (var fileToUpdate in filesToUpdate)
         {
-            ProgressLabel.Content = $"Downloading {fileToUpdate.FileName}...";
-            ProgressBar.Value = 0;
+            var downloadPath = Path.Combine(LocalDirPath, "Unora", fileToUpdate.FileName);
 
-            // Download the file based on the download URL and file name
-            await FileService.DownloadFileFromServer(
+            // Check if it belongs to an additional folder and adjust the path
+            foreach (var folder in additionalFolders)
+                if (fileToUpdate.FileName.StartsWith(folder, StringComparison.Ordinal))
+                {
+                    downloadPath = Path.Combine(LocalDirPath, fileToUpdate.FileName);
+
+                    break;
+                }
+
+            Debug.WriteLine($"Queuing download for: {fileToUpdate.FileName} to {downloadPath}");
+
+            // Queue the download task
+            var downloadTask = FileService.DownloadFileFromServer(
                 downloadUrl,
                 fileToUpdate.FileName,
-                Path.Combine(LocalDirPath, fileToUpdate.FileName),
+                downloadPath,
                 new Progress<long>(value => ProgressBar.Value = value));
 
-            ProgressBar.Value = 0;
+            tasks.Add(downloadTask);
         }
 
+        // Wait for all download tasks to complete
+        await Task.WhenAll(tasks);
         ProgressLabel.Content = "Update complete.";
         LaunchBtn.IsEnabled = true;
     }
@@ -115,16 +146,25 @@ public sealed partial class MainWindow
         settingsWindow.Show();
     }
 
+    private void EnsureUnoraFolderExists()
+    {
+        var unoraFolderPath = Path.Combine(LocalDirPath, "Unora");
+
+        if (!Directory.Exists(unoraFolderPath))
+            Directory.CreateDirectory(unoraFolderPath);
+    }
+
     private Dictionary<string, string> GetLocalFilesWithHashes()
     {
-        var files = Directory.GetFiles(LocalDirPath, "*", SearchOption.AllDirectories);
+        var files = Directory.GetFiles(Path.Combine(LocalDirPath, "Unora"), "*", SearchOption.AllDirectories);
         var fileHashes = new ConcurrentDictionary<string, string>();
 
         Parallel.ForEach(
             files,
             file =>
             {
-                var relativePath = GetRelativePath(LocalDirPath, file);
+                // Adjust the relative path to match the server's format
+                var relativePath = GetRelativePath(Path.Combine(LocalDirPath, "Unora"), file);
                 var hash = CalculateHash(file);
                 fileHashes[relativePath] = hash;
             });
@@ -134,10 +174,35 @@ public sealed partial class MainWindow
 
     private string GetRelativePath(string basePath, string filePath)
     {
-        if (filePath.StartsWith(basePath, StringComparison.Ordinal))
-            return filePath.Substring(basePath.Length).TrimStart(Path.DirectorySeparatorChar);
+        var fileUri = new Uri(filePath);
+        var baseUri = new Uri(basePath);
 
-        return filePath;
+        if (!basePath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+            baseUri = new Uri(basePath + Path.DirectorySeparatorChar);
+
+        return Uri.UnescapeDataString(baseUri.MakeRelativeUri(fileUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+    }
+
+    private void InitializeTrayIcon()
+    {
+        // Create an icon from a resource
+        var iconUri = new Uri("pack://application:,,,/UnoraLaunchpad;component/favicon.ico", UriKind.RelativeOrAbsolute);
+        var iconStream = Application.GetResourceStream(iconUri)?.Stream;
+
+        if (iconStream != null)
+            _notifyIcon = new NotifyIcon
+            {
+                Icon = new Icon(iconStream),
+                Visible = true
+            };
+
+        // Create a context menu for the tray icon
+        var contextMenu = new ContextMenuStrip();
+        contextMenu.Items.Add("Open", null, TrayMenu_Open_Click);
+        contextMenu.Items.Add("Exit", null, TrayMenu_Exit_Click);
+
+        _notifyIcon.ContextMenuStrip = contextMenu;
+        _notifyIcon.DoubleClick += (_, _) => ShowWindow();
     }
 
     private void InjectDll(IntPtr accessHandle)
@@ -246,7 +311,7 @@ public sealed partial class MainWindow
             serverPort = 6900;
         }
 
-        using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Darkages.exe");
+        using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Unora\\" + "\\Darkages.exe");
 
         try
         {
@@ -328,13 +393,23 @@ public sealed partial class MainWindow
         }
     }
 
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    protected override void OnStateChanged(EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+            Hide();
+
+        base.OnStateChanged(e);
+    }
+
     private void OpenGameUpdate(GameUpdate gameUpdate)
     {
         var detailView = new GameUpdateDetailView(gameUpdate);
         detailView.ShowDialog(); // Opens the detail view window
     }
 
-    private static void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
+    private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
     {
         using var stream = new ProcessMemoryStream(process.ProcessId);
 
@@ -342,7 +417,10 @@ public sealed partial class MainWindow
 
         patcher.ApplyServerHostnamePatch(serverIPAddress);
         patcher.ApplyServerPortPatch(serverPort);
-        //patcher.ApplySkipIntroVideoPatch();
+
+        if (SkipIntro)
+            patcher.ApplySkipIntroVideoPatch();
+
         patcher.ApplyMultipleInstancesPatch();
     }
 
@@ -362,9 +440,23 @@ public sealed partial class MainWindow
 
     public void SaveSettings(Settings settings) => _fileService.SaveSettings(settings, LauncherSettings);
 
+    private void ShowWindow()
+    {
+        Show();
+        WindowState = WindowState.Normal;
+    }
+
     private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton == MouseButton.Left)
             DragMove();
     }
+
+    private void TrayMenu_Exit_Click(object sender, EventArgs e)
+    {
+        _notifyIcon.Dispose();
+        Application.Current.Shutdown();
+    }
+
+    private void TrayMenu_Open_Click(object sender, EventArgs e) => ShowWindow();
 }

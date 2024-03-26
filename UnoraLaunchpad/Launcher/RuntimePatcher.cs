@@ -7,19 +7,10 @@ using System.Text;
 
 namespace UnoraLaunchpad;
 
-public sealed class RuntimePatcher : IDisposable
+public sealed class RuntimePatcher(ClientVersion clientVersion, Stream stream, bool leaveOpen = false) : IDisposable
 {
-    private readonly ClientVersion ClientVersion;
-    private readonly Stream Stream;
-    private readonly BinaryWriter Writer;
+    private readonly BinaryWriter Writer = new(stream, Encoding.UTF8, leaveOpen);
     private bool IsDisposed;
-
-    public RuntimePatcher(ClientVersion clientVersion, Stream stream, bool leaveOpen = false)
-    {
-        ClientVersion = clientVersion;
-        Stream = stream;
-        Writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen);
-    }
 
     #region Patch Methods
     public void ApplyServerHostnamePatch(IPAddress ipAddress) => ApplyServerHostnamePatch(ipAddress.GetAddressBytes());
@@ -28,7 +19,7 @@ public sealed class RuntimePatcher : IDisposable
     {
         CheckIfDisposed();
 
-        Stream.Position = ClientVersion.ServerHostnamePatchAddress;
+        stream.Position = clientVersion.ServerHostnamePatchAddress;
 
         // Write IP bytes in reverse
         foreach (var ipByte in ipAddressBytes.Reverse())
@@ -37,7 +28,7 @@ public sealed class RuntimePatcher : IDisposable
             Writer.Write(ipByte);
         }
 
-        Stream.Position = ClientVersion.SkipHostnamePatchAddress;
+        stream.Position = clientVersion.SkipHostnamePatchAddress;
 
         for (var i = 0; i < 13; i++)
             Writer.Write((byte)0x90); // NOP
@@ -50,7 +41,7 @@ public sealed class RuntimePatcher : IDisposable
 
         CheckIfDisposed();
 
-        Stream.Position = ClientVersion.ServerPortPatchAddress;
+        stream.Position = clientVersion.ServerPortPatchAddress;
 
         var portHiByte = (port >> 8) & 0xFF;
         var portLoByte = port & 0xFF;
@@ -64,7 +55,7 @@ public sealed class RuntimePatcher : IDisposable
     {
         CheckIfDisposed();
 
-        Stream.Position = ClientVersion.IntroVideoPatchAddress;
+        stream.Position = clientVersion.IntroVideoPatchAddress;
 
         Writer.Write((byte)0x83); // CMP
         Writer.Write((byte)0xFA); // EDX
@@ -78,7 +69,7 @@ public sealed class RuntimePatcher : IDisposable
     {
         CheckIfDisposed();
 
-        Stream.Position = ClientVersion.MultipleInstancePatchAddress;
+        stream.Position = clientVersion.MultipleInstancePatchAddress;
 
         Writer.Write((byte)0x31); // XOR
         Writer.Write((byte)0xC0); // EAX, EAX
@@ -92,7 +83,7 @@ public sealed class RuntimePatcher : IDisposable
     {
         CheckIfDisposed();
 
-        Stream.Position = ClientVersion.HideWallsPatchAddress;
+        stream.Position = clientVersion.HideWallsPatchAddress;
 
         Writer.Write((byte)0xEB); // JMP SHORT
         Writer.Write((byte)0x17); // +17

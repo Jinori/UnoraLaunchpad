@@ -12018,3 +12018,379 @@
    at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
    at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
    at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 340
+3/27/2024 10:16:18 AM: System.AggregateException: One or more errors occurred. ---> System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\DDrawCompat-Darkages.log' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.File.InternalReadAllBytes(String path, Boolean checkHost)
+   at System.IO.File.ReadAllBytes(String path)
+   at UnoraLaunchpad.MainWindow.CalculateHash(String filePath) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 56
+   at UnoraLaunchpad.MainWindow.<>c__DisplayClass37_0.<GetLocalFilesWithHashes>b__0(String file) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 182
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass30_0`2.<ForEachWorker>b__0(Int32 i)
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass17_0`1.<ForWorker>b__1()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.InnerInvokeWithArg(Task childTask)
+   at System.Threading.Tasks.Task.<>c__DisplayClass176_0.<ExecuteSelfReplicating>b__0(Object <p0>)
+   --- End of inner exception stack trace ---
+   at System.Threading.Tasks.Task.ThrowIfExceptional(Boolean includeTaskCanceledExceptions)
+   at System.Threading.Tasks.Task.Wait(Int32 millisecondsTimeout, CancellationToken cancellationToken)
+   at System.Threading.Tasks.Task.Wait()
+   at System.Threading.Tasks.Parallel.ForWorker[TLocal](Int32 fromInclusive, Int32 toExclusive, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Func`4 bodyWithLocal, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal](TSource[] array, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Action`3 bodyWithStateAndIndex, Func`4 bodyWithStateAndLocal, Func`5 bodyWithEverything, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal](IEnumerable`1 source, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Action`3 bodyWithStateAndIndex, Func`4 bodyWithStateAndLocal, Func`5 bodyWithEverything, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEach[TSource](IEnumerable`1 source, Action`1 body)
+   at UnoraLaunchpad.MainWindow.GetLocalFilesWithHashes() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 176
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 93
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+---> (Inner Exception #0) System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\DDrawCompat-Darkages.log' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.File.InternalReadAllBytes(String path, Boolean checkHost)
+   at System.IO.File.ReadAllBytes(String path)
+   at UnoraLaunchpad.MainWindow.CalculateHash(String filePath) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 56
+   at UnoraLaunchpad.MainWindow.<>c__DisplayClass37_0.<GetLocalFilesWithHashes>b__0(String file) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 182
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass30_0`2.<ForEachWorker>b__0(Int32 i)
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass17_0`1.<ForWorker>b__1()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.InnerInvokeWithArg(Task childTask)
+   at System.Threading.Tasks.Task.<>c__DisplayClass176_0.<ExecuteSelfReplicating>b__0(Object <p0>)<---
+
+3/27/2024 10:18:09 AM: System.AggregateException: One or more errors occurred. ---> System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\DDrawCompat-Darkages.log' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.File.InternalReadAllBytes(String path, Boolean checkHost)
+   at System.IO.File.ReadAllBytes(String path)
+   at UnoraLaunchpad.MainWindow.CalculateHash(String filePath) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 56
+   at UnoraLaunchpad.MainWindow.<>c__DisplayClass37_0.<GetLocalFilesWithHashes>b__0(String file) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 182
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass30_0`2.<ForEachWorker>b__0(Int32 i)
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass17_0`1.<ForWorker>b__1()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.InnerInvokeWithArg(Task childTask)
+   at System.Threading.Tasks.Task.<>c__DisplayClass176_0.<ExecuteSelfReplicating>b__0(Object <p0>)
+   --- End of inner exception stack trace ---
+   at System.Threading.Tasks.Task.ThrowIfExceptional(Boolean includeTaskCanceledExceptions)
+   at System.Threading.Tasks.Task.Wait(Int32 millisecondsTimeout, CancellationToken cancellationToken)
+   at System.Threading.Tasks.Task.Wait()
+   at System.Threading.Tasks.Parallel.ForWorker[TLocal](Int32 fromInclusive, Int32 toExclusive, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Func`4 bodyWithLocal, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal](TSource[] array, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Action`3 bodyWithStateAndIndex, Func`4 bodyWithStateAndLocal, Func`5 bodyWithEverything, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal](IEnumerable`1 source, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Action`3 bodyWithStateAndIndex, Func`4 bodyWithStateAndLocal, Func`5 bodyWithEverything, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEach[TSource](IEnumerable`1 source, Action`1 body)
+   at UnoraLaunchpad.MainWindow.GetLocalFilesWithHashes() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 176
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 93
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+---> (Inner Exception #0) System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\DDrawCompat-Darkages.log' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.File.InternalReadAllBytes(String path, Boolean checkHost)
+   at System.IO.File.ReadAllBytes(String path)
+   at UnoraLaunchpad.MainWindow.CalculateHash(String filePath) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 56
+   at UnoraLaunchpad.MainWindow.<>c__DisplayClass37_0.<GetLocalFilesWithHashes>b__0(String file) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 182
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass30_0`2.<ForEachWorker>b__0(Int32 i)
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass17_0`1.<ForWorker>b__1()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.InnerInvokeWithArg(Task childTask)
+   at System.Threading.Tasks.Task.<>c__DisplayClass176_0.<ExecuteSelfReplicating>b__0(Object <p0>)<---
+
+3/27/2024 10:18:39 AM: System.AggregateException: One or more errors occurred. ---> System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\DDrawCompat-Darkages.log' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.File.InternalReadAllBytes(String path, Boolean checkHost)
+   at System.IO.File.ReadAllBytes(String path)
+   at UnoraLaunchpad.MainWindow.CalculateHash(String filePath) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 56
+   at UnoraLaunchpad.MainWindow.<>c__DisplayClass37_0.<GetLocalFilesWithHashes>b__0(String file) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 182
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass30_0`2.<ForEachWorker>b__0(Int32 i)
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass17_0`1.<ForWorker>b__1()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.InnerInvokeWithArg(Task childTask)
+   at System.Threading.Tasks.Task.<>c__DisplayClass176_0.<ExecuteSelfReplicating>b__0(Object <p0>)
+   --- End of inner exception stack trace ---
+   at System.Threading.Tasks.Task.ThrowIfExceptional(Boolean includeTaskCanceledExceptions)
+   at System.Threading.Tasks.Task.Wait(Int32 millisecondsTimeout, CancellationToken cancellationToken)
+   at System.Threading.Tasks.Task.Wait()
+   at System.Threading.Tasks.Parallel.ForWorker[TLocal](Int32 fromInclusive, Int32 toExclusive, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Func`4 bodyWithLocal, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal](TSource[] array, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Action`3 bodyWithStateAndIndex, Func`4 bodyWithStateAndLocal, Func`5 bodyWithEverything, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEachWorker[TSource,TLocal](IEnumerable`1 source, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Action`3 bodyWithStateAndIndex, Func`4 bodyWithStateAndLocal, Func`5 bodyWithEverything, Func`1 localInit, Action`1 localFinally)
+   at System.Threading.Tasks.Parallel.ForEach[TSource](IEnumerable`1 source, Action`1 body)
+   at UnoraLaunchpad.MainWindow.GetLocalFilesWithHashes() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 176
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 93
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+---> (Inner Exception #0) System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\DDrawCompat-Darkages.log' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.File.InternalReadAllBytes(String path, Boolean checkHost)
+   at System.IO.File.ReadAllBytes(String path)
+   at UnoraLaunchpad.MainWindow.CalculateHash(String filePath) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 56
+   at UnoraLaunchpad.MainWindow.<>c__DisplayClass37_0.<GetLocalFilesWithHashes>b__0(String file) in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 182
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass30_0`2.<ForEachWorker>b__0(Int32 i)
+   at System.Threading.Tasks.Parallel.<>c__DisplayClass17_0`1.<ForWorker>b__1()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.InnerInvokeWithArg(Task childTask)
+   at System.Threading.Tasks.Task.<>c__DisplayClass176_0.<ExecuteSelfReplicating>b__0(Object <p0>)<---
+
+3/27/2024 10:19:17 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 17
+3/27/2024 10:19:17 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 24
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 92
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+3/27/2024 10:19:40 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 17
+3/27/2024 10:19:40 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 24
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 92
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+3/27/2024 10:19:56 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 17
+3/27/2024 10:19:57 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 24
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 92
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+3/27/2024 10:20:25 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 17
+3/27/2024 10:20:25 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 24
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 92
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+3/27/2024 10:23:30 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 17
+3/27/2024 10:23:30 AM: System.Net.Http.HttpRequestException: Response status code does not indicate success: 500 (Internal Server Error).
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.HttpService.<GetFilesWithHashes>d__1.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\HttpService.cs:line 24
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at UnoraLaunchpad.MainWindow.<CheckForFileUpdates>d__34.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 92
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.GetResult()
+   at UnoraLaunchpad.MainWindow.<Launcher_Loaded>d__42.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\MainWindow.xaml.cs:line 331
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\binkw32.dll' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\ia.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\DarkAges.exe' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\dawnd.dll' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanmad.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\ddraw.dll' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanmeh.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\hades.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanwad.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanwtz.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\national.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanwns.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanweh.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\misc.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\Legend.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanmim.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanmns.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanpal.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanwim.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\khanmtz.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\setoa.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\roh.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\seo.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:39 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\Mss32.dll' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37
+4/26/2024 3:11:40 PM: System.IO.IOException: The process cannot access the file 'C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\bin\Debug\Unora\npc\npcbase.dat' because it is being used by another process.
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize)
+   at System.IO.File.Create(String path)
+   at UnoraLaunchpad.FileService.<DownloadFileFromServer>d__0.MoveNext() in C:\Users\mikeb\Documents\GitHub\UnoraLaunchpad\UnoraLaunchpad\FileService.cs:line 37

@@ -57,11 +57,11 @@ public sealed partial class MainWindow
 
     private string CalculateHash(string filePath)
     {
-        using var sha256 = SHA256.Create();
-        var bytes = File.ReadAllBytes(filePath);
-        var hashBytes = sha256.ComputeHash(bytes);
+        using var md5 = MD5.Create();
+        using var stream = File.OpenRead(filePath);
+        var hash = md5.ComputeHash(stream);
 
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
     }
 
     private async Task CheckForFileUpdates()
@@ -74,13 +74,9 @@ public sealed partial class MainWindow
         {
             Path.Combine("Unora", "maps"),
             Path.Combine("Unora", "npc")
-            // Add more folder paths as needed, prefixed with "Unora"
         };
 
-        // Combine the base URL with the API endpoint for all files
         var allFilesUrl = AppSettings.BaseUrl + AppSettings.ApiBaseAllFilesUrl;
-
-        // Combine the base URL with the download endpoint
         var downloadUrl = AppSettings.BaseUrl + AppSettings.DownloadUrl;
 
         ProgressLabel.Content = "Checking for updated files on the server. Please wait...";
@@ -94,9 +90,9 @@ public sealed partial class MainWindow
         {
             var updateRequired = false;
 
-            if (!localFiles.ContainsKey(serverFile.FileName))
+            if (!localFiles.TryGetValue(serverFile.FileName, out var file))
                 updateRequired = true;
-            else if (localFiles[serverFile.FileName] != serverFile.Hash)
+            else if (file != serverFile.Hash)
                 updateRequired = true;
             else if (additionalFolders.Any(folder => IsFileInFolder(localFiles, folder, serverFile)))
                 updateRequired = true;
@@ -105,34 +101,39 @@ public sealed partial class MainWindow
                 filesToUpdate.Add(serverFile);
         }
 
-        var tasks = new List<Task>();
-
-        foreach (var fileToUpdate in filesToUpdate)
+        if (filesToUpdate.Count == 0)
         {
-            var downloadPath = Path.Combine(LocalDirPath, "Unora", fileToUpdate.FileName);
+            ProgressLabel.Content = "All files are up to date.";
+            LaunchBtn.IsEnabled = true;
 
-            // Check if it belongs to an additional folder and adjust the path
-            foreach (var folder in additionalFolders)
-                if (fileToUpdate.FileName.StartsWith(folder, StringComparison.Ordinal))
-                {
-                    downloadPath = Path.Combine(LocalDirPath, fileToUpdate.FileName);
-
-                    break;
-                }
-
-            Debug.WriteLine($"Queuing download for: {fileToUpdate.FileName} to {downloadPath}");
-
-            // Queue the download task
-            var downloadTask = FileService.DownloadFileFromServer(
-                downloadUrl,
-                fileToUpdate.FileName,
-                downloadPath,
-                new Progress<long>(value => ProgressBar.Value = value));
-
-            tasks.Add(downloadTask);
+            return;
         }
 
-        // Wait for all download tasks to complete
+        var tasks = filesToUpdate.Select(
+                                     fileToUpdate =>
+                                     {
+                                         var downloadPath = Path.Combine(LocalDirPath, "Unora", fileToUpdate.FileName);
+
+                                         foreach (var folder in additionalFolders)
+                                             if (fileToUpdate.FileName.StartsWith(folder, StringComparison.Ordinal))
+                                             {
+                                                 downloadPath = Path.Combine(LocalDirPath, fileToUpdate.FileName);
+
+                                                 break;
+                                             }
+
+                                         return FileService.DownloadFileFromServer(
+                                             downloadUrl,
+                                             fileToUpdate.FileName,
+                                             downloadPath,
+                                             new Progress<long>(
+                                                 _ =>
+                                                 {
+                                                     ProgressLabel.Content = $"Updating {fileToUpdate.FileName}";
+                                                 }));
+                                     })
+                                 .ToList();
+
         await Task.WhenAll(tasks);
         ProgressLabel.Content = "Update complete.";
         LaunchBtn.IsEnabled = true;
@@ -156,19 +157,35 @@ public sealed partial class MainWindow
 
     private Dictionary<string, string> GetLocalFilesWithHashes()
     {
-        var files = Directory.GetFiles(Path.Combine(LocalDirPath, "Unora"), "*", SearchOption.AllDirectories);
+        // Specify the directory path
+        var baseDir = Path.Combine(LocalDirPath, "Unora");
+        var files = Directory.GetFiles(baseDir, "*", SearchOption.AllDirectories);
+
         var fileHashes = new ConcurrentDictionary<string, string>();
 
+        // Use parallel processing to compute hashes for all files
         Parallel.ForEach(
             files,
             file =>
             {
-                // Adjust the relative path to match the server's format
-                var relativePath = GetRelativePath(Path.Combine(LocalDirPath, "Unora"), file);
-                var hash = CalculateHash(file);
-                fileHashes[relativePath] = hash;
+                try
+                {
+                    // Calculate the relative path from the base directory to the file
+                    var relativePath = GetRelativePath(baseDir, file);
+
+                    // Calculate the hash of the file content
+                    var hash = CalculateHash(file);
+
+                    // Add or update the hash in the concurrent dictionary
+                    fileHashes[relativePath] = hash;
+                } catch (Exception ex)
+                {
+                    // Log the error for the problematic file
+                    Debug.WriteLine($"Error processing file {file}: {ex.Message}");
+                }
             });
 
+        // Convert the concurrent dictionary to a regular dictionary
         return fileHashes.ToDictionary(k => k.Key, v => v.Value);
     }
 
@@ -198,7 +215,8 @@ public sealed partial class MainWindow
 
         // Create a context menu for the tray icon
         var contextMenu = new ContextMenuStrip();
-        contextMenu.Items.Add("Open", null, TrayMenu_Open_Click);
+        contextMenu.Items.Add("Launch Client", null, Launch);
+        contextMenu.Items.Add("Open Launcher", null, TrayMenu_Open_Click);
         contextMenu.Items.Add("Exit", null, TrayMenu_Exit_Click);
 
         _notifyIcon.ContextMenuStrip = contextMenu;
@@ -228,10 +246,8 @@ public sealed partial class MainWindow
             (UIntPtr)nameLength,
             out _);
 
-        //retreive function pointer for remote thread
         var injectionPtr = NativeMethods.GetProcAddress(NativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
 
-        //if failed to retreive function pointer
         if (injectionPtr == UIntPtr.Zero)
         {
             MessageBox.Show(this, "Injection pointer was null.", "Injection Error");
@@ -295,6 +311,40 @@ public sealed partial class MainWindow
         // Check if any of the local files' paths contain the folder name and the file name
         localFiles.Keys.Any(localFile => localFile.Contains(Path.Combine(folder, serverFile.FileName)));
 
+    private void Launch(object sender, EventArgs e)
+    {
+        IPAddress ipAddress;
+        int serverPort;
+
+        if (UseLocalhost)
+        {
+            ipAddress = ResolveHostname("127.0.0.1");
+            serverPort = 4200;
+        }
+        else
+        {
+            ipAddress = ResolveHostname("unoralauncher.duckdns.org");
+            serverPort = 6900;
+        }
+
+        using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Unora\\" + "\\Darkages.exe");
+
+        try
+        {
+            PatchClient(process, ipAddress, serverPort);
+
+            if (UseDawndWindower)
+            {
+                var processPtr = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, process.ProcessId);
+                InjectDll(processPtr);
+            }
+        } catch (Exception ex)
+        {
+            // An error occured trying to patch the client
+            Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
+        }
+    }
+
     private void LaunchBtn_OnClick(object sender, RoutedEventArgs e)
     {
         IPAddress ipAddress;
@@ -334,7 +384,7 @@ public sealed partial class MainWindow
         try
         {
             await LoadAndBindGameUpdates();
-            await CheckForFileUpdates();
+            await Application.Current.Dispatcher.Invoke(async () => await CheckForFileUpdates());
         } catch (Exception ex)
         {
             LogException(ex);

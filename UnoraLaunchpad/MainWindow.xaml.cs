@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -8,13 +6,14 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
-using Newtonsoft.Json;
+using UnoraLaunchpad.Definitions;
+using UnoraLaunchpad.Extensions;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
@@ -22,12 +21,10 @@ namespace UnoraLaunchpad;
 
 public sealed partial class MainWindow
 {
-    private static readonly string LocalDirPath = AppDomain.CurrentDomain.BaseDirectory;
-    private static readonly string LauncherSettings = AppDomain.CurrentDomain.BaseDirectory + "\\LauncherSettings\\settings.json";
-    private readonly FileService _fileService = new();
-    private readonly HttpService _httpService = new();
+    private static readonly string LauncherSettings = "LauncherSettings/settings.json";
+    private readonly FileService FileService = new();
+    private readonly UnoraClient UnoraClient = new();
     private NotifyIcon _notifyIcon;
-    public AppSettings AppSettings { get; set; }
 
     public ObservableCollection<GameUpdate> GameUpdates { get; set; } = new();
     public bool SkipIntro { get; set; }
@@ -42,14 +39,11 @@ public sealed partial class MainWindow
         InitializeTrayIcon();
         OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate);
         DataContext = this;
-
-        // Load app settings from embedded resources
-        AppSettings = LoadAppSettingsFromResources();
     }
 
     public void ApplySettings()
     {
-        var settings = _fileService.LoadSettings(LauncherSettings);
+        var settings = FileService.LoadSettings(LauncherSettings);
         UseDawndWindower = settings.UseDawndWindower;
         UseLocalhost = settings.UseLocalhost;
         SkipIntro = settings.SkipIntro;
@@ -61,82 +55,65 @@ public sealed partial class MainWindow
         using var stream = File.OpenRead(filePath);
         var hash = md5.ComputeHash(stream);
 
-        return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        return BitConverter.ToString(hash);
     }
 
     private async Task CheckForFileUpdates()
     {
         ApplySettings();
         LaunchBtn.IsEnabled = false;
+        
         EnsureUnoraFolderExists();
 
-        var additionalFolders = new List<string>
-        {
-            Path.Combine("Unora", "maps"),
-            Path.Combine("Unora", "npc")
-        };
+        ProgressLabel.Content = "Checking for updates...";
+        
+        var fileDetails = await UnoraClient.GetFileDetailsAsync();
 
-        var allFilesUrl = AppSettings.BaseUrl + AppSettings.ApiBaseAllFilesUrl;
-        var downloadUrl = AppSettings.BaseUrl + AppSettings.DownloadUrl;
+        ProgressLabel.Content = "Applying updates...";
+        
+        var counter = 0;
 
-        ProgressLabel.Content = "Checking for updated files on the server. Please wait...";
+        await Task.Run(
+            async () =>
+            {
+                var updateTask = fileDetails.ForEachAsync(
+                    async fileDetail =>
+                    {
+                        var filePath = Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, fileDetail.RelativePath);
+                        var directory = Path.GetDirectoryName(filePath)!;
+                        var fileHash = string.Empty;
 
-        var serverFiles = await _httpService.GetFilesWithHashes(allFilesUrl);
-        var localFiles = GetLocalFilesWithHashes();
+                        //if directory doesn't exist, create it
+                        if (!Directory.Exists(directory))
+                            Directory.CreateDirectory(directory);
+                        else if (File.Exists(filePath))
+                            fileHash = CalculateHash(filePath);
 
-        var filesToUpdate = new List<FileDetail>();
+                        if (!fileHash.Equals(fileDetail.Hash, StringComparison.OrdinalIgnoreCase))
+                        {
+                            await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath);
 
-        foreach (var serverFile in serverFiles)
-        {
-            var updateRequired = false;
+                            Interlocked.Increment(ref counter);
+                        }
+                    });
 
-            if (!localFiles.TryGetValue(serverFile.FileName, out var file))
-                updateRequired = true;
-            else if (file != serverFile.Hash)
-                updateRequired = true;
-            else if (additionalFolders.Any(folder => IsFileInFolder(localFiles, folder, serverFile)))
-                updateRequired = true;
+                while (true)
+                {
+                    var task = await Task.WhenAny(Task.Delay(500), updateTask);
 
-            if (updateRequired)
-                filesToUpdate.Add(serverFile);
-        }
+                    if (task == updateTask)
+                        break;
 
-        if (filesToUpdate.Count == 0)
-        {
-            ProgressLabel.Content = "All files are up to date.";
-            LaunchBtn.IsEnabled = true;
+                    Dispatcher.Invoke(() => ProgressLabel.Content = $"Updated {counter} files");
+                }
 
-            return;
-        }
-
-        var tasks = filesToUpdate.Select(
-                                     fileToUpdate =>
-                                     {
-                                         var downloadPath = Path.Combine(LocalDirPath, "Unora", fileToUpdate.FileName);
-
-                                         foreach (var folder in additionalFolders)
-                                             if (fileToUpdate.FileName.StartsWith(folder, StringComparison.Ordinal))
-                                             {
-                                                 downloadPath = Path.Combine(LocalDirPath, fileToUpdate.FileName);
-
-                                                 break;
-                                             }
-
-                                         return FileService.DownloadFileFromServer(
-                                             downloadUrl,
-                                             fileToUpdate.FileName,
-                                             downloadPath,
-                                             new Progress<long>(
-                                                 _ =>
-                                                 {
-                                                     ProgressLabel.Content = $"Updating {fileToUpdate.FileName}";
-                                                 }));
-                                     })
-                                 .ToList();
-
-        await Task.WhenAll(tasks);
-        ProgressLabel.Content = "Update complete.";
-        LaunchBtn.IsEnabled = true;
+                Dispatcher.BeginInvoke(() =>
+                {
+                    ProgressLabel.Content = "Update complete.";
+                    LaunchBtn.IsEnabled = true;
+                });
+                
+            });
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
@@ -149,57 +126,10 @@ public sealed partial class MainWindow
 
     private void EnsureUnoraFolderExists()
     {
-        var unoraFolderPath = Path.Combine(LocalDirPath, "Unora");
-
-        if (!Directory.Exists(unoraFolderPath))
-            Directory.CreateDirectory(unoraFolderPath);
+        if (!Directory.Exists(CONSTANTS.UNORA_FOLDER_NAME))
+            Directory.CreateDirectory(CONSTANTS.UNORA_FOLDER_NAME);
     }
-
-    private Dictionary<string, string> GetLocalFilesWithHashes()
-    {
-        // Specify the directory path
-        var baseDir = Path.Combine(LocalDirPath, "Unora");
-        var files = Directory.GetFiles(baseDir, "*", SearchOption.AllDirectories);
-
-        var fileHashes = new ConcurrentDictionary<string, string>();
-
-        // Use parallel processing to compute hashes for all files
-        Parallel.ForEach(
-            files,
-            file =>
-            {
-                try
-                {
-                    // Calculate the relative path from the base directory to the file
-                    var relativePath = GetRelativePath(baseDir, file);
-
-                    // Calculate the hash of the file content
-                    var hash = CalculateHash(file);
-
-                    // Add or update the hash in the concurrent dictionary
-                    fileHashes[relativePath] = hash;
-                } catch (Exception ex)
-                {
-                    // Log the error for the problematic file
-                    Debug.WriteLine($"Error processing file {file}: {ex.Message}");
-                }
-            });
-
-        // Convert the concurrent dictionary to a regular dictionary
-        return fileHashes.ToDictionary(k => k.Key, v => v.Value);
-    }
-
-    private string GetRelativePath(string basePath, string filePath)
-    {
-        var fileUri = new Uri(filePath);
-        var baseUri = new Uri(basePath);
-
-        if (!basePath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
-            baseUri = new Uri(basePath + Path.DirectorySeparatorChar);
-
-        return Uri.UnescapeDataString(baseUri.MakeRelativeUri(fileUri).ToString().Replace('/', Path.DirectorySeparatorChar));
-    }
-
+    
     private void InitializeTrayIcon()
     {
         // Create an icon from a resource
@@ -306,11 +236,7 @@ public sealed partial class MainWindow
 
         //return succeeded
     }
-
-    private bool IsFileInFolder(IReadOnlyDictionary<string, string> localFiles, string folder, FileDetail serverFile) =>
-        // Check if any of the local files' paths contain the folder name and the file name
-        localFiles.Keys.Any(localFile => localFile.Contains(Path.Combine(folder, serverFile.FileName)));
-
+    
     private void Launch(object sender, EventArgs e)
     {
         IPAddress ipAddress;
@@ -323,7 +249,7 @@ public sealed partial class MainWindow
         }
         else
         {
-            ipAddress = ResolveHostname("unoralauncher.duckdns.org");
+            ipAddress = ResolveHostname("chaotic-minds.dynu.net");
             serverPort = 6900;
         }
 
@@ -344,47 +270,13 @@ public sealed partial class MainWindow
             Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
         }
     }
-
-    private void LaunchBtn_OnClick(object sender, RoutedEventArgs e)
-    {
-        IPAddress ipAddress;
-        int serverPort;
-
-        if (UseLocalhost)
-        {
-            ipAddress = ResolveHostname("127.0.0.1");
-            serverPort = 4200;
-        }
-        else
-        {
-            ipAddress = ResolveHostname("unoralauncher.duckdns.org");
-            serverPort = 6900;
-        }
-
-        using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Unora\\" + "\\Darkages.exe");
-
-        try
-        {
-            PatchClient(process, ipAddress, serverPort);
-
-            if (UseDawndWindower)
-            {
-                var processPtr = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, process.ProcessId);
-                InjectDll(processPtr);
-            }
-        } catch (Exception ex)
-        {
-            // An error occured trying to patch the client
-            Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
-        }
-    }
-
+    
     private async void Launcher_Loaded(object sender, RoutedEventArgs e)
     {
         try
         {
             await LoadAndBindGameUpdates();
-            await Application.Current.Dispatcher.Invoke(async () => await CheckForFileUpdates());
+            await CheckForFileUpdates();
         } catch (Exception ex)
         {
             LogException(ex);
@@ -393,40 +285,8 @@ public sealed partial class MainWindow
 
     public async Task LoadAndBindGameUpdates()
     {
-        var gameUpdatesUrl = AppSettings.BaseUrl + AppSettings.LauncherUpdatesUrl;
-        var gameUpdates = await _httpService.LoadGameUpdatesAsync(gameUpdatesUrl);
+        var gameUpdates = await UnoraClient.GetGameUpdatesAsync();
         GameUpdatesControl.DataContext = new { GameUpdates = gameUpdates };
-    }
-
-    public static AppSettings LoadAppSettings(string path)
-    {
-        if (File.Exists(path))
-        {
-            var json = File.ReadAllText(path);
-
-            return JsonConvert.DeserializeObject<AppSettings>(json);
-        }
-
-        return new AppSettings();
-    }
-
-    private AppSettings LoadAppSettingsFromResources()
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        const string RESOURCE_NAME = "UnoraLaunchpad.Resources.appsettings.json";
-
-        using var stream = assembly.GetManifestResourceStream(RESOURCE_NAME);
-
-        if (stream != null)
-        {
-            using var reader = new StreamReader(stream);
-
-            var json = reader.ReadToEnd();
-
-            return JsonConvert.DeserializeObject<AppSettings>(json);
-        }
-
-        return null;
     }
 
     public static void LogException(Exception e)
@@ -462,7 +322,6 @@ public sealed partial class MainWindow
     private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
     {
         using var stream = new ProcessMemoryStream(process.ProcessId);
-
         using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true);
 
         patcher.ApplyServerHostnamePatch(serverIPAddress);
@@ -488,7 +347,8 @@ public sealed partial class MainWindow
         return ipAddresses.FirstOrDefault();
     }
 
-    public void SaveSettings(Settings settings) => _fileService.SaveSettings(settings, LauncherSettings);
+    public void SaveSettings(Settings settings) => FileService.SaveSettings(settings, LauncherSettings);
+
 
     private void ShowWindow()
     {

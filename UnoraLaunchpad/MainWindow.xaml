@@ -142,7 +142,7 @@
                        Foreground="White" />
             </StackPanel>
             <Button x:Name="LaunchBtn"
-                    Click="LaunchBtn_OnClick"
+                    Click="Launch"
                     Width="150"
                     Height="30"
                     materialDesign:ButtonAssist.CornerRadius="5"

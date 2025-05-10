@@ -1,0 +1,8 @@
+<trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+        <requestedPrivileges>
+            <!-- force UAC prompt, require admin rights -->
+            <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        </requestedPrivileges>
+    </security>
+</trustInfo>

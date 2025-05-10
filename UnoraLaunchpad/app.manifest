@@ -1,8 +1,26 @@
-<trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-    <security>
-        <requestedPrivileges>
-            <!-- force UAC prompt, require admin rights -->
-            <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
-        </requestedPrivileges>
-    </security>
-</trustInfo>
+<?xml version="1.0" encoding="utf-8"?>
+<assembly
+        xmlns="urn:schemas-microsoft-com:asm.v1"
+        manifestVersion="1.0">
+
+    <!-- 1) This identity block is required for every .NET exe -->
+    <assemblyIdentity
+            version="1.0.0.0"
+            processorArchitecture="*"
+            name="UnoraLaunchpad"
+            type="win32" />
+
+    <!-- 2) Enable administrator UAC prompt -->
+    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+        <security>
+            <requestedPrivileges>
+                <requestedExecutionLevel
+                        level="requireAdministrator"
+                        uiAccess="false" />
+            </requestedPrivileges>
+        </security>
+    </trustInfo>
+
+    <!-- 3) (Optional) Windows themes / DPI-awareness can go here, too. -->
+
+</assembly>

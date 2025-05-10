@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Flurl.Http;
 using Newtonsoft.Json;
 using Polly;
 using Polly.Timeout;
@@ -28,7 +26,8 @@ public sealed class UnoraClient
         
         ApiClient = new HttpClient
         {
-            BaseAddress = new Uri(CONSTANTS.BASE_API_URL)
+            BaseAddress = new Uri(CONSTANTS.BASE_API_URL),
+            Timeout = TimeSpan.FromMinutes(30)
         };
     }
 
@@ -55,7 +54,7 @@ public sealed class UnoraClient
             if (File.Exists(destinationPath))
                 File.Delete(destinationPath);
 
-            using var response = await ApiClient.GetAsync(resource, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await ApiClient.GetAsync($"get/{resource}", HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
             using var networkStream = await response.Content.ReadAsStreamAsync();

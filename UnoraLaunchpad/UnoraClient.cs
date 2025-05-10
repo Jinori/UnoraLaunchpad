@@ -48,17 +48,27 @@ public sealed class UnoraClient
     {
         return ResiliencePolicy.ExecuteAsync(InnerGetFileAsync);
         
-        Task InnerGetFileAsync()
+        async Task InnerGetFileAsync()
         {
-            var request = new FlurlRequest(ApiClient.BaseAddress + CONSTANTS.GET_FILE_RESOURCE + Uri.EscapeUriString(relativePath));
-            var destinationFolder = Path.GetDirectoryName(destinationPath);
-            var destinationFileName = Path.GetFileName(destinationPath);
-
+            var resource = Uri.EscapeUriString(relativePath);
+            
             if (File.Exists(destinationPath))
                 File.Delete(destinationPath);
 
-            return request.WithTimeout(300)
-                          .DownloadFileAsync(destinationFolder, destinationFileName, 1024 * 1024 * 5); //5mb buffer
+            using var response = await ApiClient.GetAsync(resource, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+
+            using var networkStream = await response.Content.ReadAsStreamAsync();
+
+            using var fileStream = new FileStream(
+                destinationPath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                81920,
+                true);
+
+            await networkStream.CopyToAsync(fileStream);
         }
     }
 

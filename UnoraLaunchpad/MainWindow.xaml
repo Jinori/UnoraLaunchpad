@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:UnoraLaunchpad"
         mc:Ignorable="d"
         Title="Unora Launcher"
-        Height="600"
+        Height="733"
         Width="1000"
         WindowStyle="None"
         ResizeMode="NoResize"

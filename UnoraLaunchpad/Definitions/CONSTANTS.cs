@@ -5,7 +5,7 @@ public static class CONSTANTS
     #if DEBUG
     public const string BASE_API_URL = "http://localhost:5001/api/files/";
     #else
-    public const string BASE_API_URL = "http://chaotic-minds.dynu.net:5001/api/files/";
+    public const string BASE_API_URL = "http://unora.freeddns.org:5001/api/files/";
     #endif
     public const string GET_FILE_DETAILS_RESOURCE = "details";
     public const string GET_FILE_RESOURCE = "get/";

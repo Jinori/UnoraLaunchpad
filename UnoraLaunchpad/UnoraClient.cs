@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -23,12 +24,18 @@ public sealed class UnoraClient
                                 .WaitAndRetryAsync(5, attempt => TimeSpan.FromSeconds(attempt));
 
         ResiliencePolicy = retryPolicy;
+
+        var handler = new HttpClientHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+        };
         
-        ApiClient = new HttpClient
+        ApiClient = new HttpClient(handler)
         {
             BaseAddress = new Uri(CONSTANTS.BASE_API_URL),
             Timeout = TimeSpan.FromMinutes(30)
         };
+        
     }
 
     public Task<List<FileDetail>> GetFileDetailsAsync()

@@ -62,59 +62,81 @@ public sealed partial class MainWindow
     {
         ApplySettings();
         LaunchBtn.IsEnabled = false;
-        
+        SwirlLoader.Visibility = Visibility.Visible;
         EnsureUnoraFolderExists();
 
         ProgressLabel.Content = "Checking for updates...";
-        
+
         var fileDetails = await UnoraClient.GetFileDetailsAsync();
 
+        // Find out which files actually need updating
+        var filesToUpdate = fileDetails.Where(fileDetail =>
+                                       {
+                                           var filePath = Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, fileDetail.RelativePath);
+
+                                           if (!File.Exists(filePath))
+                                               return true;
+
+                                           var fileHash = CalculateHash(filePath);
+
+                                           return !fileHash.Equals(fileDetail.Hash, StringComparison.OrdinalIgnoreCase);
+                                       })
+                                       .ToList();
+
+        if (filesToUpdate.Any())
+        {
+            // Ask user to close any running Darkages instances before proceeding
+            var lockWindow = new UpdateLockWindow();
+            var result = lockWindow.ShowDialog();
+
+            if (result != true)
+            {
+                // User cancelled; abort update logic here
+                MessageBox.Show("Update cancelled. Please update later.", "Unora Launcher");
+                LaunchBtn.IsEnabled = true;
+
+                return;
+            }
+        }
+
         ProgressLabel.Content = "Applying updates...";
-        
+
         var counter = 0;
 
-        await Task.Run(
-            async () =>
+        await Task.Run(async () =>
+        {
+            var updateTask = filesToUpdate.ForEachAsync(async fileDetail =>
             {
-                var updateTask = fileDetails.ForEachAsync(
-                    async fileDetail =>
-                    {
-                        var filePath = Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, fileDetail.RelativePath);
-                        var directory = Path.GetDirectoryName(filePath)!;
-                        var fileHash = string.Empty;
+                var filePath = Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, fileDetail.RelativePath);
+                var directory = Path.GetDirectoryName(filePath)!;
 
-                        //if directory doesn't exist, create it
-                        if (!Directory.Exists(directory))
-                            Directory.CreateDirectory(directory);
-                        else if (File.Exists(filePath))
-                            fileHash = CalculateHash(filePath);
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
 
-                        if (!fileHash.Equals(fileDetail.Hash, StringComparison.OrdinalIgnoreCase))
-                        {
-                            await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath);
-
-                            Interlocked.Increment(ref counter);
-                        }
-                    });
-
-                while (true)
-                {
-                    var task = await Task.WhenAny(Task.Delay(500), updateTask);
-
-                    if (task == updateTask)
-                        break;
-
-                    Dispatcher.Invoke(() => ProgressLabel.Content = $"Updated {counter} files");
-                }
-
-                Dispatcher.BeginInvoke(() =>
-                {
-                    ProgressLabel.Content = "Update complete.";
-                    LaunchBtn.IsEnabled = true;
-                });
-                
+                await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath);
+                Interlocked.Increment(ref counter);
             });
+
+            while (true)
+            {
+                var task = await Task.WhenAny(Task.Delay(500), updateTask);
+
+                if (task == updateTask)
+                    break;
+
+                Dispatcher.Invoke(() => ProgressLabel.Content = $"Updated {counter} files");
+            }
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                ProgressLabel.Content = "Update complete.";
+                SwirlLoader.Visibility = Visibility.Collapsed;
+                LaunchBtn.IsEnabled = true;
+            });
+
+        });
     }
+
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 

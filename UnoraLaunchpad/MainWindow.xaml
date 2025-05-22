@@ -133,14 +133,29 @@
         <!-- Bottom Bar -->
         <Grid Grid.Row="2"
               Background="#333">
-            <StackPanel Orientation="Vertical"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="12" /> <!-- gap -->
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Swirl Loader on the left -->
+                <local:SwirlLoader x:Name="SwirlLoader" 
+                                   Width="15" Height="15"
+                                   Visibility="Collapsed"
+                                   VerticalAlignment="Center"
+                                   Margin="0,-20,20,0" />
+
+                <!-- Progress Label to the right -->
                 <Label x:Name="ProgressLabel"
-                       HorizontalAlignment="Center"
-                       FontSize="10"
-                       Foreground="White" />
-            </StackPanel>
+                       Grid.Column="2"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       Foreground="White"
+                       Padding="0"
+                       Margin="0,0,0,0"/>
+            </Grid>
             <Button x:Name="LaunchBtn"
                     Click="Launch"
                     Width="150"

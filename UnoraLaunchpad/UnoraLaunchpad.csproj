@@ -53,6 +53,12 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SwirlLoader.xaml.cs">
+      <DependentUpon>SwirlLoader.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UpdateLockWIndow.xaml.cs">
+      <DependentUpon>UpdateLockWIndow.xaml</DependentUpon>
+    </Compile>
     <Page Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -98,6 +104,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="SettingsWindow.xaml" />
+    <Page Include="SwirlLoader.xaml" />
+    <Page Include="UpdateLockWIndow.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

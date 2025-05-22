@@ -11,10 +11,10 @@ namespace UnoraLaunchpad
         [STAThread]
         public static void Main()
         {
-            const string appName = "UnoraLaunchpadSingleInstance";
+            const string APP_NAME = "UnoraLaunchpadSingleInstance";
             System.Net.ServicePointManager.DefaultConnectionLimit = 5;
 
-            _mutex = new Mutex(true, appName, out bool isNewInstance);
+            _mutex = new Mutex(true, APP_NAME, out var isNewInstance);
 
             if (!isNewInstance)
             {

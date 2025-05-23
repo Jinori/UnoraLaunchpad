@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -50,19 +51,24 @@ public sealed class UnoraClient
         }
     }
 
-    public Task DownloadFileAsync(string relativePath, string destinationPath)
+    public async Task DownloadFileAsync(string relativePath, string destinationPath, IProgress<DownloadProgress> progress = null)
     {
-        return ResiliencePolicy.ExecuteAsync(InnerGetFileAsync);
-        
+        await ResiliencePolicy.ExecuteAsync(InnerGetFileAsync);
+
         async Task InnerGetFileAsync()
         {
             var resource = Uri.EscapeUriString(relativePath);
-            
+
             if (File.Exists(destinationPath))
                 File.Delete(destinationPath);
 
             using var response = await ApiClient.GetAsync($"get/{resource}", HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
+
+            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+            var totalRead = 0L;
+            const int BUFFER_SIZE = 81920;
+            var buffer = new byte[BUFFER_SIZE];
 
             using var networkStream = await response.Content.ReadAsStreamAsync();
 
@@ -71,12 +77,59 @@ public sealed class UnoraClient
                 FileMode.Create,
                 FileAccess.Write,
                 FileShare.None,
-                81920,
+                BUFFER_SIZE,
                 true);
 
-            await networkStream.CopyToAsync(fileStream);
+            var sw = Stopwatch.StartNew();
+            var lastBytes = 0L;
+            var lastTime = 0L;
+
+            while (true)
+            {
+                var read = await networkStream.ReadAsync(buffer, 0, buffer.Length);
+
+                if (read == 0)
+                    break;
+
+                await fileStream.WriteAsync(buffer, 0, read);
+                totalRead += read;
+
+                if ((progress != null) && (sw.ElapsedMilliseconds - lastTime > 500))
+                {
+                    var speed = (totalRead - lastBytes) / (double)(sw.ElapsedMilliseconds - lastTime) * 1000; // bytes/sec
+                    lastBytes = totalRead;
+                    lastTime = sw.ElapsedMilliseconds;
+
+                    progress.Report(
+                        new DownloadProgress
+                        {
+                            BytesReceived = totalRead,
+                            TotalBytes = totalBytes,
+                            SpeedBytesPerSec = speed
+                        });
+                }
+            }
+
+            // Final update to ensure UI reflects completion
+            progress?.Report(
+                new DownloadProgress
+                {
+                    BytesReceived = totalRead,
+                    TotalBytes = totalBytes,
+                    SpeedBytesPerSec = 0
+                });
         }
     }
+
+
+    // Helper class for reporting progress
+    public sealed class DownloadProgress
+    {
+        public long BytesReceived { get; set; }
+        public long TotalBytes { get; set; }
+        public double SpeedBytesPerSec { get; set; }
+    }
+
 
     public Task<List<GameUpdate>> GetGameUpdatesAsync()
     {

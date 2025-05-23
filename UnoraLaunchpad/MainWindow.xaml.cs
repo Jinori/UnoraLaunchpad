@@ -7,13 +7,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
 using UnoraLaunchpad.Definitions;
-using UnoraLaunchpad.Extensions;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
@@ -65,7 +63,17 @@ public sealed partial class MainWindow
         SwirlLoader.Visibility = Visibility.Visible;
         EnsureUnoraFolderExists();
 
-        ProgressLabel.Content = "Checking for updates...";
+        // Show the progress area, hide the status label
+        Dispatcher.Invoke(() =>
+        {
+            DownloadProgressPanel.Visibility = Visibility.Visible;
+            StatusLabel.Visibility = Visibility.Collapsed;
+        });
+
+        ProgressFileName.Text = "";
+        ProgressBytes.Text = "Checking for updates...";
+        ProgressSpeed.Text = "";
+        DownloadProgressBar.IsIndeterminate = true;
 
         var fileDetails = await UnoraClient.GetFileDetailsAsync();
 
@@ -83,15 +91,17 @@ public sealed partial class MainWindow
                                        })
                                        .ToList();
 
+        // --- NEW: Calculate the total bytes for all files being updated ---
+        var totalBytesToDownload = filesToUpdate.Sum(f => f.Size); // Make sure f.Size is available and in bytes
+        var totalDownloaded = 0L;
+
         if (filesToUpdate.Any())
         {
-            // Ask user to close any running Darkages instances before proceeding
             var lockWindow = new UpdateLockWindow();
             var result = lockWindow.ShowDialog();
 
             if (result != true)
             {
-                // User cancelled; abort update logic here
                 MessageBox.Show("Update cancelled. Please update later.", "Unora Launcher");
                 LaunchBtn.IsEnabled = true;
 
@@ -99,13 +109,18 @@ public sealed partial class MainWindow
             }
         }
 
-        ProgressLabel.Content = "Applying updates...";
+        ProgressFileName.Text = "";
+        ProgressBytes.Text = "Applying updates...";
+        ProgressSpeed.Text = "";
 
-        var counter = 0;
+        // --- Set the progress bar range to total size (use 0 if none, disables the bar) ---
+        DownloadProgressBar.IsIndeterminate = false;
+        DownloadProgressBar.Minimum = 0;
+        DownloadProgressBar.Maximum = totalBytesToDownload > 0 ? totalBytesToDownload : 1; // fallback to 1 to avoid div/0
 
         await Task.Run(async () =>
         {
-            var updateTask = filesToUpdate.ForEachAsync(async fileDetail =>
+            foreach (var fileDetail in filesToUpdate)
             {
                 var filePath = Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, fileDetail.RelativePath);
                 var directory = Path.GetDirectoryName(filePath)!;
@@ -113,28 +128,61 @@ public sealed partial class MainWindow
                 if (!Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
 
-                await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath);
-                Interlocked.Increment(ref counter);
-            });
+                long fileBytesDownloaded = 0L;
 
-            while (true)
-            {
-                var task = await Task.WhenAny(Task.Delay(500), updateTask);
+                Dispatcher.Invoke(() =>
+                {
+                    ProgressFileName.Text = fileDetail.RelativePath;
+                });
 
-                if (task == updateTask)
-                    break;
+                var progress = new Progress<UnoraClient.DownloadProgress>(p =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        fileBytesDownloaded = p.BytesReceived;
+                        ProgressBytes.Text = $"{FormatBytes(totalDownloaded + p.BytesReceived)} of {FormatBytes(totalBytesToDownload)}";
+                        ProgressSpeed.Text = $"@ {FormatSpeed(p.SpeedBytesPerSec)}";
+                        DownloadProgressBar.Value = totalDownloaded + p.BytesReceived;
+                    });
+                });
 
-                Dispatcher.Invoke(() => ProgressLabel.Content = $"Updated {counter} files");
+                await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath, progress);
+                totalDownloaded += fileBytesDownloaded;
             }
 
+            // When done, hide progress, show "Update complete."
             Dispatcher.BeginInvoke(() =>
             {
-                ProgressLabel.Content = "Update complete.";
+                DownloadProgressPanel.Visibility = Visibility.Collapsed;
+                StatusLabel.Text = "Update complete.";
+                StatusLabel.Visibility = Visibility.Visible;
                 SwirlLoader.Visibility = Visibility.Collapsed;
                 LaunchBtn.IsEnabled = true;
             });
-
         });
+    }
+
+
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 0) return "??";
+        if (bytes > 1024 * 1024)
+            return $"{bytes / 1024 / 1024.0:F2} MB";
+        if (bytes > 1024)
+            return $"{bytes / 1024.0:F2} KB";
+
+        return $"{bytes} B";
+    }
+
+    private static string FormatSpeed(double bytesPerSec)
+    {
+        if (bytesPerSec > 1024 * 1024)
+            return $"{bytesPerSec / 1024 / 1024.0:F2} MB/s";
+        if (bytesPerSec > 1024)
+            return $"{bytesPerSec / 1024.0:F2} KB/s";
+
+        return $"{bytesPerSec:F2} B/s";
     }
 
 

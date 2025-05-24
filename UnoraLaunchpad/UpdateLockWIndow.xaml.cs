@@ -14,7 +14,9 @@ namespace UnoraLaunchpad
 
         private void UpdateStatus()
         {
-            var procs = Process.GetProcessesByName("Darkages");
+            var procs = Process.GetProcessesByName("Unora")
+                               .ToArray();
+            
             if (procs.Length == 0)
             {
                 DialogResult = true; // allow update
@@ -22,7 +24,7 @@ namespace UnoraLaunchpad
             }
             else
             {
-                StatusText.Text = $"Close {procs.Length} instance(s) of Darkages to proceed.";
+                StatusText.Text = $"Close {procs.Length} instance(s) of Unora to proceed.";
             }
         }
 

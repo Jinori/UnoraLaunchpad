@@ -130,24 +130,15 @@
             </ScrollViewer>
         </Grid>
 
-        <!-- Bottom Bar -->
-<!-- Bottom Bar -->
 <Grid Grid.Row="2" Background="#333">
     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="12" /> <!-- gap -->
+            <ColumnDefinition Width="12" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Swirl Loader on the left -->
-        <local:SwirlLoader x:Name="SwirlLoader" 
-                           Width="15" Height="15"
-                           Visibility="Collapsed"
-                           VerticalAlignment="Center"
-                           Margin="0,-20,20,0" />
-
-        <!-- Download Progress Area (new, now collapsible) -->
+        <!-- Download Progress Area (collapsible) -->
         <StackPanel x:Name="DownloadProgressPanel" Grid.Column="2" Orientation="Vertical" Margin="0,0,0,0">
             <!-- File Name & Icon -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -158,7 +149,10 @@
                 <TextBlock x:Name="ProgressFileName"
                            FontWeight="Bold"
                            Foreground="White"
-                           FontSize="14"/>
+                           FontSize="14"
+                           MinWidth="180"
+                           MaxWidth="320"
+                           TextTrimming="CharacterEllipsis"/>
             </StackPanel>
             <!-- Progress Bar -->
             <ProgressBar x:Name="DownloadProgressBar"
@@ -171,12 +165,14 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="ProgressBytes"
                            Foreground="#BBB"
-                           FontSize="12"/>
+                           FontSize="12"
+                           MinWidth="110"/>
                 <TextBlock Text="  " />
                 <TextBlock x:Name="ProgressSpeed"
                            Foreground="#48F772"
                            FontWeight="SemiBold"
-                           FontSize="12"/>
+                           FontSize="12"
+                           MinWidth="70"/>
             </StackPanel>
         </StackPanel>
         <!-- Status label, hidden except when showing -->
@@ -203,6 +199,7 @@
         <TextBlock Text="Launch" />
     </Button>
 </Grid>
+
 
     </Grid>
 </Window>

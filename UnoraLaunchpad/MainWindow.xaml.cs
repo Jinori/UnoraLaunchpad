@@ -15,428 +15,490 @@ using UnoraLaunchpad.Definitions;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
-namespace UnoraLaunchpad;
-
-public sealed partial class MainWindow
+namespace UnoraLaunchpad
 {
-    private static readonly string LauncherSettings = "LauncherSettings/settings.json";
-    private readonly FileService FileService = new();
-    private readonly UnoraClient UnoraClient = new();
-    private NotifyIcon _notifyIcon;
-
-    public ObservableCollection<GameUpdate> GameUpdates { get; set; } = new();
-    public bool SkipIntro { get; set; }
-    public bool UseDawndWindower { get; set; }
-    public bool UseLocalhost { get; set; }
-    public ICommand OpenGameUpdateCommand { get; }
-    public object Sync { get; } = new();
-
-    public MainWindow()
+    public sealed partial class MainWindow
     {
-        InitializeComponent();
-        InitializeTrayIcon();
-        OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate);
-        DataContext = this;
-    }
+        private static readonly string LauncherSettingsPath = "LauncherSettings/settings.json";
 
-    public void ApplySettings()
-    {
-        var settings = FileService.LoadSettings(LauncherSettings);
-        UseDawndWindower = settings.UseDawndWindower;
-        UseLocalhost = settings.UseLocalhost;
-        SkipIntro = settings.SkipIntro;
-    }
+        private readonly FileService FileService = new();
+        private readonly UnoraClient UnoraClient = new();
+        private NotifyIcon NotifyIcon;
 
-    private string CalculateHash(string filePath)
-    {
-        using var md5 = MD5.Create();
-        using var stream = File.OpenRead(filePath);
-        var hash = md5.ComputeHash(stream);
+        public ObservableCollection<GameUpdate> GameUpdates { get; } = new();
+        public bool SkipIntro { get; set; }
+        public bool UseDawndWindower { get; set; }
+        public bool UseLocalhost { get; set; }
+        public ICommand OpenGameUpdateCommand { get; }
+        public object Sync { get; } = new();
 
-        return BitConverter.ToString(hash);
-    }
-
-    private async Task CheckForFileUpdates()
-    {
-        ApplySettings();
-        LaunchBtn.IsEnabled = false;
-        SwirlLoader.Visibility = Visibility.Visible;
-        EnsureUnoraFolderExists();
-
-        // Show the progress area, hide the status label
-        Dispatcher.Invoke(() =>
+        public MainWindow()
         {
-            DownloadProgressPanel.Visibility = Visibility.Visible;
-            StatusLabel.Visibility = Visibility.Collapsed;
-        });
+            InitializeComponent();
+            InitializeTrayIcon();
+            OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate);
+            DataContext = this;
+        }
 
-        ProgressFileName.Text = "";
-        ProgressBytes.Text = "Checking for updates...";
-        ProgressSpeed.Text = "";
-        DownloadProgressBar.IsIndeterminate = true;
+        /// <summary>
+        /// Loads and applies launcher settings from disk.
+        /// </summary>
+        public void ApplySettings()
+        {
+            var settings = FileService.LoadSettings(LauncherSettingsPath);
+            UseDawndWindower = settings.UseDawndWindower;
+            UseLocalhost = settings.UseLocalhost;
+            SkipIntro = settings.SkipIntro;
+        }
 
-        var fileDetails = await UnoraClient.GetFileDetailsAsync();
+        /// <summary>
+        /// Calculates an MD5 hash for a file.
+        /// </summary>
+        private static string CalculateHash(string filePath)
+        {
+            using var md5 = MD5.Create();
+            using var stream = File.OpenRead(filePath);
+            return BitConverter.ToString(md5.ComputeHash(stream));
+        }
 
-        // Find out which files actually need updating
-        var filesToUpdate = fileDetails.Where(fileDetail =>
-                                       {
-                                           var filePath = Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, fileDetail.RelativePath);
+        private async Task CheckAndUpdateLauncherAsync()
+        {
+            var serverVersion = await UnoraClient.GetLauncherVersionAsync();
+            var localVersion = GetLocalLauncherVersion();
 
-                                           if (!File.Exists(filePath))
-                                               return true;
+            if (serverVersion != localVersion)
+            {
+                var bootstrapperPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Unora\\UnoraBootstrapper.exe");
+                var currentLauncherPath = Process.GetCurrentProcess().MainModule!.FileName!;
+                var currentProcessId = Process.GetCurrentProcess().Id;
 
-                                           var fileHash = CalculateHash(filePath);
+                var psi = new ProcessStartInfo
+                {
+                    FileName = bootstrapperPath,
+                    Arguments = $"\"{currentLauncherPath}\" {Process.GetCurrentProcess().Id}",
+                    UseShellExecute = true  // <-- This is crucial
+                };
+                Process.Start(psi);
+                
+                Application.Current.Shutdown();
+                Environment.Exit(0);
+            }
+        }
+        
 
-                                           return !fileHash.Equals(fileDetail.Hash, StringComparison.OrdinalIgnoreCase);
-                                       })
-                                       .ToList();
+        private string GetLocalLauncherVersion()
+        {
+            var exePath = Process.GetCurrentProcess().MainModule!.FileName!;
+            return FileVersionInfo.GetVersionInfo(exePath).FileVersion ?? "0";
+        }
+        
+        /// <summary>
+        /// Checks for file updates, downloads any required updates, and updates the UI accordingly.
+        /// </summary>
+        private async Task CheckForFileUpdates()
+        {
+            ApplySettings();
+            SetUiStateUpdating();
 
-        // --- NEW: Calculate the total bytes for all files being updated ---
-        var totalBytesToDownload = filesToUpdate.Sum(f => f.Size); // Make sure f.Size is available and in bytes
-        var totalDownloaded = 0L;
+            var fileDetails = await UnoraClient.GetFileDetailsAsync();
+            var filesToUpdate = fileDetails
+                .Where(NeedsUpdate)
+                .ToList();
 
-        if (filesToUpdate.Any())
+            var totalBytesToDownload = filesToUpdate.Sum(f => f.Size);
+            var totalDownloaded = 0L;
+
+            if (filesToUpdate.Any() && !ConfirmUpdateProceed())
+            {
+                ShowMessage("Update cancelled. Please update later.", "Unora Launcher");
+                SetUiStateIdle();
+                return;
+            }
+
+            PrepareProgressBar(totalBytesToDownload);
+
+            await Task.Run(async () =>
+            {
+                foreach (var fileDetail in filesToUpdate)
+                {
+                    PrepareFileProgress(fileDetail.RelativePath, totalDownloaded, totalBytesToDownload);
+
+                    var filePath = GetFilePath(fileDetail.RelativePath);
+                    EnsureDirectoryExists(filePath);
+
+                    var fileBytesDownloaded = 0L;
+
+                    var progress = new Progress<UnoraClient.DownloadProgress>(p =>
+                    {
+                        fileBytesDownloaded = p.BytesReceived; // capture for use after download
+                        UpdateFileProgress(p.BytesReceived, totalDownloaded, totalBytesToDownload, p.SpeedBytesPerSec);
+                    });
+
+                    await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath, progress);
+                    totalDownloaded += fileBytesDownloaded;
+
+                }
+            });
+        }
+
+        /// <summary>
+        /// Determines if a file needs to be updated based on its hash.
+        /// </summary>
+        private bool NeedsUpdate(FileDetail fileDetail)
+        {
+            var filePath = GetFilePath(fileDetail.RelativePath);
+            if (!File.Exists(filePath))
+                return true;
+
+            return !CalculateHash(filePath).Equals(fileDetail.Hash, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string GetFilePath(string relativePath) =>
+            Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, relativePath);
+
+        private void EnsureDirectoryExists(string filePath)
+        {
+            var directory = Path.GetDirectoryName(filePath)!;
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+        }
+
+        private bool ConfirmUpdateProceed()
         {
             var lockWindow = new UpdateLockWindow();
             var result = lockWindow.ShowDialog();
+            return result == true;
+        }
 
-            if (result != true)
+        private void ShowMessage(string message, string title) =>
+            MessageBox.Show(message, title);
+
+        #region Progress UI Helpers
+
+        private void SetUiStateUpdating() =>
+            Dispatcher.Invoke(() =>
             {
-                MessageBox.Show("Update cancelled. Please update later.", "Unora Launcher");
-                LaunchBtn.IsEnabled = true;
+                DownloadProgressPanel.Visibility = Visibility.Visible;
+                StatusLabel.Visibility = Visibility.Collapsed;
+                LaunchBtn.IsEnabled = false;
+                ProgressFileName.Text = string.Empty;
+                ProgressBytes.Text = "Checking for updates...";
+                ProgressSpeed.Text = string.Empty;
+                DownloadProgressBar.IsIndeterminate = true;
+            });
 
+        private void SetUiStateIdle() => Dispatcher.Invoke(() => LaunchBtn.IsEnabled = true);
+
+        private void SetUiStateComplete()
+        {
+            DownloadProgressPanel.Visibility = Visibility.Collapsed;
+            StatusLabel.Text = "Update complete.";
+            StatusLabel.Visibility = Visibility.Visible;
+            LaunchBtn.IsEnabled = true;
+        }
+
+        private void PrepareProgressBar(long totalBytesToDownload) =>
+            Dispatcher.Invoke(() =>
+            {
+                ProgressFileName.Text = string.Empty;
+                ProgressBytes.Text = "Applying updates...";
+                ProgressSpeed.Text = string.Empty;
+                DownloadProgressBar.IsIndeterminate = false;
+                DownloadProgressBar.Minimum = 0;
+                DownloadProgressBar.Maximum = totalBytesToDownload > 0 ? totalBytesToDownload : 1;
+            });
+
+        private void PrepareFileProgress(string fileName, long downloaded, long total) =>
+            Dispatcher.Invoke(() =>
+            {
+                ProgressFileName.Text = fileName;
+                ProgressBytes.Text = $"{FormatBytes(downloaded)} of {FormatBytes(total)}";
+                ProgressSpeed.Text = string.Empty;
+                DownloadProgressBar.Value = downloaded;
+            });
+
+        private void UpdateFileProgress(
+            long bytesReceived,
+            long totalDownloaded,
+            long totalBytesToDownload,
+            double speedBytesPerSec) =>
+            Dispatcher.Invoke(() =>
+            {
+                ProgressBytes.Text = $"{FormatBytes(totalDownloaded + bytesReceived)} of {FormatBytes(totalBytesToDownload)}";
+                ProgressSpeed.Text = $"@ {FormatSpeed(speedBytesPerSec)}";
+                DownloadProgressBar.Value = totalDownloaded + bytesReceived;
+            });
+        #endregion
+
+        #region Formatting
+
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes < 0) return "??";
+            if (bytes > 1024 * 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
+            if (bytes > 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024.0):F2} MB";
+            if (bytes > 1024)
+                return $"{bytes / 1024.0:F2} KB";
+
+            return $"{bytes} B";
+        }
+
+        private static string FormatSpeed(double bytesPerSec)
+        {
+            if (bytesPerSec > 1024 * 1024)
+                return $"{bytesPerSec / (1024.0 * 1024.0):F2} MB/s";
+            if (bytesPerSec > 1024)
+                return $"{bytesPerSec / 1024.0:F2} KB/s";
+
+            return $"{bytesPerSec:F2} B/s";
+        }
+
+        #endregion
+
+        #region System Tray / UI Initialization
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void CogButton_Click(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new SettingsWindow();
+            settingsWindow.Show();
+        }
+        
+        private void InitializeTrayIcon()
+        {
+            // Create an icon from a resource
+            var iconUri = new Uri("pack://application:,,,/UnoraLaunchpad;component/favicon.ico", UriKind.RelativeOrAbsolute);
+            var iconStream = Application.GetResourceStream(iconUri)?.Stream;
+
+            if (iconStream != null)
+                NotifyIcon = new NotifyIcon
+                {
+                    Icon = new Icon(iconStream),
+                    Visible = true
+                };
+
+            // Create a context menu for the tray icon
+            var contextMenu = new ContextMenuStrip();
+            contextMenu.Items.Add("Launch Client", null, Launch);
+            contextMenu.Items.Add("Open Launcher", null, TrayMenu_Open_Click);
+            contextMenu.Items.Add("Exit", null, TrayMenu_Exit_Click);
+
+            NotifyIcon.ContextMenuStrip = contextMenu;
+            NotifyIcon.DoubleClick += (_, _) => ShowWindow();
+        }
+
+        private void TrayMenu_Exit_Click(object sender, EventArgs e)
+        {
+            NotifyIcon.Dispose();
+            Application.Current.Shutdown();
+        }
+
+        private void TrayMenu_Open_Click(object sender, EventArgs e) => ShowWindow();
+
+        private void ShowWindow()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+        }
+
+        #endregion
+
+        #region Window/Launcher Logic
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+        protected override void OnStateChanged(EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+                Hide();
+
+            base.OnStateChanged(e);
+        }
+
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
+        }
+
+        #endregion
+
+        #region Launcher Core
+
+        private void Launch(object sender, EventArgs e)
+        {
+            var (ipAddress, serverPort) = GetServerConnection();
+
+            using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Unora\\Unora.exe");
+
+            try
+            {
+                PatchClient(process, ipAddress, serverPort);
+
+                if (UseDawndWindower)
+                {
+                    var processPtr = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, process.ProcessId);
+                    InjectDll(processPtr);
+                }
+
+                _ = RenameGameWindowAsync(Process.GetProcessById(process.ProcessId));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
+            }
+        }
+
+        private (IPAddress, int) GetServerConnection()
+        {
+            if (UseLocalhost)
+                return (ResolveHostname("127.0.0.1"), 4200);
+
+            return (ResolveHostname("chaotic-minds.dynu.net"), 6900);
+        }
+
+        private static IPAddress ResolveHostname(string hostname)
+        {
+            // Lookup the server hostname (via DNS)
+            var hostEntry = Dns.GetHostEntry(hostname);
+
+            // Find the IPv4 addresses
+            var ipAddresses =
+                from ip in hostEntry.AddressList
+                where ip.AddressFamily == AddressFamily.InterNetwork
+                select ip;
+
+            return ipAddresses.FirstOrDefault();
+        }
+
+        private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
+        {
+            using var stream = new ProcessMemoryStream(process.ProcessId);
+            using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true);
+
+            patcher.ApplyServerHostnamePatch(serverIPAddress);
+            patcher.ApplyServerPortPatch(serverPort);
+
+            if (SkipIntro)
+                patcher.ApplySkipIntroVideoPatch();
+
+            patcher.ApplyMultipleInstancesPatch();
+        }
+
+        private void InjectDll(IntPtr accessHandle)
+        {
+            const string DLL_NAME = "dawnd.dll";
+            var nameLength = DLL_NAME.Length + 1;
+
+            // Allocate memory and write the DLL name to target process
+            var allocate = NativeMethods.VirtualAllocEx(
+                accessHandle, IntPtr.Zero, (IntPtr)nameLength, 0x1000, 0x40);
+
+            NativeMethods.WriteProcessMemory(
+                accessHandle, allocate, DLL_NAME, (UIntPtr)nameLength, out _);
+
+            var injectionPtr = NativeMethods.GetProcAddress(
+                NativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+
+            if (injectionPtr == UIntPtr.Zero)
+            {
+                MessageBox.Show(this, "Injection pointer was null.", "Injection Error");
                 return;
             }
-        }
 
-        ProgressFileName.Text = "";
-        ProgressBytes.Text = "Applying updates...";
-        ProgressSpeed.Text = "";
+            var thread = NativeMethods.CreateRemoteThread(
+                accessHandle, IntPtr.Zero, IntPtr.Zero, injectionPtr, allocate, 0, out _);
 
-        // --- Set the progress bar range to total size (use 0 if none, disables the bar) ---
-        DownloadProgressBar.IsIndeterminate = false;
-        DownloadProgressBar.Minimum = 0;
-        DownloadProgressBar.Maximum = totalBytesToDownload > 0 ? totalBytesToDownload : 1; // fallback to 1 to avoid div/0
-
-        await Task.Run(async () =>
-        {
-            foreach (var fileDetail in filesToUpdate)
+            if (thread == IntPtr.Zero)
             {
-                var filePath = Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, fileDetail.RelativePath);
-                var directory = Path.GetDirectoryName(filePath)!;
-
-                if (!Directory.Exists(directory))
-                    Directory.CreateDirectory(directory);
-
-                long fileBytesDownloaded = 0L;
-
-                Dispatcher.Invoke(() =>
-                {
-                    ProgressFileName.Text = fileDetail.RelativePath;
-                });
-
-                var progress = new Progress<UnoraClient.DownloadProgress>(p =>
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        fileBytesDownloaded = p.BytesReceived;
-                        ProgressBytes.Text = $"{FormatBytes(totalDownloaded + p.BytesReceived)} of {FormatBytes(totalBytesToDownload)}";
-                        ProgressSpeed.Text = $"@ {FormatSpeed(p.SpeedBytesPerSec)}";
-                        DownloadProgressBar.Value = totalDownloaded + p.BytesReceived;
-                    });
-                });
-
-                await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath, progress);
-                totalDownloaded += fileBytesDownloaded;
+                MessageBox.Show(this, "Remote injection thread was null. Try again...", "Injection Error");
+                return;
             }
 
-            // When done, hide progress, show "Update complete."
-            Dispatcher.BeginInvoke(() =>
+            var result = NativeMethods.WaitForSingleObject(thread, 10 * 1000);
+
+            if (result != WaitEventResult.Signaled)
             {
-                DownloadProgressPanel.Visibility = Visibility.Collapsed;
-                StatusLabel.Text = "Update complete.";
-                StatusLabel.Visibility = Visibility.Visible;
-                SwirlLoader.Visibility = Visibility.Collapsed;
-                LaunchBtn.IsEnabled = true;
-            });
-        });
-    }
+                MessageBox.Show(this, "Injection thread timed out, or signaled incorrectly. Try again...", "Injection Error");
+                if (thread != IntPtr.Zero)
+                    NativeMethods.CloseHandle(thread);
+                return;
+            }
 
-
-
-    private static string FormatBytes(long bytes)
-    {
-        if (bytes < 0) return "??";
-        if (bytes > 1024 * 1024)
-            return $"{bytes / 1024 / 1024.0:F2} MB";
-        if (bytes > 1024)
-            return $"{bytes / 1024.0:F2} KB";
-
-        return $"{bytes} B";
-    }
-
-    private static string FormatSpeed(double bytesPerSec)
-    {
-        if (bytesPerSec > 1024 * 1024)
-            return $"{bytesPerSec / 1024 / 1024.0:F2} MB/s";
-        if (bytesPerSec > 1024)
-            return $"{bytesPerSec / 1024.0:F2} KB/s";
-
-        return $"{bytesPerSec:F2} B/s";
-    }
-
-
-    private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
-
-    private void CogButton_Click(object sender, RoutedEventArgs e)
-    {
-        var settingsWindow = new SettingsWindow();
-        settingsWindow.Show();
-    }
-
-    private void EnsureUnoraFolderExists()
-    {
-        if (!Directory.Exists(CONSTANTS.UNORA_FOLDER_NAME))
-            Directory.CreateDirectory(CONSTANTS.UNORA_FOLDER_NAME);
-    }
-    
-    private void InitializeTrayIcon()
-    {
-        // Create an icon from a resource
-        var iconUri = new Uri("pack://application:,,,/UnoraLaunchpad;component/favicon.ico", UriKind.RelativeOrAbsolute);
-        var iconStream = Application.GetResourceStream(iconUri)?.Stream;
-
-        if (iconStream != null)
-            _notifyIcon = new NotifyIcon
-            {
-                Icon = new Icon(iconStream),
-                Visible = true
-            };
-
-        // Create a context menu for the tray icon
-        var contextMenu = new ContextMenuStrip();
-        contextMenu.Items.Add("Launch Client", null, Launch);
-        contextMenu.Items.Add("Open Launcher", null, TrayMenu_Open_Click);
-        contextMenu.Items.Add("Exit", null, TrayMenu_Exit_Click);
-
-        _notifyIcon.ContextMenuStrip = contextMenu;
-        _notifyIcon.DoubleClick += (_, _) => ShowWindow();
-    }
-
-    private void InjectDll(IntPtr accessHandle)
-    {
-        const string DLL_NAME = "dawnd.dll";
-
-        //length of string containing the DLL file name +1 byte padding
-        var nameLength = DLL_NAME.Length + 1;
-
-        //allocate memory within the virtual address space of the target process
-        var allocate = NativeMethods.VirtualAllocEx(
-            accessHandle,
-            (IntPtr)null,
-            (IntPtr)nameLength,
-            0x1000,
-            0x40); //allocation pour WriteProcessMemory
-
-        //write DLL file name to allocated memory in target process
-        NativeMethods.WriteProcessMemory(
-            accessHandle,
-            allocate,
-            DLL_NAME,
-            (UIntPtr)nameLength,
-            out _);
-
-        var injectionPtr = NativeMethods.GetProcAddress(NativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-
-        if (injectionPtr == UIntPtr.Zero)
-        {
-            MessageBox.Show(this, "Injection pointer was null.", "Injection Error");
-
-            //return failed
-            return;
-        }
-
-        //create thread in target process, and store accessHandle in hThread
-        var thread = NativeMethods.CreateRemoteThread(
-            accessHandle,
-            (IntPtr)null,
-            IntPtr.Zero,
-            injectionPtr,
-            allocate,
-            0,
-            out _);
-
-        //make sure thread accessHandle is valid
-        if (thread == IntPtr.Zero)
-        {
-            //incorrect thread accessHandle ... return failed
-            MessageBox.Show(this, "Remote injection thread was null. Try again...", "Injection Error");
-
-            return;
-        }
-
-        //time-out is 10 seconds...
-        var result = NativeMethods.WaitForSingleObject(thread, 10 * 1000);
-
-        //check whether thread timed out...
-        if (result != WaitEventResult.Signaled)
-        {
-            //thread timed out...
-            MessageBox.Show(this, "Injection thread timed out, or signaled incorrectly. Try again...", "Injection Error");
-
-            //make sure thread accessHandle is valid before closing... prevents crashes.
+            NativeMethods.VirtualFreeEx(accessHandle, allocate, (UIntPtr)0, 0x8000);
             if (thread != IntPtr.Zero)
-                //close thread in target process
                 NativeMethods.CloseHandle(thread);
-
-            return;
         }
 
-        //free up allocated space ( AllocMem )
-        NativeMethods.VirtualFreeEx(
-            accessHandle,
-            allocate,
-            (UIntPtr)0,
-            0x8000);
-
-        //make sure thread accessHandle is valid before closing... prevents crashes.
-        if (thread != IntPtr.Zero)
-            //close thread in target process
-            NativeMethods.CloseHandle(thread);
-
-        //return succeeded
-    }
-    
-    private void Launch(object sender, EventArgs e)
-    {
-        IPAddress ipAddress;
-        int serverPort;
-
-        if (UseLocalhost)
+        private async Task RenameGameWindowAsync(Process process)
         {
-            ipAddress = ResolveHostname("127.0.0.1");
-            serverPort = 4200;
-        }
-        else
-        {
-            ipAddress = ResolveHostname("chaotic-minds.dynu.net");
-            serverPort = 6900;
-        }
-
-        using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Unora\\" + "\\Darkages.exe");
-
-        try
-        {
-            PatchClient(process, ipAddress, serverPort);
-
-            if (UseDawndWindower)
+            const string NEW_TITLE = "Unora";
+            for (var i = 0; i < 20; i++)
             {
-                var processPtr = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, process.ProcessId);
-                InjectDll(processPtr);
+                // Refresh the process to update MainWindowHandle
+                process.Refresh();
+
+                if (process.MainWindowHandle != IntPtr.Zero)
+                {
+                    NativeMethods.SetWindowText(process.MainWindowHandle, NEW_TITLE);
+                    break;
+                }
+                await Task.Delay(100);
             }
-        } catch (Exception ex)
-        {
-            // An error occured trying to patch the client
-            Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
         }
-    }
-    
-    private async void Launcher_Loaded(object sender, RoutedEventArgs e)
-    {
-        try
+
+
+        #endregion
+
+        #region Game Updates
+
+        private async void Launcher_Loaded(object sender, RoutedEventArgs e)
         {
-            await LoadAndBindGameUpdates();
-            await CheckForFileUpdates();
-        } catch (Exception ex)
-        {
-            LogException(ex);
+            try
+            {
+                await LoadAndBindGameUpdates();
+                await CheckForFileUpdates();
+                await CheckAndUpdateLauncherAsync();
+                Dispatcher.BeginInvoke(SetUiStateComplete);
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
+            }
         }
-    }
 
-    public async Task LoadAndBindGameUpdates()
-    {
-        var gameUpdates = await UnoraClient.GetGameUpdatesAsync();
-        GameUpdatesControl.DataContext = new { GameUpdates = gameUpdates };
-    }
-
-    public static void LogException(Exception e)
-    {
-        var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LauncherSettings", "log.txt");
-
-        try
+        public async Task LoadAndBindGameUpdates()
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
-            File.AppendAllText(logPath, $"{DateTime.Now}: {e}\n");
-        } catch
-        {
-            // Handle any exceptions that might occur while logging
+            var gameUpdates = await UnoraClient.GetGameUpdatesAsync();
+            GameUpdatesControl.DataContext = new { GameUpdates = gameUpdates };
         }
+
+        private void OpenGameUpdate(GameUpdate gameUpdate)
+        {
+            var detailView = new GameUpdateDetailView(gameUpdate);
+            detailView.ShowDialog();
+        }
+
+        public static void LogException(Exception e)
+        {
+            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LauncherSettings", "log.txt");
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+                File.AppendAllText(logPath, $"{DateTime.Now}: {e}\n");
+            }
+            catch
+            {
+                // Suppress logging errors
+            }
+        }
+
+        #endregion
+
+        public void SaveSettings(Settings settings) => FileService.SaveSettings(settings, LauncherSettingsPath);
     }
-
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-
-    protected override void OnStateChanged(EventArgs e)
-    {
-        if (WindowState == WindowState.Minimized)
-            Hide();
-
-        base.OnStateChanged(e);
-    }
-
-    private void OpenGameUpdate(GameUpdate gameUpdate)
-    {
-        var detailView = new GameUpdateDetailView(gameUpdate);
-        detailView.ShowDialog(); // Opens the detail view window
-    }
-
-    private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
-    {
-        using var stream = new ProcessMemoryStream(process.ProcessId);
-        using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true);
-
-        patcher.ApplyServerHostnamePatch(serverIPAddress);
-        patcher.ApplyServerPortPatch(serverPort);
-
-        if (SkipIntro)
-            patcher.ApplySkipIntroVideoPatch();
-
-        patcher.ApplyMultipleInstancesPatch();
-    }
-
-    private static IPAddress ResolveHostname(string hostname)
-    {
-        // Lookup the server hostname (via DNS)
-        var hostEntry = Dns.GetHostEntry(hostname);
-
-        // Find the IPv4 addresses
-        var ipAddresses =
-            from ip in hostEntry.AddressList
-            where ip.AddressFamily == AddressFamily.InterNetwork
-            select ip;
-
-        return ipAddresses.FirstOrDefault();
-    }
-
-    public void SaveSettings(Settings settings) => FileService.SaveSettings(settings, LauncherSettings);
-
-
-    private void ShowWindow()
-    {
-        Show();
-        WindowState = WindowState.Normal;
-    }
-
-    private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
-    {
-        if (e.ChangedButton == MouseButton.Left)
-            DragMove();
-    }
-
-    private void TrayMenu_Exit_Click(object sender, EventArgs e)
-    {
-        _notifyIcon.Dispose();
-        Application.Current.Shutdown();
-    }
-
-    private void TrayMenu_Open_Click(object sender, EventArgs e) => ShowWindow();
 }

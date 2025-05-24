@@ -14,8 +14,8 @@ namespace UnoraLaunchpad;
 
 public sealed class UnoraClient
 {
-    private readonly HttpClient ApiClient;
-    private readonly AsyncPolicy ResiliencePolicy;
+    private static HttpClient ApiClient;
+    private static AsyncPolicy ResiliencePolicy;
 
     public UnoraClient()
     {
@@ -39,11 +39,28 @@ public sealed class UnoraClient
         
     }
 
+    public async Task<string> GetLauncherVersionAsync()
+    {
+        try
+        {
+            var response = await ApiClient.GetStringAsync(CONSTANTS.GET_LAUNCHER_VERSION_RESOURCE);
+            dynamic obj = JsonConvert.DeserializeObject(response);
+            return (string)obj.Version;
+        }
+        catch (Exception ex)
+        {
+            // LOG THIS
+            Console.WriteLine($"Failed to get launcher version: {ex}");
+            throw;
+        }
+    }
+
+    
     public Task<List<FileDetail>> GetFileDetailsAsync()
     {
         return ResiliencePolicy.ExecuteAsync(InnerGetFileDetailsAsync);
-        
-        async Task<List<FileDetail>> InnerGetFileDetailsAsync()
+
+        static async Task<List<FileDetail>> InnerGetFileDetailsAsync()
         {
             var json = await ApiClient.GetStringAsync(CONSTANTS.GET_FILE_DETAILS_RESOURCE);
 
@@ -51,7 +68,7 @@ public sealed class UnoraClient
         }
     }
 
-    public async Task DownloadFileAsync(string relativePath, string destinationPath, IProgress<DownloadProgress> progress = null)
+    public static async Task DownloadFileAsync(string relativePath, string destinationPath, IProgress<DownloadProgress> progress = null)
     {
         await ResiliencePolicy.ExecuteAsync(InnerGetFileAsync);
 
@@ -135,7 +152,7 @@ public sealed class UnoraClient
     {
         return ResiliencePolicy.ExecuteAsync(InnerGetGameUpdatesAsync);
 
-        async Task<List<GameUpdate>> InnerGetGameUpdatesAsync()
+        static async Task<List<GameUpdate>> InnerGetGameUpdatesAsync()
         {
             var json = await ApiClient.GetStringAsync(CONSTANTS.GET_GAME_UPDATES_RESOURCE);
 

@@ -7,6 +7,7 @@ public static class CONSTANTS
     #else
     public const string BASE_API_URL = "http://unora.freeddns.org:5001/api/files/";
     #endif
+    public const string GET_LAUNCHER_VERSION_RESOURCE = "launcherversion";
     public const string GET_FILE_DETAILS_RESOURCE = "details";
     public const string GET_FILE_RESOURCE = "get/";
     public const string GET_GAME_UPDATES_RESOURCE = "gameUpdates";

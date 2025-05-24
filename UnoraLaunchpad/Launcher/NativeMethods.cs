@@ -7,6 +7,9 @@ namespace UnoraLaunchpad;
 
 internal static class NativeMethods
 {
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+    
     [DllImport("kernel32", SetLastError = true)]
     public static extern bool CloseHandle(IntPtr handle);
 

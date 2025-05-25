@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,6 +11,16 @@ internal sealed partial class SettingsWindow : Window
 {
     private readonly MainWindow _mainWindow;
     private readonly Settings _settings;
+    private static readonly Dictionary<string, string> ThemeResourceMap = new()
+    {
+        { "Dark",  "pack://application:,,,/Resources/DarkTheme.xaml" },
+        { "Light", "pack://application:,,,/Resources/LightTheme.xaml" },
+        { "Teal",  "pack://application:,,,/Resources/TealTheme.xaml" },
+        { "Violet", "pack://application:,,,/Resources/VioletTheme.xaml" },
+        { "Amber", "pack://application:,,,/Resources/AmberTheme.xaml" },
+        { "Emerald", "pack://application:,,,/Resources/EmeraldTheme.xaml" }
+    };
+
 
     public SettingsWindow(MainWindow mainWindow, Settings settings)
     {
@@ -26,56 +37,41 @@ internal sealed partial class SettingsWindow : Window
 
     private void LoadSettings()
     {
-        // _settings is already initialized by the constructor
-
         DawndCheckBox.IsChecked = _settings.UseDawndWindower;
         SkipIntroCheckBox.IsChecked = _settings.SkipIntro;
         LocalhostCheckBox.IsChecked = _settings.UseLocalhost;
 
-        string currentTheme = "Dark"; // Default
-        if (!string.IsNullOrEmpty(_settings.SelectedTheme))
-        {
-            currentTheme = _settings.SelectedTheme;
-        }
-        else // If no theme is set in settings, default to "Dark" and update the settings object
-        {
-            _settings.SelectedTheme = "Dark";
-        }
+        var currentTheme = string.IsNullOrEmpty(_settings.SelectedTheme) ? "Dark" : _settings.SelectedTheme;
+        _settings.SelectedTheme = currentTheme; // Ensure it's set for persistence
 
-        // Set ComboBox
+        // Set ComboBox to match the loaded theme
         ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>()
-            .FirstOrDefault(cbi => cbi.Content.ToString() == currentTheme) ?? ThemeComboBox.Items[0];
+                                                  .FirstOrDefault(cbi => cbi.Content.ToString() == currentTheme) ?? ThemeComboBox.Items[0];
 
         // Apply the loaded theme
-        Uri themeUri;
-        if (currentTheme == "Light")
-        {
-            themeUri = new Uri("pack://application:,,,/Resources/LightTheme.xaml", UriKind.Absolute);
-        }
-        else // Dark or any other case
-        {
-            themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
-        }
-        App.ChangeTheme(themeUri);
+        App.ChangeTheme(GetThemeUri(currentTheme));
     }
 
+
+    private static Uri GetThemeUri(string themeName)
+    {
+        if (!ThemeResourceMap.TryGetValue(themeName, out var uriString))
+            uriString = ThemeResourceMap["Dark"]; // Default fallback
+        return new Uri(uriString, UriKind.Absolute);
+    }
+
+    
     private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (ThemeComboBox.SelectedItem is ComboBoxItem selectedItem)
         {
-            string themeName = selectedItem.Content.ToString();
-            Uri themeUri;
-            if (themeName == "Light")
-            {
-                themeUri = new Uri("pack://application:,,,/Resources/LightTheme.xaml", UriKind.Absolute);
-            }
-            else // Default to Dark
-            {
-                themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
-            }
-            App.ChangeTheme(themeUri);
+            var themeName = selectedItem.Content.ToString();
+            App.ChangeTheme(GetThemeUri(themeName));
+            // Optionally, update settings so it persists:
+            _settings.SelectedTheme = themeName; 
         }
     }
+
 
     private void SaveBtn_Click(object sender, RoutedEventArgs e)
     {

@@ -34,4 +34,11 @@
     <SolidColorBrush x:Key="GameTileTextColor" Color="Black"/>
     <SolidColorBrush x:Key="GameTileDescriptionBackgroundColor" Color="#AAFFFFFF"/>
 
+    <!-- MaterialDesign Checkbox Colors for Visibility on Light Background -->
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxOff" Color="Black"/> <!-- Unchecked box border -->
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxChecked" Color="#007ACC"/> <!-- Checked checkmark, matches AccentColor1 (blue) -->
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxDisabled" Color="#AAAAAA"/>
+    <SolidColorBrush x:Key="MaterialDesignBody" Color="Black"/>
+    <SolidColorBrush x:Key="MaterialDesignBodyLight" Color="Black"/>
+
 </ResourceDictionary>

@@ -21,6 +21,18 @@
         x:ClassModifier="internal"
         Loaded="SettingsWindow_Loaded">
 
+    
+    <!-- === Add this block here! === -->
+    <Window.Resources>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+            <Setter Property="Background" Value="{DynamicResource SecondaryBackgroundColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextColor}" />
+        </Style>
+
+    </Window.Resources>
+
+    <!-- === End added block === -->
+    
     <Grid Background="{DynamicResource PrimaryBackgroundColor}">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" /> <!-- Custom Title Bar -->
@@ -56,22 +68,32 @@
                         VerticalAlignment="Center">
                 <CheckBox x:Name="DawndCheckBox"
                           Content="Use Dawnd Windower"
+                          Foreground="{DynamicResource IconForegroundColor}"
+                          Background="{DynamicResource PrimaryTextColor}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center" />
                 <CheckBox x:Name="SkipIntroCheckBox"
                           Content="Skip Intro"
+                          Foreground="{DynamicResource IconForegroundColor}"
+                          Background="{DynamicResource PrimaryTextColor}"
                           Margin="0,20, 0, 0"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                     <Label Content="Theme:" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextColor}"/>
-                    <ComboBox x:Name="ThemeComboBox" Width="150" VerticalAlignment="Center" SelectionChanged="ThemeComboBox_SelectionChanged">
+                    <ComboBox x:Name="ThemeComboBox" Width="150" VerticalAlignment="Center" SelectionChanged="ThemeComboBox_SelectionChanged" Foreground="{DynamicResource IconForegroundColor}">
+                        <ComboBoxItem Content="Amber"/>
                         <ComboBoxItem Content="Dark"/>
+                        <ComboBoxItem Content="Emerald"/>
                         <ComboBoxItem Content="Light"/>
+                        <ComboBoxItem Content="Teal"/>
+                        <ComboBoxItem Content="Violet"/>
                     </ComboBox>
                 </StackPanel>
                 <CheckBox x:Name="LocalhostCheckBox"
-                          Margin="0,60, 0, 0"  调整了间距
+                          Foreground="{DynamicResource IconForegroundColor}"
+                          Background="{DynamicResource PrimaryTextColor}"
+                          Margin="0,60, 0, 0"
                           Content="Localhost"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center" />

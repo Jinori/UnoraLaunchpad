@@ -52,6 +52,9 @@ namespace UnoraLaunchpad
         /// <summary>
         /// Loads and applies launcher settings from disk.
         /// </summary>
+        /// <summary>
+        /// Loads and applies launcher settings from disk.
+        /// </summary>
         public void ApplySettings()
         {
             _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
@@ -64,24 +67,39 @@ namespace UnoraLaunchpad
             UseLocalhost = _launcherSettings.UseLocalhost;
             SkipIntro = _launcherSettings.SkipIntro;
 
-            string themeName = _launcherSettings.SelectedTheme;
+            var themeName = _launcherSettings.SelectedTheme;
             if (string.IsNullOrEmpty(themeName))
             {
                 themeName = "Dark"; // Default theme
                 _launcherSettings.SelectedTheme = themeName; // Ensure default is set in current settings object
             }
 
+            // Map theme name to file URI
             Uri themeUri;
-            if (themeName == "Light")
+            switch (themeName)
             {
-                themeUri = new Uri("pack://application:,,,/Resources/LightTheme.xaml", UriKind.Absolute);
-            }
-            else
-            {
-                themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
+                case "Light":
+                    themeUri = new Uri("pack://application:,,,/Resources/LightTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Teal":
+                    themeUri = new Uri("pack://application:,,,/Resources/TealTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Violet":
+                    themeUri = new Uri("pack://application:,,,/Resources/VioletTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Amber":
+                    themeUri = new Uri("pack://application:,,,/Resources/AmberTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Emerald":
+                    themeUri = new Uri("pack://application:,,,/Resources/EmeraldTheme.xaml", UriKind.Absolute);
+                    break;
+                default:
+                    themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
+                    break;
             }
             App.ChangeTheme(themeUri);
         }
+
 
         /// <summary>
         /// Calculates an MD5 hash for a file.

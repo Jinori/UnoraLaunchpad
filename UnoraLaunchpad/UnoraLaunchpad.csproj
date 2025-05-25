@@ -104,6 +104,12 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Resources\AmberTheme.xaml" />
+    <Page Include="Resources\DarkTheme.xaml" />
+    <Page Include="Resources\EmeraldTheme.xaml" />
+    <Page Include="Resources\LightTheme.xaml" />
+    <Page Include="Resources\TealTheme.xaml" />
+    <Page Include="Resources\VioletTheme.xaml" />
     <Page Include="SettingsWindow.xaml" />
     <Page Include="SwirlLoader.xaml" />
     <Page Include="UpdateLockWIndow.xaml" />

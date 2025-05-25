@@ -5,7 +5,7 @@ namespace UnoraLaunchpad;
 
 public sealed class FileService
 {
-    public Settings LoadSettings(string path)
+    public static Settings LoadSettings(string path)
     {
         if (File.Exists(path))
         {
@@ -17,7 +17,7 @@ public sealed class FileService
         return new Settings();
     }
 
-    public void SaveSettings(Settings settings, string path)
+    public static void SaveSettings(Settings settings, string path)
     {
         var directoryPath = Path.GetDirectoryName(path);
 

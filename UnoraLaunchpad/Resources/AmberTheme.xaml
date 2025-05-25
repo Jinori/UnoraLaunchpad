@@ -1,0 +1,44 @@
+﻿<!-- Resources/AmberTheme.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Background Colors -->
+    <SolidColorBrush x:Key="PrimaryBackgroundColor" Color="#2D2320"/>
+    <SolidColorBrush x:Key="SecondaryBackgroundColor" Color="#4B3621"/>
+    <SolidColorBrush x:Key="TertiaryBackgroundColor" Color="#6F4E37"/>
+
+    <!-- Title Bar Colors -->
+    <SolidColorBrush x:Key="TitleBarColor" Color="#B98B46"/>
+    <SolidColorBrush x:Key="TitleBarTextColor" Color="#FFEBCB"/>
+
+    <!-- Text Colors -->
+    <SolidColorBrush x:Key="PrimaryTextColor" Color="#FFEBCB"/>
+    <SolidColorBrush x:Key="SecondaryTextColor" Color="#FFD884"/>
+    <SolidColorBrush x:Key="IconForegroundColor" Color="#FFD884"/>
+
+    <!-- Button Colors -->
+    <SolidColorBrush x:Key="ButtonBackgroundColor" Color="#B98B46"/>
+    <SolidColorBrush x:Key="ButtonForegroundColor" Color="#FFF4E3"/>
+    <SolidColorBrush x:Key="ButtonTransparentBackgroundColor" Color="Transparent"/>
+
+    <!-- Border Colors -->
+    <SolidColorBrush x:Key="PrimaryBorderColor" Color="#FFD884"/>
+    <SolidColorBrush x:Key="SecondaryBorderColor" Color="#B98B46"/>
+
+    <!-- Accent Colors -->
+    <SolidColorBrush x:Key="AccentColor1" Color="#FFC300"/> <!-- Rich gold -->
+    <SolidColorBrush x:Key="AccentColor2" Color="#FF9800"/>
+
+    <!-- Game Update Tile Specific -->
+    <SolidColorBrush x:Key="GameTileBackgroundColor" Color="#4B3621"/>
+    <SolidColorBrush x:Key="GameTileBorderColor" Color="#FFD884"/>
+    <SolidColorBrush x:Key="GameTileTextColor" Color="#FFEBCB"/>
+    <SolidColorBrush x:Key="GameTileDescriptionBackgroundColor" Color="#992D2320"/>
+
+    <!-- MaterialDesign Checkbox Colors for Visibility on Amber -->
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxOff" Color="#FFD884"/>
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxChecked" Color="#FFC300"/>
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxDisabled" Color="#B98B46"/>
+    <SolidColorBrush x:Key="MaterialDesignBody" Color="#FFEBCB"/>
+    <SolidColorBrush x:Key="MaterialDesignBodyLight" Color="#FFD884"/>
+</ResourceDictionary>

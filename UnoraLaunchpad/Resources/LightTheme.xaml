@@ -1,0 +1,37 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Background Colors -->
+    <SolidColorBrush x:Key="PrimaryBackgroundColor" Color="White"/>
+    <SolidColorBrush x:Key="SecondaryBackgroundColor" Color="#EEEEEE"/>
+    <SolidColorBrush x:Key="TertiaryBackgroundColor" Color="#DDDDDD"/>
+
+    <!-- Title Bar Colors -->
+    <SolidColorBrush x:Key="TitleBarColor" Color="#DDDDDD"/>
+    <SolidColorBrush x:Key="TitleBarTextColor" Color="Black"/>
+
+    <!-- Text Colors -->
+    <SolidColorBrush x:Key="PrimaryTextColor" Color="Black"/>
+    <SolidColorBrush x:Key="SecondaryTextColor" Color="#333333"/>
+    <SolidColorBrush x:Key="IconForegroundColor" Color="Black"/>
+
+    <!-- Button Colors -->
+    <SolidColorBrush x:Key="ButtonBackgroundColor" Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="ButtonForegroundColor" Color="Black"/>
+    <SolidColorBrush x:Key="ButtonTransparentBackgroundColor" Color="Transparent"/>
+
+    <!-- Border Colors -->
+    <SolidColorBrush x:Key="PrimaryBorderColor" Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="SecondaryBorderColor" Color="#AAAAAA"/>
+
+    <!-- Accent Colors -->
+    <SolidColorBrush x:Key="AccentColor1" Color="#007ACC"/> <!-- Blue -->
+    <SolidColorBrush x:Key="AccentColor2" Color="#10A941"/> <!-- Green -->
+
+    <!-- Game Update Tile Specific -->
+    <SolidColorBrush x:Key="GameTileBackgroundColor" Color="#F0F0F0"/>
+    <SolidColorBrush x:Key="GameTileBorderColor" Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="GameTileTextColor" Color="Black"/>
+    <SolidColorBrush x:Key="GameTileDescriptionBackgroundColor" Color="#AAFFFFFF"/>
+
+</ResourceDictionary>

@@ -23,6 +23,7 @@ namespace UnoraLaunchpad
 
         private readonly FileService FileService = new();
         private readonly UnoraClient UnoraClient = new();
+        private Settings _launcherSettings; // Added field for settings
         private NotifyIcon NotifyIcon;
 
         public ObservableCollection<GameUpdate> GameUpdates { get; } = new();
@@ -53,10 +54,33 @@ namespace UnoraLaunchpad
         /// </summary>
         public void ApplySettings()
         {
-            var settings = FileService.LoadSettings(LauncherSettingsPath);
-            UseDawndWindower = settings.UseDawndWindower;
-            UseLocalhost = settings.UseLocalhost;
-            SkipIntro = settings.SkipIntro;
+            _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
+            if (_launcherSettings == null)
+            {
+                _launcherSettings = new Settings(); // Fallback to default settings if loading fails
+            }
+
+            UseDawndWindower = _launcherSettings.UseDawndWindower;
+            UseLocalhost = _launcherSettings.UseLocalhost;
+            SkipIntro = _launcherSettings.SkipIntro;
+
+            string themeName = _launcherSettings.SelectedTheme;
+            if (string.IsNullOrEmpty(themeName))
+            {
+                themeName = "Dark"; // Default theme
+                _launcherSettings.SelectedTheme = themeName; // Ensure default is set in current settings object
+            }
+
+            Uri themeUri;
+            if (themeName == "Light")
+            {
+                themeUri = new Uri("pack://application:,,,/Resources/LightTheme.xaml", UriKind.Absolute);
+            }
+            else
+            {
+                themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
+            }
+            App.ChangeTheme(themeUri);
         }
 
         /// <summary>
@@ -271,7 +295,21 @@ namespace UnoraLaunchpad
 
         private void CogButton_Click(object sender, RoutedEventArgs e)
         {
-            var settingsWindow = new SettingsWindow();
+            if (_launcherSettings == null)
+            {
+                // Attempt to load or use defaults if ApplySettings hasn't run or failed
+                try {
+                    _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
+                    if (_launcherSettings == null) // If still null after attempting load
+                    {
+                        _launcherSettings = new Settings(); // Fallback to default settings
+                    }
+                } catch { 
+                    _launcherSettings = new Settings(); // Fallback to default settings on error
+                }
+            }
+            var settingsWindow = new SettingsWindow(this, _launcherSettings);
+            settingsWindow.Owner = this; // Ensure SettingsWindow is owned by MainWindow
             settingsWindow.Show();
         }
         
@@ -507,6 +545,16 @@ namespace UnoraLaunchpad
 
         #endregion
 
-        public void SaveSettings(Settings settings) => FileService.SaveSettings(settings, LauncherSettingsPath);
+        public void SaveSettings(Settings settings)
+        {
+            FileService.SaveSettings(settings, LauncherSettingsPath);
+            _launcherSettings = settings; // Update the local field
+
+            // Update MainWindow properties to reflect the newly saved settings
+            UseDawndWindower = _launcherSettings.UseDawndWindower;
+            UseLocalhost = _launcherSettings.UseLocalhost;
+            SkipIntro = _launcherSettings.SkipIntro;
+            // Note: SelectedTheme is handled by App.ChangeTheme and ApplySettings directly.
+        }
     }
 }

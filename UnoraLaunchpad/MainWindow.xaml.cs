@@ -32,6 +32,14 @@ namespace UnoraLaunchpad
         public ICommand OpenGameUpdateCommand { get; }
         public object Sync { get; } = new();
 
+        private void DiscordButton_Click(object sender, RoutedEventArgs e) =>
+            // Replace with your Discord invite link
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://discord.gg/WkqbMVvDJq",
+                UseShellExecute = true
+            });
+
         public MainWindow()
         {
             InitializeComponent();

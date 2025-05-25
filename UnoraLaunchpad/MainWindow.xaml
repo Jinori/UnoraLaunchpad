@@ -78,6 +78,16 @@
               MouseDown="TitleBar_MouseDown">
             <!-- Settings Button -->
             <Button HorizontalAlignment="Right"
+                    Margin="0, 0, 147, 0"
+                    Click="DiscordButton_Click"
+                    Background="Transparent"
+                    Foreground="White"
+                    BorderBrush="Transparent">
+                <materialDesign:PackIcon Kind="MessageText" />
+            </Button>
+
+            <!-- Settings Button -->
+            <Button HorizontalAlignment="Right"
                     Margin="0, 0, 103, 0"
                     Click="CogButton_Click"
                     Background="Transparent"

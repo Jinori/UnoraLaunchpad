@@ -124,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Resource Include="discordpurp.png" />
     <Resource Include="favicon.ico" />
   </ItemGroup>
   <ItemGroup>

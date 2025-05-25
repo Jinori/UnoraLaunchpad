@@ -13,9 +13,9 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Loaded="Launcher_Loaded"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        Background="White"
-        BorderBrush="Black"
+        TextElement.Foreground="{DynamicResource PrimaryTextColor}"
+        Background="{DynamicResource PrimaryBackgroundColor}"
+        BorderBrush="{DynamicResource PrimaryBorderColor}"
         BorderThickness="2"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
@@ -24,10 +24,10 @@
     <Window.Resources>
         <!-- Data Template for Tiles -->
         <DataTemplate x:Key="GameUpdateTileTemplate">
-            <Border Background="#444"
+            <Border Background="{DynamicResource GameTileBackgroundColor}"
                     Margin="5"
                     Padding="5"
-                    BorderBrush="#888"
+                    BorderBrush="{DynamicResource GameTileBorderColor}"
                     BorderThickness="1">
                 <Border.InputBindings>
                     <MouseBinding MouseAction="LeftClick"
@@ -50,10 +50,10 @@
                                Content="{Binding Description}"
                                FontFamily="Segue UI"
                                FontSize="30"
-                               Foreground="White"
+                               Foreground="{DynamicResource GameTileTextColor}"
                                HorizontalAlignment="Stretch"
                                HorizontalContentAlignment="Center"
-                               Background="#AA000000"
+                               Background="{DynamicResource GameTileDescriptionBackgroundColor}"
                                d:DataContext="{d:DesignInstance }" />
                     </Viewbox>
                 </Grid>
@@ -62,7 +62,7 @@
         <!-- Tray Icon Menu -->
     </Window.Resources>
 
-    <Grid Background="Black">
+    <Grid Background="{DynamicResource PrimaryBackgroundColor}">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
             <!-- Custom Title Bar -->
@@ -74,15 +74,15 @@
 
         <!-- Custom Title Bar -->
         <Grid Grid.Row="0"
-              Background="#333"
+              Background="{DynamicResource TitleBarColor}"
               MouseDown="TitleBar_MouseDown">
             <!-- Settings Button -->
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 147, 0"
                     Click="DiscordButton_Click"
-                    Background="Transparent"
-                    Foreground="White"
-                    BorderBrush="Transparent">
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
                 <materialDesign:PackIcon Kind="MessageText" />
             </Button>
 
@@ -90,9 +90,9 @@
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 103, 0"
                     Click="CogButton_Click"
-                    Background="Transparent"
-                    Foreground="White"
-                    BorderBrush="Transparent">
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
                 <materialDesign:PackIcon Kind="Cog" />
             </Button>
 
@@ -100,9 +100,9 @@
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 53, 0"
                     Click="MinimizeButton_Click"
-                    Background="Transparent"
-                    Foreground="White"
-                    BorderBrush="Transparent">
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
                 <materialDesign:PackIcon Kind="WindowMinimize" />
             </Button>
 
@@ -110,9 +110,9 @@
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 3, 0"
                     Click="CloseButton_Click"
-                    Background="Transparent"
-                    Foreground="White"
-                    BorderBrush="Transparent">
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
                 <materialDesign:PackIcon Kind="Close" />
             </Button>
             <Image Source="favicon.ico"
@@ -122,6 +122,7 @@
                    VerticalAlignment="Center"
                    Margin="10,0" />
             <Label Content="Unora: Elemental Harmony"
+                   Foreground="{DynamicResource TitleBarTextColor}"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center"
                    Margin="40,0,0,0" />
@@ -129,7 +130,7 @@
 
         <!-- Main Content -->
         <Grid Grid.Row="1"
-              Background="#444">
+              Background="{DynamicResource SecondaryBackgroundColor}">
             <!-- Wrap ItemsControl in a ScrollViewer -->
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
@@ -140,7 +141,7 @@
             </ScrollViewer>
         </Grid>
 
-<Grid Grid.Row="2" Background="#333">
+<Grid Grid.Row="2" Background="{DynamicResource TitleBarColor}">
     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -153,12 +154,12 @@
             <!-- File Name & Icon -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="↓"
-                           Foreground="#FFC107"
+                           Foreground="{DynamicResource AccentColor1}"
                            FontSize="14"
                            Margin="0,0,6,0"/>
                 <TextBlock x:Name="ProgressFileName"
                            FontWeight="Bold"
-                           Foreground="White"
+                           Foreground="{DynamicResource PrimaryTextColor}"
                            FontSize="14"
                            MinWidth="180"
                            MaxWidth="320"
@@ -169,17 +170,17 @@
                          Height="8"
                          Margin="0,2,0,2"
                          IsIndeterminate="True"
-                         Background="#222"
-                         Foreground="#FFC107"/>
+                         Background="{DynamicResource TertiaryBackgroundColor}"
+                         Foreground="{DynamicResource AccentColor1}"/>
             <!-- Bytes + Speed -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="ProgressBytes"
-                           Foreground="#BBB"
+                           Foreground="{DynamicResource SecondaryTextColor}"
                            FontSize="12"
                            MinWidth="110"/>
                 <TextBlock Text="  " />
                 <TextBlock x:Name="ProgressSpeed"
-                           Foreground="#48F772"
+                           Foreground="{DynamicResource AccentColor2}"
                            FontWeight="SemiBold"
                            FontSize="12"
                            MinWidth="70"/>
@@ -189,7 +190,7 @@
         <TextBlock x:Name="StatusLabel"
                    Grid.Column="2"
                    VerticalAlignment="Center"
-                   Foreground="#BBB"
+                   Foreground="{DynamicResource SecondaryTextColor}"
                    FontSize="12"
                    Visibility="Collapsed"
                    Margin="0,8,0,0"/>
@@ -201,8 +202,8 @@
             materialDesign:ButtonAssist.CornerRadius="5"
             HorizontalAlignment="Right"
             VerticalAlignment="Center"
-            Foreground="White"
-            Background="#444"
+            Foreground="{DynamicResource ButtonForegroundColor}"
+            Background="{DynamicResource ButtonBackgroundColor}"
             Margin="0,0,20,0"
             Style="{StaticResource MaterialDesignRaisedLightButton}"
             ToolTip="Launch a client!">

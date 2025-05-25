@@ -11,16 +11,17 @@
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        Background="White"
-        BorderBrush="Black"
+        TextElement.Foreground="{DynamicResource PrimaryTextColor}"
+        Background="{DynamicResource PrimaryBackgroundColor}"
+        BorderBrush="{DynamicResource PrimaryBorderColor}"
         BorderThickness="2"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
-        x:ClassModifier="internal">
+        x:ClassModifier="internal"
+        Loaded="SettingsWindow_Loaded">
 
-    <Grid Background="Black">
+    <Grid Background="{DynamicResource PrimaryBackgroundColor}">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" /> <!-- Custom Title Bar -->
             <RowDefinition Height="*" /> <!-- Main Content -->
@@ -29,13 +30,13 @@
 
         <!-- Custom Title Bar -->
         <Grid Grid.Row="0"
-              Background="#333"
+              Background="{DynamicResource TitleBarColor}"
               MouseDown="TitleBar_MouseDown">
             <Button HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Foreground="White"
-                    Background="Transparent"
-                    BorderBrush="Transparent"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
                     Padding="0"
                     Margin="5"
                     Cursor="Hand"
@@ -43,30 +44,35 @@
                 <materialDesign:PackIcon Kind="Close" />
             </Button>
             <Label Content="Settings"
+                   Foreground="{DynamicResource TitleBarTextColor}"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center" />
         </Grid>
 
         <!-- Main Content -->
         <Grid Grid.Row="1"
-              Background="#444">
+              Background="{DynamicResource SecondaryBackgroundColor}">
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center">
                 <CheckBox x:Name="DawndCheckBox"
                           Content="Use Dawnd Windower"
-                          IsChecked="{Binding UseDawndWindower}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center" />
                 <CheckBox x:Name="SkipIntroCheckBox"
                           Content="Skip Intro"
                           Margin="0,20, 0, 0"
-                          IsChecked="{Binding SkipIntro}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                    <Label Content="Theme:" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextColor}"/>
+                    <ComboBox x:Name="ThemeComboBox" Width="150" VerticalAlignment="Center" SelectionChanged="ThemeComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Dark"/>
+                        <ComboBoxItem Content="Light"/>
+                    </ComboBox>
+                </StackPanel>
                 <CheckBox x:Name="LocalhostCheckBox"
-                          Margin="0,100, 0, 0"
+                          Margin="0,60, 0, 0"  调整了间距
                           Content="Localhost"
-                          IsChecked="{Binding UseLocalhost}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center" />
             </StackPanel>
@@ -74,7 +80,7 @@
 
         <!-- Bottom Bar -->
         <Grid Grid.Row="2"
-              Background="#333">
+              Background="{DynamicResource TitleBarColor}">
             <Button x:Name="SaveBtn"
                     Click="SaveBtn_Click"
                     Width="80"
@@ -82,8 +88,8 @@
                     materialDesign:ButtonAssist.CornerRadius="5"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Foreground="White"
-                    Background="#444"
+                    Foreground="{DynamicResource ButtonForegroundColor}"
+                    Background="{DynamicResource ButtonBackgroundColor}"
                     Margin="0,0,20,0"
                     Style="{StaticResource MaterialDesignRaisedLightButton}"
                     ToolTip="Save the current selected settings!">

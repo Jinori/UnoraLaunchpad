@@ -54,6 +54,7 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GameApiRoutes.cs" />
     <Compile Include="SwirlLoader.xaml.cs">
       <DependentUpon>SwirlLoader.xaml</DependentUpon>
     </Compile>

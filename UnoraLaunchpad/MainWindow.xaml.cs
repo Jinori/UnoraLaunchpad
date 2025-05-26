@@ -113,6 +113,11 @@ namespace UnoraLaunchpad
 
         private async Task CheckAndUpdateLauncherAsync()
         {
+            // Only run the update check if Unora is the selected game
+            var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
+            if (!selectedGame.Equals("Unora", StringComparison.OrdinalIgnoreCase))
+                return;
+
             var serverVersion = await UnoraClient.GetLauncherVersionAsync();
             var localVersion = GetLocalLauncherVersion();
 
@@ -126,22 +131,22 @@ namespace UnoraLaunchpad
                 {
                     FileName = bootstrapperPath,
                     Arguments = $"\"{currentLauncherPath}\" {Process.GetCurrentProcess().Id}",
-                    UseShellExecute = true  // <-- This is crucial
+                    UseShellExecute = true
                 };
                 Process.Start(psi);
-                
+
                 Application.Current.Shutdown();
                 Environment.Exit(0);
             }
         }
-        
+
 
         private string GetLocalLauncherVersion()
         {
             var exePath = Process.GetCurrentProcess().MainModule!.FileName!;
             return FileVersionInfo.GetVersionInfo(exePath).FileVersion ?? "0";
         }
-        
+
         /// <summary>
         /// Checks for file updates, downloads any required updates, and updates the UI accordingly.
         /// </summary>
@@ -150,10 +155,13 @@ namespace UnoraLaunchpad
             ApplySettings();
             SetUiStateUpdating();
 
-            var fileDetails = await UnoraClient.GetFileDetailsAsync();
-            var filesToUpdate = fileDetails
-                .Where(NeedsUpdate)
-                .ToList();
+            var apiRoutes = GetCurrentApiRoutes();
+            var fileDetails = await UnoraClient.GetFileDetailsAsync(apiRoutes.GameDetails);
+
+            Debug.WriteLine($"[Launcher] Downloading {fileDetails.Count} files for {apiRoutes.GameDetails}");
+
+            var filesToUpdate = fileDetails.Where(NeedsUpdate).ToList();
+            Debug.WriteLine($"[Launcher] Files to update: {filesToUpdate.Count}");
 
             var totalBytesToDownload = filesToUpdate.Sum(f => f.Size);
             var totalDownloaded = 0L;
@@ -162,6 +170,7 @@ namespace UnoraLaunchpad
             {
                 ShowMessage("Update cancelled. Please update later.", "Unora Launcher");
                 SetUiStateIdle();
+
                 return;
             }
 
@@ -171,6 +180,7 @@ namespace UnoraLaunchpad
             {
                 foreach (var fileDetail in filesToUpdate)
                 {
+                    Debug.WriteLine($"[Launcher] Downloading file: {fileDetail.RelativePath}");
                     PrepareFileProgress(fileDetail.RelativePath, totalDownloaded, totalBytesToDownload);
 
                     var filePath = GetFilePath(fileDetail.RelativePath);
@@ -180,16 +190,32 @@ namespace UnoraLaunchpad
 
                     var progress = new Progress<UnoraClient.DownloadProgress>(p =>
                     {
-                        fileBytesDownloaded = p.BytesReceived; // capture for use after download
-                        UpdateFileProgress(p.BytesReceived, totalDownloaded, totalBytesToDownload, p.SpeedBytesPerSec);
+                        fileBytesDownloaded = p.BytesReceived;
+
+                        UpdateFileProgress(
+                            p.BytesReceived,
+                            totalDownloaded,
+                            totalBytesToDownload,
+                            p.SpeedBytesPerSec);
                     });
 
-                    await UnoraClient.DownloadFileAsync(fileDetail.RelativePath, filePath, progress);
-                    totalDownloaded += fileBytesDownloaded;
+                    try
+                    {
+                        await UnoraClient.DownloadFileAsync(apiRoutes.GameFile(fileDetail.RelativePath), filePath, progress);
+                    } catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[Launcher] Download failed: {ex.Message}");
+                        ShowMessage($"Failed to download {fileDetail.RelativePath}: {ex.Message}", "Update Error");
+                        // Optionally, break/continue/return depending on your tolerance for errors.
+                    }
 
+                    totalDownloaded += fileBytesDownloaded;
                 }
             });
+
+            Debug.WriteLine($"[Launcher] All updates completed.");
         }
+
 
         /// <summary>
         /// Determines if a file needs to be updated based on its hash.
@@ -204,8 +230,8 @@ namespace UnoraLaunchpad
         }
 
         private string GetFilePath(string relativePath) =>
-            Path.Combine(CONSTANTS.UNORA_FOLDER_NAME, relativePath);
-
+            Path.Combine(_launcherSettings?.SelectedGame ?? CONSTANTS.UNORA_FOLDER_NAME, relativePath);
+        
         private void EnsureDirectoryExists(string filePath)
         {
             var directory = Path.GetDirectoryName(filePath)!;
@@ -391,12 +417,43 @@ namespace UnoraLaunchpad
         #endregion
 
         #region Launcher Core
+        public async void ReloadSettingsAndRefresh()
+        {
+            ApplySettings();           // Load settings from disk (SelectedGame, etc.)
+            SetWindowTitle();          // Update the window title everywhere
+            await LoadAndBindGameUpdates(); // Reload news/patches for the selected server
+            await CheckForFileUpdates();    // Check/download updates for selected server
+            Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
+        }
+        public void ReloadSettingsAndRefreshLocal()
+        {
+            ApplySettings(); // Reloads from disk into _launcherSettings
+            // Optionally: Re-fetch game updates and other game-specific info
+            _ = LoadAndBindGameUpdates();
+        }
+
+        private (string folder, string exe) GetGameLaunchInfo(string selectedGame) =>
+            // You can load this from a config file for extensibility if needed.
+            selectedGame switch
+            {
+                "Unora"   => ("Unora", "Unora.exe"),
+                "Legends" => ("Legends", "Client.exe"),
+                // Add more as needed
+                _ => ("Unora", "Unora.exe") // Fallback
+            };
 
         private void Launch(object sender, EventArgs e)
         {
-            var (ipAddress, serverPort) = GetServerConnection();
+            (var ipAddress, var serverPort) = GetServerConnection();
 
-            using var process = SuspendedProcess.Start(AppDomain.CurrentDomain.BaseDirectory + "\\Unora\\Unora.exe");
+            // Use SelectedGame from your settings
+            var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
+            (var gameFolder, var gameExe) = GetGameLaunchInfo(selectedGame);
+
+            // Build the full path to the executable
+            var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gameFolder, gameExe);
+
+            using var process = SuspendedProcess.Start(exePath);
 
             try
             {
@@ -408,13 +465,15 @@ namespace UnoraLaunchpad
                     InjectDll(processPtr);
                 }
 
-                _ = RenameGameWindowAsync(Process.GetProcessById(process.ProcessId));
+                // Optionally, set window title to the selected game name
+                _ = RenameGameWindowAsync(Process.GetProcessById(process.ProcessId), selectedGame);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
             }
         }
+
 
         private (IPAddress, int) GetServerConnection()
         {
@@ -497,22 +556,35 @@ namespace UnoraLaunchpad
                 NativeMethods.CloseHandle(thread);
         }
 
-        private async Task RenameGameWindowAsync(Process process)
+        private async Task RenameGameWindowAsync(Process process, string newTitle)
         {
-            const string NEW_TITLE = "Unora";
             for (var i = 0; i < 20; i++)
             {
-                // Refresh the process to update MainWindowHandle
                 process.Refresh();
 
                 if (process.MainWindowHandle != IntPtr.Zero)
                 {
-                    NativeMethods.SetWindowText(process.MainWindowHandle, NEW_TITLE);
+                    NativeMethods.SetWindowText(process.MainWindowHandle, newTitle);
                     break;
                 }
                 await Task.Delay(100);
             }
         }
+
+        private void SetWindowTitle()
+        {
+            var selectedGame = _launcherSettings?.SelectedGame?.Trim() ?? "Unora";
+            var title = selectedGame switch
+            {
+                "Legends" => "Legends: Age of Chaos",
+                "Unora"   => "Unora: Elemental Harmony",
+                _         => $"Unora Launcher"
+            };
+
+            Title = title; // OS-level window title
+            WindowTitleLabel.Content = title; // Custom title bar label
+        }
+
 
 
         #endregion
@@ -523,20 +595,40 @@ namespace UnoraLaunchpad
         {
             try
             {
+                ApplySettings();
+                SetWindowTitle();
                 await LoadAndBindGameUpdates();
                 await CheckForFileUpdates();
                 await CheckAndUpdateLauncherAsync();
-                Dispatcher.BeginInvoke(SetUiStateComplete);
             }
             catch (Exception ex)
             {
                 LogException(ex);
             }
+            finally
+            {
+                // Always restore UI, no matter what happened.
+                Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
+            }
         }
 
+
+        private GameApiRoutes GetCurrentApiRoutes()
+        {
+            // Use your actual API base URL; this will pick the right one for Debug/Release from CONSTANTS
+            var baseUrl = CONSTANTS.BASE_API_URL.TrimEnd('/');
+            var selectedGame = string.IsNullOrWhiteSpace(_launcherSettings?.SelectedGame)
+                ? CONSTANTS.UNORA_FOLDER_NAME // Default to "Unora" if not set
+                : _launcherSettings.SelectedGame;
+
+            return new GameApiRoutes(baseUrl, selectedGame);
+        }
+
+        
         public async Task LoadAndBindGameUpdates()
         {
-            var gameUpdates = await UnoraClient.GetGameUpdatesAsync();
+            var apiRoutes = GetCurrentApiRoutes();
+            var gameUpdates = await UnoraClient.GetGameUpdatesAsync(apiRoutes.GameUpdates);
             GameUpdatesControl.DataContext = new { GameUpdates = gameUpdates };
         }
 

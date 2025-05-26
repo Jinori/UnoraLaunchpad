@@ -6,4 +6,5 @@ public sealed class Settings
     public bool UseDawndWindower { get; set; }
     public bool UseLocalhost { get; set; }
     public string SelectedTheme { get; set; }
+    public string SelectedGame { get; set; }
 }

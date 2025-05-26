@@ -121,11 +121,13 @@
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center"
                    Margin="10,0" />
-            <Label Content="Unora: Elemental Harmony"
+            <Label x:Name="WindowTitleLabel"
+                   Content="Unora: Elemental Harmony"
                    Foreground="{DynamicResource TitleBarTextColor}"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center"
                    Margin="40,0,0,0" />
+
         </Grid>
 
         <!-- Main Content -->

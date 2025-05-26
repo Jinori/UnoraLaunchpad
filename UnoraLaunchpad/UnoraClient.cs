@@ -56,32 +56,29 @@ public sealed class UnoraClient
     }
 
     
-    public Task<List<FileDetail>> GetFileDetailsAsync()
+    public Task<List<FileDetail>> GetFileDetailsAsync(string fileDetailsUrl)
     {
-        return ResiliencePolicy.ExecuteAsync(InnerGetFileDetailsAsync);
+        return ResiliencePolicy.ExecuteAsync(() => InnerGetFileDetailsAsync(fileDetailsUrl));
 
-        static async Task<List<FileDetail>> InnerGetFileDetailsAsync()
+        static async Task<List<FileDetail>> InnerGetFileDetailsAsync(string url)
         {
-            var json = await ApiClient.GetStringAsync(CONSTANTS.GET_FILE_DETAILS_RESOURCE);
-
+            var json = await ApiClient.GetStringAsync(url);
             return JsonConvert.DeserializeObject<List<FileDetail>>(json);
         }
     }
 
-    
-    
-    public static async Task DownloadFileAsync(string relativePath, string destinationPath, IProgress<DownloadProgress> progress = null)
+
+
+    public async Task DownloadFileAsync(string fileDownloadUrl, string destinationPath, IProgress<DownloadProgress> progress = null)
     {
-        await ResiliencePolicy.ExecuteAsync(InnerGetFileAsync);
+        await ResiliencePolicy.ExecuteAsync(() => InnerGetFileAsync(fileDownloadUrl, destinationPath, progress));
 
-        async Task InnerGetFileAsync()
+        static async Task InnerGetFileAsync(string url, string destinationPath, IProgress<DownloadProgress> progress)
         {
-            var resource = Uri.EscapeUriString(relativePath);
-
             if (File.Exists(destinationPath))
                 File.Delete(destinationPath);
 
-            using var response = await ApiClient.GetAsync($"get/{resource}", HttpCompletionOption.ResponseHeadersRead);
+            using var response = await ApiClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1L;
@@ -90,6 +87,9 @@ public sealed class UnoraClient
             var buffer = new byte[BUFFER_SIZE];
 
             using var networkStream = await response.Content.ReadAsStreamAsync();
+
+            // === ENSURE DIRECTORY EXISTS HERE ===
+            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
 
             using var fileStream = new FileStream(
                 destinationPath,
@@ -141,6 +141,7 @@ public sealed class UnoraClient
     }
 
 
+
     // Helper class for reporting progress
     public sealed class DownloadProgress
     {
@@ -150,14 +151,13 @@ public sealed class UnoraClient
     }
 
 
-    public Task<List<GameUpdate>> GetGameUpdatesAsync()
+    public Task<List<GameUpdate>> GetGameUpdatesAsync(string gameUpdatesUrl)
     {
-        return ResiliencePolicy.ExecuteAsync(InnerGetGameUpdatesAsync);
+        return ResiliencePolicy.ExecuteAsync(() => InnerGetGameUpdatesAsync(gameUpdatesUrl));
 
-        static async Task<List<GameUpdate>> InnerGetGameUpdatesAsync()
+        static async Task<List<GameUpdate>> InnerGetGameUpdatesAsync(string url)
         {
-            var json = await ApiClient.GetStringAsync(CONSTANTS.GET_GAME_UPDATES_RESOURCE);
-
+            var json = await ApiClient.GetStringAsync(url);
             return JsonConvert.DeserializeObject<List<GameUpdate>>(json);
         }
     }

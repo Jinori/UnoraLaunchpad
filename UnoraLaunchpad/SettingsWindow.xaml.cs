@@ -48,6 +48,14 @@ internal sealed partial class SettingsWindow : Window
         ThemeComboBox.SelectedItem = ThemeComboBox.Items.Cast<ComboBoxItem>()
                                                   .FirstOrDefault(cbi => cbi.Content.ToString() == currentTheme) ?? ThemeComboBox.Items[0];
 
+        var currentGame = string.IsNullOrEmpty(_settings.SelectedGame) ? "Unora" : _settings.SelectedGame;
+        _settings.SelectedGame = currentGame;
+
+        GameComboBox.SelectedItem = GameComboBox.Items.Cast<ComboBoxItem>()
+                                                .FirstOrDefault(cbi => cbi.Content.ToString() == currentGame)
+                                    ?? GameComboBox.Items[0];
+
+        
         // Apply the loaded theme
         App.ChangeTheme(GetThemeUri(currentTheme));
     }
@@ -79,6 +87,12 @@ internal sealed partial class SettingsWindow : Window
         _settings.SkipIntro = SkipIntroCheckBox.IsChecked ?? false;
         _settings.UseLocalhost = LocalhostCheckBox.IsChecked ?? false;
 
+        if (GameComboBox.SelectedItem is ComboBoxItem selectedGameItem)
+            _settings.SelectedGame = selectedGameItem.Content.ToString();
+        else
+            _settings.SelectedGame = "Unora";
+
+        
         if (ThemeComboBox.SelectedItem is ComboBoxItem selectedThemeItem)
         {
             _settings.SelectedTheme = selectedThemeItem.Content.ToString();
@@ -88,7 +102,9 @@ internal sealed partial class SettingsWindow : Window
             _settings.SelectedTheme = "Dark"; // Fallback, though ComboBox should always have a selection
         }
         
+
         _mainWindow.SaveSettings(_settings); // Persist settings through MainWindow
+        _mainWindow.ReloadSettingsAndRefresh();
         Close();
     }
 

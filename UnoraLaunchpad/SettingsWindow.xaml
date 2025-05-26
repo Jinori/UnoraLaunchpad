@@ -61,44 +61,59 @@
                    VerticalAlignment="Center" />
         </Grid>
 
-        <!-- Main Content -->
-        <Grid Grid.Row="1"
-              Background="{DynamicResource SecondaryBackgroundColor}">
-            <StackPanel HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                <CheckBox x:Name="DawndCheckBox"
-                          Content="Use Dawnd Windower"
-                          Foreground="{DynamicResource IconForegroundColor}"
-                          Background="{DynamicResource PrimaryTextColor}"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center" />
-                <CheckBox x:Name="SkipIntroCheckBox"
-                          Content="Skip Intro"
-                          Foreground="{DynamicResource IconForegroundColor}"
-                          Background="{DynamicResource PrimaryTextColor}"
-                          Margin="0,20, 0, 0"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center" />
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                    <Label Content="Theme:" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextColor}"/>
-                    <ComboBox x:Name="ThemeComboBox" Width="150" VerticalAlignment="Center" SelectionChanged="ThemeComboBox_SelectionChanged" Foreground="{DynamicResource IconForegroundColor}">
-                        <ComboBoxItem Content="Amber"/>
-                        <ComboBoxItem Content="Dark"/>
-                        <ComboBoxItem Content="Emerald"/>
-                        <ComboBoxItem Content="Light"/>
-                        <ComboBoxItem Content="Teal"/>
-                        <ComboBoxItem Content="Violet"/>
-                    </ComboBox>
-                </StackPanel>
-                <CheckBox x:Name="LocalhostCheckBox"
-                          Foreground="{DynamicResource IconForegroundColor}"
-                          Background="{DynamicResource PrimaryTextColor}"
-                          Margin="0,60, 0, 0"
-                          Content="Localhost"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center" />
-            </StackPanel>
-        </Grid>
+<!-- Main Content -->
+<Grid Grid.Row="1"
+      Background="{DynamicResource SecondaryBackgroundColor}">
+    <StackPanel HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+
+        <CheckBox x:Name="DawndCheckBox"
+                  Content="Use Dawnd Windower"
+                  Foreground="{DynamicResource IconForegroundColor}"
+                  Background="{DynamicResource PrimaryTextColor}"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" />
+
+        <CheckBox x:Name="SkipIntroCheckBox"
+                  Content="Skip Intro"
+                  Foreground="{DynamicResource IconForegroundColor}"
+                  Background="{DynamicResource PrimaryTextColor}"
+                  Margin="0,20, 0, 0"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+            <Label Content="Theme:" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextColor}"/>
+            <ComboBox x:Name="ThemeComboBox" Width="150" VerticalAlignment="Center" SelectionChanged="ThemeComboBox_SelectionChanged" Foreground="{DynamicResource IconForegroundColor}">
+                <ComboBoxItem Content="Amber"/>
+                <ComboBoxItem Content="Dark"/>
+                <ComboBoxItem Content="Emerald"/>
+                <ComboBoxItem Content="Light"/>
+                <ComboBoxItem Content="Teal"/>
+                <ComboBoxItem Content="Violet"/>
+            </ComboBox>
+        </StackPanel>
+
+        <!-- === NEW: Game Selector === -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+            <Label Content="Game:" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextColor}"/>
+            <ComboBox x:Name="GameComboBox" Width="150" VerticalAlignment="Center">
+                <ComboBoxItem Content="Unora"/>
+                <!-- Add more games here if needed -->
+            </ComboBox>
+        </StackPanel>
+        <!-- === END NEW === -->
+
+        <CheckBox x:Name="LocalhostCheckBox"
+                  Foreground="{DynamicResource IconForegroundColor}"
+                  Background="{DynamicResource PrimaryTextColor}"
+                  Margin="0,60, 0, 0"
+                  Content="Localhost"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" />
+    </StackPanel>
+</Grid>
+
 
         <!-- Bottom Bar -->
         <Grid Grid.Row="2"

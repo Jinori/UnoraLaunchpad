@@ -77,7 +77,7 @@ namespace UnoraLaunchpad
             }
 
             // New Password migration logic to EncryptedPassword
-            bool settingsModified = false;
+            var settingsModified = false;
             if (_launcherSettings.SavedCharacters != null)
             {
                 foreach (var character in _launcherSettings.SavedCharacters)
@@ -90,22 +90,12 @@ namespace UnoraLaunchpad
                         {
                             character.EncryptedPassword = PasswordHelper.EncryptString(character.Password);
                             character.Password = null;      // Clear old plaintext
-                            character.PasswordHash = null;  // Ensure old hash field is also cleared (though it should be null if Password was populated)
-                            character.Salt = null;          // Ensure old salt field is also cleared
                             settingsModified = true;
                         }
                         catch (Exception ex)
                         {
-                             System.Diagnostics.Debug.WriteLine($"Error encrypting plaintext password for character {character.Username}: {ex.Message}");
+                             
                         }
-                    }
-                    else if (!string.IsNullOrEmpty(character.PasswordHash)) // No plaintext, but old hash exists
-                    {
-                        // Hashed password exists from intermediate version - cannot decrypt
-                        System.Diagnostics.Debug.WriteLine($"Character {character.Username} has a hashed password from a previous version. This password cannot be automatically migrated to the new encrypted format and must be re-entered in Settings.");
-                        character.PasswordHash = null;  // Clear unusable hash
-                        character.Salt = null;          // Clear associated salt
-                        settingsModified = true; // Mark as modified to save the cleared fields
                     }
                     // If EncryptedPassword is already populated, and Password/PasswordHash are null, nothing to do.
                 }
@@ -167,8 +157,8 @@ namespace UnoraLaunchpad
             {
                 // Ensure the window is placed mostly on screen.
                 // Use current Width/Height which might have been set from settings or default XAML values.
-                double maxLeft = SystemParameters.VirtualScreenWidth - Width;
-                double maxTop = SystemParameters.VirtualScreenHeight - Height;
+                var maxLeft = SystemParameters.VirtualScreenWidth - Width;
+                var maxTop = SystemParameters.VirtualScreenHeight - Height;
 
                 // Basic clamp to ensure top-left is within screen and not excessively off-screen
                 Left = Math.Min(Math.Max(0, _launcherSettings.WindowLeft), maxLeft);
@@ -566,11 +556,11 @@ namespace UnoraLaunchpad
 
         private void Launch(object sender, EventArgs e)
         {
-            (var ipAddress, var serverPort) = GetServerConnection();
+            var (ipAddress, serverPort) = GetServerConnection();
 
             // Use SelectedGame from your settings
             var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
-            (var gameFolder, var gameExe) = GetGameLaunchInfo(selectedGame);
+            var (gameFolder, gameExe) = GetGameLaunchInfo(selectedGame);
 
             // Build the full path to the executable
             var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gameFolder, gameExe);
@@ -711,21 +701,6 @@ namespace UnoraLaunchpad
 
         #endregion
 
-        // Placeholder for ShowPasswordDialog in MainWindow.xaml.cs
-        private string ShowPasswordDialog(string username)
-        {
-            // This method will be fully implemented in the next step
-            // using the PasswordPromptDialog.
-            // For now, this placeholder allows compilation of LaunchSavedBtn_Click.
-            PasswordPromptDialog dialog = new PasswordPromptDialog(username);
-            dialog.Owner = this; // Set the owner to the MainWindow instance
-            if (dialog.ShowDialog() == true) // ShowDialog() returns a bool? (nullable boolean)
-            {
-                return dialog.Password;
-            }
-            return null; // Or string.Empty, depending on how cancellation should be handled
-        }
-
         private async void LaunchSavedBtn_Click(object sender, RoutedEventArgs e)
         {
             // Ensure _launcherSettings is up-to-date (though ApplySettings usually handles this on load)
@@ -747,12 +722,12 @@ namespace UnoraLaunchpad
             {
                 if (selectedItem == "All")
                 {
-                    bool anyLaunched = false;
+                    var anyLaunched = false;
                     foreach (var character in _launcherSettings.SavedCharacters.ToList())
                     {
                         if (!string.IsNullOrEmpty(character.EncryptedPassword))
                         {
-                            string decryptedPassword = PasswordHelper.DecryptString(character.EncryptedPassword);
+                            var decryptedPassword = PasswordHelper.DecryptString(character.EncryptedPassword);
                             if (!string.IsNullOrEmpty(decryptedPassword))
                             {
                                 character.Password = decryptedPassword; // Temporarily set for LaunchAndLogin
@@ -782,7 +757,7 @@ namespace UnoraLaunchpad
                     {
                         if (!string.IsNullOrEmpty(characterToLaunch.EncryptedPassword))
                         {
-                            string decryptedPassword = PasswordHelper.DecryptString(characterToLaunch.EncryptedPassword);
+                            var decryptedPassword = PasswordHelper.DecryptString(characterToLaunch.EncryptedPassword);
                             if (!string.IsNullOrEmpty(decryptedPassword))
                             {
                                 characterToLaunch.Password = decryptedPassword; // Temporarily set for LaunchAndLogin
@@ -822,16 +797,15 @@ namespace UnoraLaunchpad
 
         private async Task LaunchAndLogin(Character character)
         {
-            Process gameProcess = null;
-            int gameProcessId = 0;
             try
             {
-                (var ipAddress, var serverPort) = GetServerConnection();
+                var (ipAddress, serverPort) = GetServerConnection();
                 // Ensure _launcherSettings is used, ApplySettings() at start of LaunchSaveBtn_Click should handle this.
                 var selectedGame = _launcherSettings.SelectedGame ?? "Unora"; 
-                (var gameFolder, var gameExe) = GetGameLaunchInfo(selectedGame);
+                var (gameFolder, gameExe) = GetGameLaunchInfo(selectedGame);
                 var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gameFolder, gameExe);
 
+                var gameProcessId = 0;
                 using (var suspendedProcess = SuspendedProcess.Start(exePath))
                 {
                     gameProcessId = suspendedProcess.ProcessId; // Capture PID
@@ -840,15 +814,11 @@ namespace UnoraLaunchpad
                     // Use 'this.UseDawndWindower' which is synced by ApplySettings()
                     if (this.UseDawndWindower) 
                     {
-                        IntPtr processHandleForInjection = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, gameProcessId);
+                        var processHandleForInjection = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, gameProcessId);
                         if (processHandleForInjection != IntPtr.Zero)
                         {
                             InjectDll(processHandleForInjection);
                             NativeMethods.CloseHandle(processHandleForInjection);
-                        }
-                        else
-                        {
-                            Debug.WriteLine($"[LaunchAndLogin] Failed to open process for injection. Error: {NativeMethods.GetLastError()}");
                         }
                     }
                 } // suspendedProcess is disposed and resumed here
@@ -858,6 +828,7 @@ namespace UnoraLaunchpad
                     return;
                 }
 
+                Process gameProcess = null;
                 try
                 {
                     gameProcess = Process.GetProcessById(gameProcessId);
@@ -888,6 +859,8 @@ namespace UnoraLaunchpad
                 }
                 
                 await PerformAutomatedLogin(character.Username, character.Password, gameProcess);
+                await RenameGameWindowAsync(gameProcess, character.Username);
+                await WaitForClientReady(gameProcess);
             }
             catch (Exception ex)
             {
@@ -900,47 +873,41 @@ namespace UnoraLaunchpad
         {
             try
             {
+                BlockInput(true);
+
                 if (gameProc.MainWindowHandle == IntPtr.Zero)
                 {
                     gameProc.Refresh();
-                    await Task.Delay(1000);
+                    await Task.Delay(1500);
                     if (gameProc.MainWindowHandle == IntPtr.Zero)
                     {
-                        MessageBox.Show("Game window not found for automated login (PerformAutomatedLogin).",
-                            "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Game window not found.", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
                 }
 
-                // Bring game window to the front
                 NativeMethods.SetForegroundWindow(gameProc.MainWindowHandle.ToInt32());
-                await Task.Delay(1000); // Allow window to focus
+                await Task.Delay(1500);
 
                 var inputSimulator = new InputSimulator();
 
-                // Simulate ENTER to start login sequence
-                await Task.Delay(200); // Let the login screen settle
-                BlockInput(true);
+                await Task.Delay(200);
                 inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
                 await Task.Delay(500);
 
-                // Move mouse to simulated "Continue" button (approximate)
                 var screenPoint = GetRelativeScreenPoint(gameProc.MainWindowHandle, 0.20, 0.66);
                 MoveAndClickPoint(screenPoint);
                 await Task.Delay(500);
 
-                // Enter username
                 inputSimulator.Keyboard.TextEntry(username);
                 await Task.Delay(250);
                 inputSimulator.Keyboard.KeyPress(VirtualKeyCode.TAB);
                 await Task.Delay(400);
 
-                
-                // Enter password
                 foreach (var c in password)
                 {
                     inputSimulator.Keyboard.KeyPress((VirtualKeyCode)VkKeyScan(c));
-                    await Task.Delay(50); // small delay to mimic natural typing
+                    await Task.Delay(50);
                 }
 
                 await Task.Delay(200);
@@ -956,6 +923,33 @@ namespace UnoraLaunchpad
             }
         }
 
+
+        private async Task WaitForClientReady(Process gameProc, int timeoutMs = 10000)
+        {
+            var sw = Stopwatch.StartNew();
+
+            while (sw.ElapsedMilliseconds < timeoutMs)
+            {
+                if (gameProc.HasExited)
+                    throw new Exception("Client exited before login finished.");
+
+                gameProc.Refresh();
+                var title = gameProc.MainWindowTitle;
+
+                // Adjust this condition to match when the game is *done* logging in.
+                // If the title changes or a window handle appears, you can check for that here.
+                if (!string.IsNullOrWhiteSpace(title) && !title.Contains("Unora"))
+                {
+                    return; // Assume client reached post-login state
+                }
+
+                await Task.Delay(500);
+            }
+
+            throw new TimeoutException("Client did not appear ready within timeout.");
+        }
+        
+        
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool BlockInput(bool fBlockIt);

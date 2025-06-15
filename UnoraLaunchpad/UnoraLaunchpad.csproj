@@ -43,6 +43,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -74,6 +75,7 @@
     <Compile Include="Character.cs" />
     <Compile Include="FileService.cs" />
     <Compile Include="GameUpdate.cs" />
+    <Compile Include="PasswordHelper.cs" />
     <Compile Include="GameUpdateDetailView.xaml.cs">
       <DependentUpon>GameUpdateDetailView.xaml</DependentUpon>
     </Compile>

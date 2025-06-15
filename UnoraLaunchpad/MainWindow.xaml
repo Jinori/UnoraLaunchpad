@@ -215,7 +215,34 @@
                   Height="30"
                   VerticalContentAlignment="Center"
                   Margin="0,0,5,0"
-                  ToolTip="Select a saved character or 'All'" />
+                  ToolTip="Select a saved character or 'All'"
+                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                  Foreground="{DynamicResource PrimaryTextColor}"
+                  Background="{DynamicResource PrimaryBackgroundColor}"
+                  BorderBrush="{DynamicResource PrimaryBorderColor}"
+                  Padding="5">
+
+            <!-- Force solid popup background to avoid transparency issues -->
+            <ComboBox.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#FF1E1E1E"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="#FF1E1E1E"/>
+            </ComboBox.Resources>
+
+            <!-- Style the items inside the dropdown -->
+            <ComboBox.ItemContainerStyle>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryBackgroundColor}" />
+                    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextColor}" />
+                    <Setter Property="FontWeight" Value="Normal" />
+                    <Setter Property="FontSize" Value="14" />
+                    <Setter Property="Padding" Value="6,2"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="SnapsToDevicePixels" Value="True"/>
+                </Style>
+            </ComboBox.ItemContainerStyle>
+        </ComboBox>
+
         <Button x:Name="LaunchSavedBtn"
                 Click="LaunchSavedBtn_Click"
                 Height="30"

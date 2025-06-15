@@ -279,6 +279,16 @@ namespace UnoraLaunchpad
             }
             var lockWindow = new UpdateLockWindow();
             var result = lockWindow.ShowDialog();
+
+            if (lockWindow.UserSkippedClosingClients) // Added this block
+            {
+                MessageBox.Show(
+                    "You've chosen to skip closing active game clients. Game files may not update correctly, and you might encounter incorrect assets in-game until all clients are closed and the launcher performs a full update check.",
+                    "Update Warning",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+
             return result == true;
         }
 

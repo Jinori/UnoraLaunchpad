@@ -1,4 +1,4 @@
-﻿namespace UnoraLaunchpad;
+namespace UnoraLaunchpad.Models; // Updated namespace
 
 public sealed class GameUpdate
 {

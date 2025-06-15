@@ -1,6 +1,6 @@
 using System;
 using System.Windows; // For Window
-using UnoraLaunchpad.Definitions; // For Settings, GameUpdate
+using UnoraLaunchpad.Models; // For Settings, GameUpdate
 
 namespace UnoraLaunchpad.Interfaces
 {

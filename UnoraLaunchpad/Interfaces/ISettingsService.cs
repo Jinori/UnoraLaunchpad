@@ -1,6 +1,6 @@
 using System;
 using System.Windows; // For WindowState and Uri (Uri might be System)
-using UnoraLaunchpad.Definitions; // For Settings
+using UnoraLaunchpad.Models; // For Settings
 
 namespace UnoraLaunchpad.Interfaces
 {

@@ -1,6 +1,6 @@
-﻿namespace UnoraLaunchpad;
+namespace UnoraLaunchpad.Models; // Updated namespace
 
-using Definitions; // For CONSTANTS
+using Definitions; // For CONSTANTS. Ensure this using is still valid relative to the new namespace.
 
 /// <summary>
 /// Defines the API routes for a specific game and the launcher itself.

@@ -1,8 +1,9 @@
 using System;
 using System.IO;
 using System.Windows; // Required for SystemParameters
-using UnoraLaunchpad.Definitions; // Required for Settings class
+using UnoraLaunchpad.Models;    // Required for Settings class
 using UnoraLaunchpad.Interfaces; // Required for ISettingsService
+// UnoraLaunchpad.Definitions is not directly used in this file for CONSTANTS, so it can be removed if only for Settings.
 
 namespace UnoraLaunchpad.Services
 {

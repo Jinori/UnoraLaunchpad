@@ -32,6 +32,7 @@ public partial class PatchNotesWindow : Window
                     FontWeight = FontWeights.Bold,
                     Margin = new Thickness(0, 10, 0, 5)
                 };
+                header.SetResourceReference(TextBlock.ForegroundProperty, "PrimaryTextColor"); // Added
                 PatchNotesPanel.Children.Add(header);
 
                 foreach (var section in note.Sections)
@@ -42,26 +43,30 @@ public partial class PatchNotesWindow : Window
                         FontStyle = FontStyles.Italic,
                         Margin = new Thickness(0, 5, 0, 2)
                     };
+                    sectionHeader.SetResourceReference(TextBlock.ForegroundProperty, "SecondaryTextColor"); // Added
                     PatchNotesPanel.Children.Add(sectionHeader);
 
                     foreach (var line in section.Lines)
                     {
-                        PatchNotesPanel.Children.Add(new TextBlock
+                        var contentLine = new TextBlock // Changed to create instance first
                         {
                             Text = "• " + line,
                             TextWrapping = TextWrapping.Wrap
-                        });
+                        };
+                        contentLine.SetResourceReference(TextBlock.ForegroundProperty, "PrimaryTextColor"); // Added
+                        PatchNotesPanel.Children.Add(contentLine);
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            PatchNotesPanel.Children.Add(new TextBlock
+            var errorBlock = new TextBlock // Changed to create instance first
             {
-                Text = "Failed to load patch notes: " + ex.Message,
-                Foreground = System.Windows.Media.Brushes.Red
-            });
+                Text = "Failed to load patch notes: " + ex.Message
+            };
+            errorBlock.SetResourceReference(TextBlock.ForegroundProperty, "PrimaryTextColor"); // Changed from Brushes.Red
+            PatchNotesPanel.Children.Add(errorBlock);
         }
     }
 

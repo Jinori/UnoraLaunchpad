@@ -6,33 +6,26 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-// System.Security.Cryptography is no longer needed here
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.ComponentModel; // Added for CancelEventArgs
 using UnoraLaunchpad.Definitions;
-using UnoraLaunchpad.Utils; // Added for LoggingService
-using UnoraLaunchpad.Services;
-using UnoraLaunchpad.Interfaces; // Required for service interfaces
 using Application = System.Windows.Application;
-// Using MessageBox alias removed as _userNotifierService should be used.
+using MessageBox = System.Windows.MessageBox;
 
 namespace UnoraLaunchpad
 {
     public sealed partial class MainWindow
     {
-        // LauncherSettingsPath is now in SettingsService
-        // _launcherSettings is now managed by SettingsService
+        private static readonly string LauncherSettingsPath = "LauncherSettings/settings.json";
 
-        private readonly FileService _fileService = new(); // FileService might not have an interface yet
-        private readonly UnoraClient _unoraClient = new(); // UnoraClient might not have an interface yet
-        private readonly IUserNotifierService _userNotifierService;
-        private readonly ISettingsService _settingsService;
-        private readonly IUpdateService _updateService;
-        private readonly ILaunchService _launchService;
-        private readonly INavigationService _navigationService;
+        private readonly FileService FileService = new();
+        private readonly UnoraClient UnoraClient = new();
+        private Settings _launcherSettings; // Added field for settings
+        private NotifyIcon NotifyIcon;
 
         public ObservableCollection<GameUpdate> GameUpdates { get; } = new();
         public bool SkipIntro { get; set; }
@@ -52,78 +45,235 @@ namespace UnoraLaunchpad
         public MainWindow()
         {
             InitializeComponent();
-
-            // Instantiate concrete services and assign to interface variables
-            // FileService and UnoraClient are kept concrete for now as they don't have interfaces defined in this step
-            _userNotifierService = new UserNotifierService();
-            _settingsService = new SettingsService(_fileService);
-            // For services that depend on other services, pass the interface-typed fields:
-            _updateService = new UpdateService(_unoraClient, _settingsService, _userNotifierService);
-            _launchService = new LaunchService(_settingsService, _userNotifierService);
-            _navigationService = new NavigationService();
-
             InitializeTrayIcon();
-            OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate); // Assumes RelayCommand is available
+            OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate);
             DataContext = this;
-            AssignUpdateServiceCallbacks();
-        }
-
-        private void AssignUpdateServiceCallbacks()
-        {
-            _updateService.PrepareProgressBarAction = PrepareProgressBar;
-            _updateService.PrepareFileProgressAction = PrepareFileProgress;
-            _updateService.UpdateFileProgressAction = UpdateFileProgress;
-            _updateService.SetUiStateIdleAction = SetUiStateIdle;
         }
 
         /// <summary>
-        /// Loads and applies launcher settings using SettingsService.
+        /// Loads and applies launcher settings from disk.
+        /// </summary>
+        /// <summary>
+        /// Loads and applies launcher settings from disk.
         /// </summary>
         public void ApplySettings()
         {
-            var currentSettings = _settingsService.GetCurrentSettings();
-
-            UseDawndWindower = currentSettings.UseDawndWindower;
-            UseLocalhost = currentSettings.UseLocalhost;
-            SkipIntro = currentSettings.SkipIntro;
-
-            _settingsService.LoadAndApplyTheme(uri => App.ChangeTheme(uri));
-
-            _settingsService.LoadAndApplyWindowDimensions((w, h, l, t) =>
+            _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
+            if (_launcherSettings == null)
             {
-                // Check if dimensions are valid before applying to avoid collapsing the window
-                // This check is now effectively handled within LoadAndApplyWindowDimensions itself.
-                Width = w;
-                Height = h;
+                _launcherSettings = new Settings(); // Fallback to default settings if loading fails
+            }
 
-                // Only apply Left and Top if they are not the default (0,0) or if explicitly set
-                // This logic is also now better handled inside SettingsService to ensure on-screen placement
-                if (l != 0 || t != 0 || (w == SystemParameters.PrimaryScreenWidth && h == SystemParameters.PrimaryScreenHeight)) // Handles maximized case or specific positions
-                {
-                    Left = l;
-                    Top = t;
-                }
-            });
+            UseDawndWindower = _launcherSettings.UseDawndWindower;
+            UseLocalhost = _launcherSettings.UseLocalhost;
+            SkipIntro = _launcherSettings.SkipIntro;
+
+            var themeName = _launcherSettings.SelectedTheme;
+            if (string.IsNullOrEmpty(themeName))
+            {
+                themeName = "Dark"; // Default theme
+                _launcherSettings.SelectedTheme = themeName; // Ensure default is set in current settings object
+            }
+
+            // Map theme name to file URI
+            Uri themeUri;
+            switch (themeName)
+            {
+                case "Light":
+                    themeUri = new Uri("pack://application:,,,/Resources/LightTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Teal":
+                    themeUri = new Uri("pack://application:,,,/Resources/TealTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Violet":
+                    themeUri = new Uri("pack://application:,,,/Resources/VioletTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Amber":
+                    themeUri = new Uri("pack://application:,,,/Resources/AmberTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Emerald":
+                    themeUri = new Uri("pack://application:,,,/Resources/EmeraldTheme.xaml", UriKind.Absolute);
+                    break;
+                default:
+                    themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
+                    break;
+            }
+            App.ChangeTheme(themeUri);
+
+            // Apply window dimensions if they are valid
+            if (_launcherSettings.WindowWidth > 0 && _launcherSettings.WindowHeight > 0)
+            {
+                Width = _launcherSettings.WindowWidth;
+                Height = _launcherSettings.WindowHeight;
+            }
+
+            // Apply window position if it's valid and on-screen
+            // Avoid applying if both Left and Top are 0, as this might be an uninitialized state
+            // or could make the window appear at an awkward default position for some systems.
+            // WindowStartupLocation="CenterScreen" in XAML handles initial centering if position is not set.
+            if (_launcherSettings.WindowLeft != 0 || _launcherSettings.WindowTop != 0)
+            {
+                // Ensure the window is placed mostly on screen.
+                // Use current Width/Height which might have been set from settings or default XAML values.
+                double maxLeft = SystemParameters.VirtualScreenWidth - Width;
+                double maxTop = SystemParameters.VirtualScreenHeight - Height;
+
+                // Basic clamp to ensure top-left is within screen and not excessively off-screen
+                Left = Math.Min(Math.Max(0, _launcherSettings.WindowLeft), maxLeft);
+                Top = Math.Min(Math.Max(0, _launcherSettings.WindowTop), maxTop);
+            }
         }
 
 
         private void PatchNotesButton_Click(object sender, RoutedEventArgs e)
         {
-            _navigationService.ShowPatchNotes(this);
+            var patchWindow = new PatchNotesWindow();
+            patchWindow.Owner = this;
+            patchWindow.ShowDialog();
         }
 
-        // CheckAndUpdateLauncherAsync is now in UpdateService
-        // GetLocalLauncherVersion is now in UpdateService
-        // CheckForFileUpdates is now in UpdateService (will be CheckForFileUpdatesAsync)
-        // NeedsUpdate is now in UpdateService
-        // GetFilePath is now in UpdateService or internal to it
-        // EnsureDirectoryExists is now in UpdateService or internal to it
         
-        // ConfirmUpdateProceed remains here as it's UI specific with UpdateLockWindow
+        /// <summary>
+        /// Calculates an MD5 hash for a file.
+        /// </summary>
+        private static string CalculateHash(string filePath)
+        {
+            using var md5 = MD5.Create();
+            using var stream = File.OpenRead(filePath);
+            return BitConverter.ToString(md5.ComputeHash(stream));
+        }
+
+        private async Task CheckAndUpdateLauncherAsync()
+        {
+            // Only run the update check if Unora is the selected game
+            var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
+            if (!selectedGame.Equals("Unora", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var serverVersion = await UnoraClient.GetLauncherVersionAsync();
+            var localVersion = GetLocalLauncherVersion();
+
+            if (serverVersion != localVersion)
+            {
+                var bootstrapperPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Unora\\UnoraBootstrapper.exe");
+                var currentLauncherPath = Process.GetCurrentProcess().MainModule!.FileName!;
+                var currentProcessId = Process.GetCurrentProcess().Id;
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = bootstrapperPath,
+                    Arguments = $"\"{currentLauncherPath}\" {Process.GetCurrentProcess().Id}",
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+
+                Application.Current.Shutdown();
+                Environment.Exit(0);
+            }
+        }
+
+
+        private string GetLocalLauncherVersion()
+        {
+            var exePath = Process.GetCurrentProcess().MainModule!.FileName!;
+            return FileVersionInfo.GetVersionInfo(exePath).FileVersion ?? "0";
+        }
+
+        /// <summary>
+        /// Checks for file updates, downloads any required updates, and updates the UI accordingly.
+        /// </summary>
+        private async Task CheckForFileUpdates()
+        {
+            ApplySettings();
+            SetUiStateUpdating();
+
+            var apiRoutes = GetCurrentApiRoutes();
+            var fileDetails = await UnoraClient.GetFileDetailsAsync(apiRoutes.GameDetails);
+
+            Debug.WriteLine($"[Launcher] Downloading {fileDetails.Count} files for {apiRoutes.GameDetails}");
+
+            var filesToUpdate = fileDetails.Where(NeedsUpdate).ToList();
+            Debug.WriteLine($"[Launcher] Files to update: {filesToUpdate.Count}");
+
+            var totalBytesToDownload = filesToUpdate.Sum(f => f.Size);
+            var totalDownloaded = 0L;
+
+            if (filesToUpdate.Any() && !ConfirmUpdateProceed())
+            {
+                ShowMessage("Update cancelled. Please update later.", "Unora Launcher");
+                SetUiStateIdle();
+
+                return;
+            }
+
+            PrepareProgressBar(totalBytesToDownload);
+
+            await Task.Run(async () =>
+            {
+                foreach (var fileDetail in filesToUpdate)
+                {
+                    Debug.WriteLine($"[Launcher] Downloading file: {fileDetail.RelativePath}");
+                    PrepareFileProgress(fileDetail.RelativePath, totalDownloaded, totalBytesToDownload);
+
+                    var filePath = GetFilePath(fileDetail.RelativePath);
+                    EnsureDirectoryExists(filePath);
+
+                    var fileBytesDownloaded = 0L;
+
+                    var progress = new Progress<UnoraClient.DownloadProgress>(p =>
+                    {
+                        fileBytesDownloaded = p.BytesReceived;
+
+                        UpdateFileProgress(
+                            p.BytesReceived,
+                            totalDownloaded,
+                            totalBytesToDownload,
+                            p.SpeedBytesPerSec);
+                    });
+
+                    try
+                    {
+                        await UnoraClient.DownloadFileAsync(apiRoutes.GameFile(fileDetail.RelativePath), filePath, progress);
+                    } catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[Launcher] Download failed: {ex.Message}");
+                        ShowMessage($"Failed to download {fileDetail.RelativePath}: {ex.Message}", "Update Error");
+                        // Optionally, break/continue/return depending on your tolerance for errors.
+                    }
+
+                    totalDownloaded += fileBytesDownloaded;
+                }
+            });
+
+            Debug.WriteLine($"[Launcher] All updates completed.");
+        }
+
+
+        /// <summary>
+        /// Determines if a file needs to be updated based on its hash.
+        /// </summary>
+        private bool NeedsUpdate(FileDetail fileDetail)
+        {
+            var filePath = GetFilePath(fileDetail.RelativePath);
+            if (!File.Exists(filePath))
+                return true;
+
+            return !CalculateHash(filePath).Equals(fileDetail.Hash, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string GetFilePath(string relativePath) =>
+            Path.Combine(_launcherSettings?.SelectedGame ?? CONSTANTS.UNORA_FOLDER_NAME, relativePath);
+        
+        private void EnsureDirectoryExists(string filePath)
+        {
+            var directory = Path.GetDirectoryName(filePath)!;
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+        }
+
         private bool ConfirmUpdateProceed()
         {
-            var currentSettings = _settingsService.GetCurrentSettings();
-            if (currentSettings.UseLocalhost)
+            if (UseLocalhost) // or this.UseLocalhost, or _launcherSettings.UseLocalhost
             {
                 return true; // Skip showing the window if UseLocalhost is true
             }
@@ -132,13 +282,18 @@ namespace UnoraLaunchpad
 
             if (lockWindow.UserSkippedClosingClients) // Added this block
             {
-                _userNotifierService.ShowWarning(
+                MessageBox.Show(
                     "You've chosen to skip closing active game clients. Game files may not update correctly, and you might encounter incorrect assets in-game until all clients are closed and the launcher performs a full update check.",
-                    "Update Warning");
+                    "Update Warning",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
             }
 
             return result == true;
         }
+
+        private void ShowMessage(string message, string title) =>
+            MessageBox.Show(message, title);
 
         #region Progress UI Helpers
 
@@ -179,7 +334,7 @@ namespace UnoraLaunchpad
             Dispatcher.Invoke(() =>
             {
                 ProgressFileName.Text = fileName;
-                ProgressBytes.Text = $"{FormattingHelper.FormatBytes(downloaded)} of {FormattingHelper.FormatBytes(total)}";
+                ProgressBytes.Text = $"{FormatBytes(downloaded)} of {FormatBytes(total)}";
                 ProgressSpeed.Text = string.Empty;
                 DownloadProgressBar.Value = downloaded;
             });
@@ -191,10 +346,37 @@ namespace UnoraLaunchpad
             double speedBytesPerSec) =>
             Dispatcher.Invoke(() =>
             {
-                ProgressBytes.Text = $"{FormattingHelper.FormatBytes(totalDownloaded + bytesReceived)} of {FormattingHelper.FormatBytes(totalBytesToDownload)}";
-                ProgressSpeed.Text = $"@ {FormattingHelper.FormatSpeed(speedBytesPerSec)}";
+                ProgressBytes.Text = $"{FormatBytes(totalDownloaded + bytesReceived)} of {FormatBytes(totalBytesToDownload)}";
+                ProgressSpeed.Text = $"@ {FormatSpeed(speedBytesPerSec)}";
                 DownloadProgressBar.Value = totalDownloaded + bytesReceived;
             });
+        #endregion
+
+        #region Formatting
+
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes < 0) return "??";
+            if (bytes > 1024 * 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
+            if (bytes > 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024.0):F2} MB";
+            if (bytes > 1024)
+                return $"{bytes / 1024.0:F2} KB";
+
+            return $"{bytes} B";
+        }
+
+        private static string FormatSpeed(double bytesPerSec)
+        {
+            if (bytesPerSec > 1024 * 1024)
+                return $"{bytesPerSec / (1024.0 * 1024.0):F2} MB/s";
+            if (bytesPerSec > 1024)
+                return $"{bytesPerSec / 1024.0:F2} KB/s";
+
+            return $"{bytesPerSec:F2} B/s";
+        }
+
         #endregion
 
         #region System Tray / UI Initialization
@@ -203,10 +385,22 @@ namespace UnoraLaunchpad
 
         private void CogButton_Click(object sender, RoutedEventArgs e)
         {
-            var currentSettings = _settingsService.GetCurrentSettings();
-            // NavigationService's ShowSettings will handle creating and showing the window.
-            // It will need the 'this' (MainWindow) reference for the SettingsWindow constructor as it is now.
-            _navigationService.ShowSettings(this, currentSettings, SaveSettings);
+            if (_launcherSettings == null)
+            {
+                // Attempt to load or use defaults if ApplySettings hasn't run or failed
+                try {
+                    _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
+                    if (_launcherSettings == null) // If still null after attempting load
+                    {
+                        _launcherSettings = new Settings(); // Fallback to default settings
+                    }
+                } catch { 
+                    _launcherSettings = new Settings(); // Fallback to default settings on error
+                }
+            }
+            var settingsWindow = new SettingsWindow(this, _launcherSettings);
+            settingsWindow.Owner = this; // Ensure SettingsWindow is owned by MainWindow
+            settingsWindow.Show();
         }
         
         private void InitializeTrayIcon()
@@ -269,37 +463,12 @@ namespace UnoraLaunchpad
         #endregion
 
         #region Launcher Core
-        private async Task PerformUpdateChecksAsync(string cancellationMessage = "Update cancelled by user.")
-        {
-            SetUiStateUpdating();
-            if (ConfirmUpdateProceed())
-            {
-                await _updateService.CheckForFileUpdatesAsync();
-            }
-            else
-            {
-                _userNotifierService.ShowMessage(cancellationMessage, "Update Cancelled");
-                SetUiStateIdle();
-            }
-        }
         public async void ReloadSettingsAndRefresh()
         {
             ApplySettings();           // Load settings from disk (SelectedGame, etc.)
             SetWindowTitle();          // Update the window title everywhere
             await LoadAndBindGameUpdates(); // Reload news/patches for the selected server
-
-            await PerformUpdateChecksAsync();
-
-            // SetUiStateComplete is called by the service or after await / or when idle is set.
-            // The UpdateService calls SetUiStateIdleAction at the end of CheckForFileUpdatesAsync.
-            // If an update happens, UI will go idle. If no updates or cancelled, it's also idle.
-            // SetUiStateComplete might be more appropriate if PerformUpdateChecksAsync itself returned a status
-            // indicating completion rather than just cancellation/idling.
-            // For now, let's assume SetUiStateIdleAction from UpdateService is sufficient,
-            // or we call SetUiStateComplete if no specific "complete" action is taken by the service.
-            // Since UpdateService calls SetUiStateIdleAction, we might not need SetUiStateComplete here if idle implies completion of attempt.
-            // However, if an update *was* performed, a "Complete" message is better.
-            // Let's assume for now the final Dispatcher.BeginInvoke covers this.
+            await CheckForFileUpdates();    // Check/download updates for selected server
             Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
         }
         public void ReloadSettingsAndRefreshLocal()
@@ -309,26 +478,153 @@ namespace UnoraLaunchpad
             _ = LoadAndBindGameUpdates();
         }
 
-        // GetGameLaunchInfo was here but logic moved to LaunchService. Removing dead code.
+        private (string folder, string exe) GetGameLaunchInfo(string selectedGame) =>
+            // You can load this from a config file for extensibility if needed.
+            selectedGame switch
+            {
+                "Unora"   => ("Unora", "Unora.exe"),
+                "Legends" => ("Legends", "Client.exe"),
+                // Add more as needed
+                _ => ("Unora", "Unora.exe") // Fallback
+            };
 
-        // Launch, GetServerConnection, ResolveHostname, PatchClient, InjectDll, RenameGameWindowAsync
-        // are all moved to LaunchService.
-        // The Launch button click handler will now call LaunchService.LaunchGameAsync()
-
-        private async void Launch(object sender, EventArgs e) // Changed to async void
+        private void Launch(object sender, EventArgs e)
         {
-            await _launchService.LaunchGameAsync();
+            (var ipAddress, var serverPort) = GetServerConnection();
+
+            // Use SelectedGame from your settings
+            var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
+            (var gameFolder, var gameExe) = GetGameLaunchInfo(selectedGame);
+
+            // Build the full path to the executable
+            var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gameFolder, gameExe);
+
+            using var process = SuspendedProcess.Start(exePath);
+
+            try
+            {
+                PatchClient(process, ipAddress, serverPort);
+
+                if (UseDawndWindower)
+                {
+                    var processPtr = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, process.ProcessId);
+                    InjectDll(processPtr);
+                }
+
+                // Optionally, set window title to the selected game name
+                _ = RenameGameWindowAsync(Process.GetProcessById(process.ProcessId), selectedGame);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
+            }
+        }
+
+
+        private (IPAddress, int) GetServerConnection()
+        {
+            if (UseLocalhost)
+                return (ResolveHostname("127.0.0.1"), 4200);
+
+            return (ResolveHostname("chaotic-minds.dynu.net"), 6900);
+        }
+
+        private static IPAddress ResolveHostname(string hostname)
+        {
+            // Lookup the server hostname (via DNS)
+            var hostEntry = Dns.GetHostEntry(hostname);
+
+            // Find the IPv4 addresses
+            var ipAddresses =
+                from ip in hostEntry.AddressList
+                where ip.AddressFamily == AddressFamily.InterNetwork
+                select ip;
+
+            return ipAddresses.FirstOrDefault();
+        }
+
+        private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
+        {
+            using var stream = new ProcessMemoryStream(process.ProcessId);
+            using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true);
+
+            patcher.ApplyServerHostnamePatch(serverIPAddress);
+            patcher.ApplyServerPortPatch(serverPort);
+
+            if (SkipIntro)
+                patcher.ApplySkipIntroVideoPatch();
+
+            patcher.ApplyMultipleInstancesPatch();
+        }
+
+        private void InjectDll(IntPtr accessHandle)
+        {
+            const string DLL_NAME = "dawnd.dll";
+            var nameLength = DLL_NAME.Length + 1;
+
+            // Allocate memory and write the DLL name to target process
+            var allocate = NativeMethods.VirtualAllocEx(
+                accessHandle, IntPtr.Zero, (IntPtr)nameLength, 0x1000, 0x40);
+
+            NativeMethods.WriteProcessMemory(
+                accessHandle, allocate, DLL_NAME, (UIntPtr)nameLength, out _);
+
+            var injectionPtr = NativeMethods.GetProcAddress(
+                NativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+
+            if (injectionPtr == UIntPtr.Zero)
+            {
+                MessageBox.Show(this, "Injection pointer was null.", "Injection Error");
+                return;
+            }
+
+            var thread = NativeMethods.CreateRemoteThread(
+                accessHandle, IntPtr.Zero, IntPtr.Zero, injectionPtr, allocate, 0, out _);
+
+            if (thread == IntPtr.Zero)
+            {
+                MessageBox.Show(this, "Remote injection thread was null. Try again...", "Injection Error");
+                return;
+            }
+
+            var result = NativeMethods.WaitForSingleObject(thread, 10 * 1000);
+
+            if (result != WaitEventResult.Signaled)
+            {
+                MessageBox.Show(this, "Injection thread timed out, or signaled incorrectly. Try again...", "Injection Error");
+                if (thread != IntPtr.Zero)
+                    NativeMethods.CloseHandle(thread);
+                return;
+            }
+
+            NativeMethods.VirtualFreeEx(accessHandle, allocate, (UIntPtr)0, 0x8000);
+            if (thread != IntPtr.Zero)
+                NativeMethods.CloseHandle(thread);
+        }
+
+        private async Task RenameGameWindowAsync(Process process, string newTitle)
+        {
+            for (var i = 0; i < 20; i++)
+            {
+                process.Refresh();
+
+                if (process.MainWindowHandle != IntPtr.Zero)
+                {
+                    NativeMethods.SetWindowText(process.MainWindowHandle, newTitle);
+                    break;
+                }
+                await Task.Delay(100);
+            }
         }
 
         private void SetWindowTitle()
         {
-            var currentSettings = _settingsService.GetCurrentSettings();
-            var selectedGame = currentSettings?.SelectedGame?.Trim() ?? "Unora";
+            var selectedGame = _launcherSettings?.SelectedGame?.Trim() ?? "Unora";
             var title = selectedGame switch
             {
                 "Legends" => "Legends: Age of Chaos",
                 "Unora"   => "Unora: Elemental Harmony",
-                _         => $"Unora Launcher" // Default title if game not recognized
+                _         => $"Unora Launcher"
             };
 
             Title = title; // OS-level window title
@@ -348,74 +644,89 @@ namespace UnoraLaunchpad
                 ApplySettings();
                 SetWindowTitle();
                 await LoadAndBindGameUpdates();
-
-                // Use the new helper method, potentially with a different cancellation message if needed for startup
-                await PerformUpdateChecksAsync("Initial update check cancelled by user.");
-
-                await _updateService.CheckAndUpdateLauncherAsync(() =>
-                {
-                    Application.Current.Shutdown();
-                    // Environment.Exit(0); // Generally not needed if Application.Current.Shutdown() is effective
-                });
+                await CheckForFileUpdates();
+                await CheckAndUpdateLauncherAsync();
             }
             catch (Exception ex)
             {
-                LoggingService.LogException(ex);
-                // User-facing message should be more generic. Detailed error is in the log.
-                _userNotifierService.ShowError("A critical error occurred during startup. Please check the logs for more details or contact support.", "Startup Error");
+                LogException(ex);
             }
             finally
             {
-                // SetUiStateComplete is called by the service or after await.
-                // Similar to ReloadSettingsAndRefresh, relying on service callbacks or explicit call here.
+                // Always restore UI, no matter what happened.
                 Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
             }
         }
 
-        // GetCurrentApiRoutes for general game updates (not file updates) can remain if needed,
-        // or be part of another service (e.g. GameDataService).
-        // For now, keeping the local GetCurrentApiRoutes for LoadAndBindGameUpdates.
-        private GameApiRoutes GetCurrentApiRoutesForGameUpdates() // Renamed for clarity
+
+        private GameApiRoutes GetCurrentApiRoutes()
         {
-            var currentSettings = _settingsService.GetCurrentSettings();
+            // Use your actual API base URL; this will pick the right one for Debug/Release from CONSTANTS
             var baseUrl = CONSTANTS.BASE_API_URL.TrimEnd('/');
-            var selectedGame = string.IsNullOrWhiteSpace(currentSettings?.SelectedGame)
-                ? CONSTANTS.UNORA_FOLDER_NAME
-                : currentSettings.SelectedGame;
+            var selectedGame = string.IsNullOrWhiteSpace(_launcherSettings?.SelectedGame)
+                ? CONSTANTS.UNORA_FOLDER_NAME // Default to "Unora" if not set
+                : _launcherSettings.SelectedGame;
+
             return new GameApiRoutes(baseUrl, selectedGame);
         }
+
         
         public async Task LoadAndBindGameUpdates()
         {
-            var apiRoutes = GetCurrentApiRoutesForGameUpdates(); // Use the renamed method
-            var gameUpdates = await _unoraClient.GetGameUpdatesAsync(apiRoutes.GameUpdates);
+            var apiRoutes = GetCurrentApiRoutes();
+            var gameUpdates = await UnoraClient.GetGameUpdatesAsync(apiRoutes.GameUpdates);
             GameUpdatesControl.DataContext = new { GameUpdates = gameUpdates };
         }
 
         private void OpenGameUpdate(GameUpdate gameUpdate)
         {
-            _navigationService.ShowGameUpdateDetail(gameUpdate, this);
+            var detailView = new GameUpdateDetailView(gameUpdate);
+            detailView.ShowDialog();
+        }
+
+        public static void LogException(Exception e)
+        {
+            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LauncherSettings", "log.txt");
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+                File.AppendAllText(logPath, $"{DateTime.Now}: {e}\n");
+            }
+            catch
+            {
+                // Suppress logging errors
+            }
         }
 
         #endregion
 
         public void SaveSettings(Settings settings)
         {
-            _settingsService.SaveSettings(settings);
-            // Refresh local properties from the authoritative source (SettingsService)
-            var currentSettings = _settingsService.GetCurrentSettings();
-            UseDawndWindower = currentSettings.UseDawndWindower;
-            UseLocalhost = currentSettings.UseLocalhost;
-            SkipIntro = currentSettings.SkipIntro;
-            // Theme is applied via ApplySettings -> LoadAndApplyTheme
-            // Window dimensions are saved on closing
+            FileService.SaveSettings(settings, LauncherSettingsPath);
+            _launcherSettings = settings; // Update the local field
+
+            // Update MainWindow properties to reflect the newly saved settings
+            UseDawndWindower = _launcherSettings.UseDawndWindower;
+            UseLocalhost = _launcherSettings.UseLocalhost;
+            SkipIntro = _launcherSettings.SkipIntro;
+            // Note: SelectedTheme is handled by App.ChangeTheme and ApplySettings directly.
         }
         
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            // SettingsService handles null checks and saving logic internally
-            _settingsService.UpdateAndSaveWindowBounds(ActualWidth, ActualHeight, Left, Top, WindowState);
-            NotifyIcon?.Dispose(); // Dispose the tray icon when the main window is closing
+            if (_launcherSettings != null)
+            {
+                // Only save size and position if the window is in its normal state
+                if (WindowState == WindowState.Normal)
+                {
+                    _launcherSettings.WindowHeight = ActualHeight;
+                    _launcherSettings.WindowWidth = ActualWidth;
+                    _launcherSettings.WindowTop = Top;
+                    _launcherSettings.WindowLeft = Left;
+                }
+                FileService.SaveSettings(_launcherSettings, LauncherSettingsPath);
+            }
         }
     }
 }

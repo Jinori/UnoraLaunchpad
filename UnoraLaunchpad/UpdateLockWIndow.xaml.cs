@@ -9,6 +9,7 @@ namespace UnoraLaunchpad
 {
     public partial class UpdateLockWindow : Window
     {
+        public bool UserSkippedClosingClients { get; private set; } = false;
         private static readonly Dictionary<string, string> ThemeResourceMap = new()
         {
             { "Dark", "pack://application:,,,/Resources/DarkTheme.xaml" },
@@ -63,7 +64,7 @@ namespace UnoraLaunchpad
             }
             else
             {
-                StatusText.Text = $"Close {procs.Length} instance(s) of Unora to proceed.";
+                StatusText.Text = $"Found {procs.Length} game client(s) running. It's recommended to close them before updating, or you can choose to skip and continue (this may cause issues).";
             }
         }
 
@@ -76,6 +77,13 @@ namespace UnoraLaunchpad
 
             // Immediately close the entire launcher app
             Application.Current.Shutdown();
+        }
+
+        private void SkipBtn_Click(object sender, RoutedEventArgs e)
+        {
+            UserSkippedClosingClients = true;
+            DialogResult = true;
+            Close();
         }
     }
 }

@@ -8,12 +8,16 @@
     <Border CornerRadius="18" Background="{DynamicResource SecondaryBackgroundColor}" Padding="24">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <TextBlock Text="Updater Client Check" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource AccentColor1}" Margin="0,0,0,8" HorizontalAlignment="Center"/>
-            <TextBlock Name="StatusText" Text="Please close all Darkages windows before updating."
+            <TextBlock Name="StatusText" Text="Checking for active game clients..."
                        FontSize="16" Foreground="{DynamicResource PrimaryTextColor}" TextAlignment="Center" Margin="0,0,0,10"/>
             <Button Content="Check Again" Name="CheckAgainBtn" Height="36" Width="148" Margin="0,12,0,0"
                     FontWeight="Bold" Click="CheckAgainBtn_Click"
                     Background="{DynamicResource AccentColor1}"
                     Foreground="{DynamicResource PrimaryBackgroundColor}"/>
+            <Button Content="Skip and Continue" Name="SkipBtn" Height="32" Width="148" Margin="0,10,0,0"
+                    Click="SkipBtn_Click"
+                    Background="{DynamicResource TertiaryBackgroundColor}"
+                    Foreground="{DynamicResource AccentColor1}"/>
             <Button Content="Cancel Update" Name="CancelBtn" Height="32" Width="148" Margin="0,10,0,0"
                     Click="CancelBtn_Click"
                     Background="{DynamicResource TertiaryBackgroundColor}"

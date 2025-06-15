@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnoraLaunchpad.Definitions;
+using UnoraLaunchpad.Models;    // Required for Settings, FileDetail, GameApiRoutes
 using UnoraLaunchpad.Interfaces; // Required for IUpdateService
 using UnoraLaunchpad.Utils; // For FileHashHelper
 

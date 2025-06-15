@@ -4,7 +4,7 @@ using System.Text; // For Encoding
 
 namespace UnoraLaunchpad
 {
-    public static class PasswordHelper // Or EncryptionHelper
+    public static class EncryptionHelper // Formerly PasswordHelper
     {
         public static string EncryptString(string plainText, DataProtectionScope scope = DataProtectionScope.CurrentUser)
         {

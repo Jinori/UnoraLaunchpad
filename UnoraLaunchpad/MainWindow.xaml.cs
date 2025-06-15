@@ -76,36 +76,44 @@ namespace UnoraLaunchpad
                 _launcherSettings.SavedCharacters = new System.Collections.Generic.List<Character>();
             }
 
-            // Password migration logic
+            // New Password migration logic to EncryptedPassword
             bool settingsModified = false;
             if (_launcherSettings.SavedCharacters != null)
             {
                 foreach (var character in _launcherSettings.SavedCharacters)
                 {
-                    // Check if migration is needed: has old plaintext password but no new hash
-                    if (string.IsNullOrEmpty(character.PasswordHash) && !string.IsNullOrEmpty(character.Password))
+                    if (!string.IsNullOrEmpty(character.Password)) // Plaintext password exists (oldest format)
                     {
+                        // Prioritize migrating plaintext if it exists
+                        System.Diagnostics.Debug.WriteLine($"Migrating plaintext password for character: {character.Username} to encrypted format.");
                         try
                         {
-                            var salt = PasswordHelper.GenerateSalt();
-                            character.PasswordHash = PasswordHelper.HashPassword(character.Password, salt);
-                            character.Salt = salt;
-                            character.Password = null; // Clear the plaintext password
+                            character.EncryptedPassword = PasswordHelper.EncryptString(character.Password);
+                            character.Password = null;      // Clear old plaintext
+                            character.PasswordHash = null;  // Ensure old hash field is also cleared (though it should be null if Password was populated)
+                            character.Salt = null;          // Ensure old salt field is also cleared
                             settingsModified = true;
-                            System.Diagnostics.Debug.WriteLine($"Migrated password for character: {character.Username}");
                         }
                         catch (Exception ex)
                         {
-                            // Log or handle migration error for a specific character
-                            System.Diagnostics.Debug.WriteLine($"Error migrating password for character {character.Username}: {ex.Message}");
+                             System.Diagnostics.Debug.WriteLine($"Error encrypting plaintext password for character {character.Username}: {ex.Message}");
                         }
                     }
+                    else if (!string.IsNullOrEmpty(character.PasswordHash)) // No plaintext, but old hash exists
+                    {
+                        // Hashed password exists from intermediate version - cannot decrypt
+                        System.Diagnostics.Debug.WriteLine($"Character {character.Username} has a hashed password from a previous version. This password cannot be automatically migrated to the new encrypted format and must be re-entered in Settings.");
+                        character.PasswordHash = null;  // Clear unusable hash
+                        character.Salt = null;          // Clear associated salt
+                        settingsModified = true; // Mark as modified to save the cleared fields
+                    }
+                    // If EncryptedPassword is already populated, and Password/PasswordHash are null, nothing to do.
                 }
             }
 
             if (settingsModified)
             {
-                SaveSettings(_launcherSettings); // Persist migrated passwords
+                SaveSettings(_launcherSettings); // Persist migrated passwords and cleared old fields
             }
 
             UseDawndWindower = _launcherSettings.UseDawndWindower;
@@ -740,25 +748,31 @@ namespace UnoraLaunchpad
                 if (selectedItem == "All")
                 {
                     bool anyLaunched = false;
-                    foreach (var character in _launcherSettings.SavedCharacters.ToList()) // ToList to allow modification if needed, though not here
+                    foreach (var character in _launcherSettings.SavedCharacters.ToList())
                     {
-                        string password = ShowPasswordDialog(character.Username); // Placeholder
-                        if (!string.IsNullOrEmpty(password))
+                        if (!string.IsNullOrEmpty(character.EncryptedPassword))
                         {
-                            character.Password = password; // Temporarily set for LaunchAndLogin
-                            await LaunchAndLogin(character);
-                            character.Password = null; // Clear password after use
-                            anyLaunched = true;
+                            string decryptedPassword = PasswordHelper.DecryptString(character.EncryptedPassword);
+                            if (!string.IsNullOrEmpty(decryptedPassword))
+                            {
+                                character.Password = decryptedPassword; // Temporarily set for LaunchAndLogin
+                                await LaunchAndLogin(character);
+                                character.Password = null; // Clear password after use
+                                anyLaunched = true;
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Failed to decrypt password for {character.Username} during 'Launch All'. Skipping.");
+                            }
                         }
                         else
                         {
-                            Debug.WriteLine($"Password not provided for {character.Username}. Skipping launch.");
-                            // Optionally, inform user via a non-blocking message or log
+                            System.Diagnostics.Debug.WriteLine($"No encrypted password for {character.Username} during 'Launch All'. Skipping.");
                         }
                     }
                     if (!anyLaunched)
                     {
-                         MessageBox.Show("No accounts were launched. Ensure passwords are provided when prompted.", "Launch All", MessageBoxButton.OK, MessageBoxImage.Information);
+                         MessageBox.Show("No accounts could be launched. Check passwords in Settings or ensure they are saved correctly.", "Launch All", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
                 else // Specific character selected
@@ -766,16 +780,25 @@ namespace UnoraLaunchpad
                     var characterToLaunch = _launcherSettings.SavedCharacters.FirstOrDefault(c => c.Username == selectedItem);
                     if (characterToLaunch != null)
                     {
-                        string password = ShowPasswordDialog(characterToLaunch.Username); // Placeholder
-                        if (!string.IsNullOrEmpty(password))
+                        if (!string.IsNullOrEmpty(characterToLaunch.EncryptedPassword))
                         {
-                            characterToLaunch.Password = password; // Temporarily set for LaunchAndLogin
-                            await LaunchAndLogin(characterToLaunch);
-                            characterToLaunch.Password = null; // Clear password after use
+                            string decryptedPassword = PasswordHelper.DecryptString(characterToLaunch.EncryptedPassword);
+                            if (!string.IsNullOrEmpty(decryptedPassword))
+                            {
+                                characterToLaunch.Password = decryptedPassword; // Temporarily set for LaunchAndLogin
+                                await LaunchAndLogin(characterToLaunch);
+                                characterToLaunch.Password = null; // Clear password after use
+                            }
+                            else
+                            {
+                                MessageBox.Show($"Failed to decrypt password for {characterToLaunch.Username}. The password may be corrupted, or settings might have been moved from another user/computer. Please re-save the password in Settings.",
+                                                "Decryption Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            }
                         }
                         else
                         {
-                            MessageBox.Show($"Launch canceled for {characterToLaunch.Username} as no password was provided.", "Launch Canceled", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show($"No saved (encrypted) password found for {characterToLaunch.Username}. Please save the password in Settings.",
+                                            "Password Not Found", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                     }
                     else
@@ -784,14 +807,7 @@ namespace UnoraLaunchpad
                     }
                 }
             }
-            catch (NotImplementedException nie) // This catch block might no longer be necessary if the placeholder is fully replaced.
-                                                // However, other NotImplementedExceptions could occur if other parts are placeholders.
-                                                // For now, it's fine to leave it, or it can be removed if ShowPasswordDialog is the only source.
-                                                // Let's assume for now it might catch other issues, or we can remove it if confident.
-                                                // Given the task, this specific NIE for ShowPasswordDialog should be gone.
-            {
-                MessageBox.Show(this, $"Login for '{selectedItem}' requires password entry: {nie.Message}", "Password Dialog Missing", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            // Removed NotImplementedException catch block as ShowPasswordDialog is no longer called.
             catch (Exception ex)
             {
                 MessageBox.Show(this, $"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);

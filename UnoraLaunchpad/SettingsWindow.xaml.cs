@@ -166,14 +166,11 @@ internal sealed partial class SettingsWindow : Window
             return;
         }
 
-        var salt = PasswordHelper.GenerateSalt();
-        var hashedPassword = PasswordHelper.HashPassword(password, salt);
-
+        var encryptedPassword = PasswordHelper.EncryptString(password);
         var newAccount = new Character
         {
             Username = username,
-            PasswordHash = hashedPassword,
-            Salt = salt,
+            EncryptedPassword = encryptedPassword,
             Password = null // Ensure plaintext password is not stored
         };
         _settings.SavedCharacters.Add(newAccount);
@@ -208,9 +205,7 @@ internal sealed partial class SettingsWindow : Window
             // Only update password hash and salt if a new password is provided
             if (!string.IsNullOrWhiteSpace(updatedPassword))
             {
-                var salt = PasswordHelper.GenerateSalt();
-                selectedAccount.PasswordHash = PasswordHelper.HashPassword(updatedPassword, salt);
-                selectedAccount.Salt = salt;
+                selectedAccount.EncryptedPassword = PasswordHelper.EncryptString(updatedPassword);
                 selectedAccount.Password = null; // Ensure plaintext password is not stored
             }
             // If updatedPassword is blank, we assume the user does not want to change the password.

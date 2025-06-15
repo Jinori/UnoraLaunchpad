@@ -207,6 +207,24 @@
                    Visibility="Collapsed"
                    Margin="0,8,0,0"/>
     </Grid>
+
+    <!-- New "Launch Saved Clients" Button -->
+    <Button x:Name="LaunchSavedBtn"
+            Click="LaunchSavedBtn_Click"
+            Height="30"
+            Padding="10,0"
+            materialDesign:ButtonAssist.CornerRadius="5"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Foreground="{DynamicResource ButtonForegroundColor}"
+            Background="{DynamicResource ButtonBackgroundColor}"
+            Margin="0,0,110,0"
+            Style="{StaticResource MaterialDesignRaisedLightButton}"
+            ToolTip="Launch a client saved in Settings.">
+        <TextBlock Text="Launch Saved" />
+    </Button>
+
+    <!-- Existing Launch Button -->
     <Button x:Name="LaunchBtn"
             Click="Launch"
             Height="30"

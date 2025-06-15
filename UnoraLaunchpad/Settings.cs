@@ -1,4 +1,6 @@
-﻿namespace UnoraLaunchpad;
+﻿using System.Collections.Generic; // Required for List
+
+namespace UnoraLaunchpad;
 
 public sealed class Settings
 {
@@ -11,4 +13,5 @@ public sealed class Settings
     public double WindowWidth { get; set; }
     public double WindowTop { get; set; }
     public double WindowLeft { get; set; }
+    public List<Character> SavedCharacters { get; set; } = [];
 }

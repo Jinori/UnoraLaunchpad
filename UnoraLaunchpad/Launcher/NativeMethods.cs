@@ -175,6 +175,15 @@ internal static class NativeMethods
     public static extern bool GetClientRect(IntPtr hWnd, ref Rect rectangle);
     #endregion
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+    
     #region SetWindow
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int SetWindowText(IntPtr hWnd, string text);

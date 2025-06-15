@@ -33,6 +33,8 @@ internal sealed partial class SettingsWindow : Window
     private void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
     {
         LoadSettings();
+        // Add at the end of SettingsWindow_Loaded:
+        AccountsListBox_SelectionChanged(null, null); // To set initial state of buttons and textboxes
     }
 
     private void LoadSettings()
@@ -58,6 +60,15 @@ internal sealed partial class SettingsWindow : Window
         
         // Apply the loaded theme
         App.ChangeTheme(GetThemeUri(currentTheme));
+
+        // === Add these lines for account management ===
+        if (_settings.SavedCharacters == null) // Defensive check, though FileService should handle this
+        {
+            _settings.SavedCharacters = new List<Character>();
+        }
+        CharactersListBox.ItemsSource = _settings.SavedCharacters;
+        CharactersListBox.DisplayMemberPath = "Username";
+        // === End of new lines for account management ===
     }
 
 
@@ -114,5 +125,114 @@ internal sealed partial class SettingsWindow : Window
     {
         if (e.ChangedButton == MouseButton.Left)
             DragMove();
+    }
+
+    // New event handlers
+    private void AccountsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CharactersListBox.SelectedItem is Character selectedAccount)
+        {
+            UsernameTextBox.Text = selectedAccount.Username;
+            PasswordTextBox.Password = selectedAccount.Password;
+            EditAccountButton.IsEnabled = true;
+            RemoveAccountButton.IsEnabled = true;
+        }
+        else
+        {
+            UsernameTextBox.Text = string.Empty;
+            PasswordTextBox.Password = string.Empty;
+            EditAccountButton.IsEnabled = false;
+            RemoveAccountButton.IsEnabled = false;
+        }
+    }
+
+    private void AddCharacterButton_Click(object sender, RoutedEventArgs e)
+    {
+        var username = UsernameTextBox.Text.Trim();
+        var password = PasswordTextBox.Password;
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            MessageBox.Show("Username cannot be empty.", "Add Character", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        // Optional: Check for duplicate usernames
+        if (_settings.SavedCharacters.Any(acc => acc.Username.Equals(username, StringComparison.OrdinalIgnoreCase)))
+        {
+            MessageBox.Show("An character with this username already exists.", "Add Character", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var newAccount = new Character { Username = username, Password = password };
+        _settings.SavedCharacters.Add(newAccount);
+
+        RefreshCharactersListBox();
+        UsernameTextBox.Text = string.Empty;
+        PasswordTextBox.Password = string.Empty;
+    }
+
+    private void EditCharacterButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (CharactersListBox.SelectedItem is Character selectedAccount)
+        {
+            var updatedUsername = UsernameTextBox.Text.Trim();
+            var updatedPassword = PasswordTextBox.Password;
+
+            if (string.IsNullOrWhiteSpace(updatedUsername))
+            {
+                MessageBox.Show("Username cannot be empty.", "Update Account", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Optional: Check if username is changed to one that already exists (excluding itself)
+            if (!selectedAccount.Username.Equals(updatedUsername, StringComparison.OrdinalIgnoreCase) &&
+                _settings.SavedCharacters.Any(acc => acc != selectedAccount && acc.Username.Equals(updatedUsername, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("Another account with this username already exists.", "Update Account", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            selectedAccount.Username = updatedUsername;
+            selectedAccount.Password = updatedPassword;
+
+            RefreshCharactersListBox();
+            // Keep text boxes populated with edited info, user might want to edit further or deselect
+            // UsernameTextBox.Text = string.Empty;
+            // PasswordTextBox.Password = string.Empty;
+            // AccountsListBox.SelectedItem = null; // Deselect
+        }
+        else
+        {
+            MessageBox.Show("Please select an account to update.", "Update Account", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private void RemoveCharacterButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (CharactersListBox.SelectedItem is Character selectedAccount)
+        {
+            var result = MessageBox.Show($"Are you sure you want to remove the account '{selectedAccount.Username}'?",
+                                         "Remove Account", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Yes)
+            {
+                _settings.SavedCharacters.Remove(selectedAccount);
+                RefreshCharactersListBox();
+                UsernameTextBox.Text = string.Empty; // Clear after removal
+                PasswordTextBox.Password = string.Empty;
+            }
+        }
+        else
+        {
+            MessageBox.Show("Please select an account to remove.", "Remove Account", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    // Helper to refresh ListBox
+    private void RefreshCharactersListBox()
+    {
+        CharactersListBox.ItemsSource = null;
+        CharactersListBox.ItemsSource = _settings.SavedCharacters;
+        CharactersListBox.DisplayMemberPath = "Username";
     }
 }

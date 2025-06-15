@@ -11,10 +11,15 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
-using System.ComponentModel; // Added for CancelEventArgs
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Threading;
+using InputSimulatorStandard;
+using InputSimulatorStandard.Native; // Added for CancelEventArgs
 using UnoraLaunchpad.Definitions;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
+using MouseButton = System.Windows.Input.MouseButton;
 
 namespace UnoraLaunchpad
 {
@@ -635,6 +640,220 @@ namespace UnoraLaunchpad
 
         #endregion
 
+        private async void LaunchSavedBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ApplySettings(); // Ensure _launcherSettings and related properties are current
+
+            if (_launcherSettings.SavedCharacters == null || !_launcherSettings.SavedCharacters.Any())
+            {
+                MessageBox.Show("No saved accounts. Please add accounts via Settings.", "Launch Saved Client", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            Character characterToLaunch;
+            if (_launcherSettings.SavedCharacters.Count == 1)
+            {
+                characterToLaunch = _launcherSettings.SavedCharacters.First();
+            }
+            else
+            {
+                // For now, just take the first account if multiple exist.
+                // Future enhancement: Show a selection dialog.
+                characterToLaunch = _launcherSettings.SavedCharacters.First();
+                MessageBox.Show($"Multiple accounts found. Launching with the first account: '{characterToLaunch.Username}'.\nFull account selection will be implemented in a future update.", 
+                                "Multiple Accounts Notice", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+            if (characterToLaunch != null)
+            {
+                LaunchBtn.IsEnabled = false; // Disable launch buttons during operation
+                LaunchSavedBtn.IsEnabled = false;
+                await LaunchAndLogin(characterToLaunch);
+                LaunchBtn.IsEnabled = true; // Re-enable
+                LaunchSavedBtn.IsEnabled = true;
+            }
+        }
+
+        private async Task LaunchAndLogin(Character character)
+        {
+            Process gameProcess = null;
+            int gameProcessId = 0;
+            try
+            {
+                (var ipAddress, var serverPort) = GetServerConnection();
+                // Ensure _launcherSettings is used, ApplySettings() at start of LaunchSaveBtn_Click should handle this.
+                var selectedGame = _launcherSettings.SelectedGame ?? "Unora"; 
+                (var gameFolder, var gameExe) = GetGameLaunchInfo(selectedGame);
+                var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gameFolder, gameExe);
+
+                using (var suspendedProcess = SuspendedProcess.Start(exePath))
+                {
+                    gameProcessId = suspendedProcess.ProcessId; // Capture PID
+                    PatchClient(suspendedProcess, ipAddress, serverPort);
+
+                    // Use 'this.UseDawndWindower' which is synced by ApplySettings()
+                    if (this.UseDawndWindower) 
+                    {
+                        IntPtr processHandleForInjection = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, gameProcessId);
+                        if (processHandleForInjection != IntPtr.Zero)
+                        {
+                            InjectDll(processHandleForInjection);
+                            NativeMethods.CloseHandle(processHandleForInjection);
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"[LaunchAndLogin] Failed to open process for injection. Error: {NativeMethods.GetLastError()}");
+                        }
+                    }
+                } // suspendedProcess is disposed and resumed here
+
+                if (gameProcessId == 0) {
+                    MessageBox.Show("Failed to get game process ID during launch.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                try
+                {
+                    gameProcess = Process.GetProcessById(gameProcessId);
+                }
+                catch (ArgumentException) // Catches if process isn't running
+                {
+                    MessageBox.Show("Game process is not running after launch attempt. It might have crashed or failed to start.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                
+                if (gameProcess == null || gameProcess.HasExited) { 
+                    MessageBox.Show("Failed to start or patch the game process, or it exited prematurely.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                
+                // This method already waits for MainWindowHandle to be available
+                await RenameGameWindowAsync(gameProcess, selectedGame); 
+
+                if (gameProcess.MainWindowHandle == IntPtr.Zero)
+                {
+                    // If RenameGameWindowAsync didn't find it (it should have after its loop), try one more time.
+                    await Task.Delay(2000); 
+                    gameProcess.Refresh(); 
+                    if (gameProcess.MainWindowHandle == IntPtr.Zero) {
+                         MessageBox.Show("Game window handle could not be found. Cannot proceed with automated login.", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                         return;
+                    }
+                }
+                
+                await PerformAutomatedLogin(character.Username, character.Password, gameProcess);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while launching or logging in: {ex.Message}", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                LogException(ex); // MainWindow.LogException is static
+            }
+        }
+
+        private async Task PerformAutomatedLogin(string username, string password, Process gameProc)
+        {
+            try
+            {
+                if (gameProc.MainWindowHandle == IntPtr.Zero)
+                {
+                    gameProc.Refresh();
+                    await Task.Delay(1000);
+                    if (gameProc.MainWindowHandle == IntPtr.Zero)
+                    {
+                        MessageBox.Show("Game window not found for automated login (PerformAutomatedLogin).",
+                            "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                }
+
+                // Bring game window to the front
+                NativeMethods.SetForegroundWindow(gameProc.MainWindowHandle.ToInt32());
+                await Task.Delay(1000); // Allow window to focus
+
+                var inputSimulator = new InputSimulator();
+
+                // Simulate ENTER to start login sequence
+                await Task.Delay(200); // Let the login screen settle
+                BlockInput(true);
+                inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
+                await Task.Delay(500);
+
+                // Move mouse to simulated "Continue" button (approximate)
+                var screenPoint = GetRelativeScreenPoint(gameProc.MainWindowHandle, 0.20, 0.66);
+                MoveAndClickPoint(screenPoint);
+                await Task.Delay(500);
+
+                // Enter username
+                inputSimulator.Keyboard.TextEntry(username);
+                await Task.Delay(250);
+                inputSimulator.Keyboard.KeyPress(VirtualKeyCode.TAB);
+                await Task.Delay(400);
+
+                
+                // Enter password
+                foreach (var c in password)
+                {
+                    inputSimulator.Keyboard.KeyPress((VirtualKeyCode)VkKeyScan(c));
+                    await Task.Delay(50); // small delay to mimic natural typing
+                }
+
+                await Task.Delay(200);
+                inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Login automation failed: {ex.Message}", "Login Automation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                BlockInput(false); // Make absolutely sure to unblock input
+            }
+        }
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool BlockInput(bool fBlockIt);
+
+        
+        [DllImport("user32.dll")]
+        private static extern short VkKeyScan(char ch);
+
+        
+        [DllImport("user32.dll")]
+        private static extern bool SetCursorPos(int X, int Y);
+
+        [DllImport("user32.dll")]
+        private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
+
+        private const uint MouseeventfLeftdown = 0x0002;
+        private const uint MouseeventfLeftup = 0x0004;
+
+        private void MoveAndClickPoint(System.Drawing.Point point)
+        {
+            SetCursorPos(point.X, point.Y);
+            Thread.Sleep(100);
+            mouse_event(MouseeventfLeftdown, (uint)point.X, (uint)point.Y, 0, 0);
+            Thread.Sleep(50);
+            mouse_event(MouseeventfLeftup, (uint)point.X, (uint)point.Y, 0, 0);
+        }
+
+        
+        private System.Drawing.Point GetRelativeScreenPoint(IntPtr hwnd, double relativeX, double relativeY)
+        {
+            var rect = new NativeMethods.Rect();
+            if (!NativeMethods.GetWindowRect(hwnd, ref rect))
+                return new System.Drawing.Point(0, 0); // fallback if invalid
+
+            var width = rect.Right - rect.Left;
+            var height = rect.Bottom - rect.Top;
+
+            var screenX = rect.Left + (int)(width * relativeX);
+            var screenY = rect.Top + (int)(height * relativeY);
+
+            return new System.Drawing.Point(screenX, screenY);
+        }
+        
+        
         #region Game Updates
 
         private async void Launcher_Loaded(object sender, RoutedEventArgs e)

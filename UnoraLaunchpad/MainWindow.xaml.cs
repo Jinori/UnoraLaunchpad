@@ -16,6 +16,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using InputSimulatorStandard;
 using InputSimulatorStandard.Native; // Added for CancelEventArgs
+using UnoraLaunchpad; // Added for PasswordHelper and Character
 using UnoraLaunchpad.Definitions;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
@@ -67,6 +68,44 @@ namespace UnoraLaunchpad
             if (_launcherSettings == null)
             {
                 _launcherSettings = new Settings(); // Fallback to default settings if loading fails
+            }
+
+            // Ensure SavedCharacters list exists
+            if (_launcherSettings.SavedCharacters == null)
+            {
+                _launcherSettings.SavedCharacters = new System.Collections.Generic.List<Character>();
+            }
+
+            // Password migration logic
+            bool settingsModified = false;
+            if (_launcherSettings.SavedCharacters != null)
+            {
+                foreach (var character in _launcherSettings.SavedCharacters)
+                {
+                    // Check if migration is needed: has old plaintext password but no new hash
+                    if (string.IsNullOrEmpty(character.PasswordHash) && !string.IsNullOrEmpty(character.Password))
+                    {
+                        try
+                        {
+                            var salt = PasswordHelper.GenerateSalt();
+                            character.PasswordHash = PasswordHelper.HashPassword(character.Password, salt);
+                            character.Salt = salt;
+                            character.Password = null; // Clear the plaintext password
+                            settingsModified = true;
+                            System.Diagnostics.Debug.WriteLine($"Migrated password for character: {character.Username}");
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log or handle migration error for a specific character
+                            System.Diagnostics.Debug.WriteLine($"Error migrating password for character {character.Username}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            if (settingsModified)
+            {
+                SaveSettings(_launcherSettings); // Persist migrated passwords
             }
 
             UseDawndWindower = _launcherSettings.UseDawndWindower;
@@ -127,6 +166,30 @@ namespace UnoraLaunchpad
                 Left = Math.Min(Math.Max(0, _launcherSettings.WindowLeft), maxLeft);
                 Top = Math.Min(Math.Max(0, _launcherSettings.WindowTop), maxTop);
             }
+
+            RefreshSavedCharactersComboBox(); // Populate/update the ComboBox
+        }
+
+        private void RefreshSavedCharactersComboBox()
+        {
+            SavedCharactersComboBox.Items.Clear();
+            SavedCharactersComboBox.Items.Add("All");
+
+            if (_launcherSettings?.SavedCharacters != null && _launcherSettings.SavedCharacters.Any())
+            {
+                foreach (var character in _launcherSettings.SavedCharacters)
+                {
+                    SavedCharactersComboBox.Items.Add(character.Username);
+                }
+                // By default, "All" can remain selected or select the first actual character if desired.
+                // SavedCharactersComboBox.SelectedItem = _launcherSettings.SavedCharacters.First().Username;
+            }
+
+            // Ensure "All" is selected if it's the only item or by default.
+            SavedCharactersComboBox.SelectedItem = "All";
+
+            // Optionally, disable LaunchSavedBtn if no characters exist beyond "All"
+            LaunchSavedBtn.IsEnabled = _launcherSettings?.SavedCharacters != null && _launcherSettings.SavedCharacters.Any();
         }
 
 
@@ -470,7 +533,7 @@ namespace UnoraLaunchpad
         #region Launcher Core
         public async void ReloadSettingsAndRefresh()
         {
-            ApplySettings();           // Load settings from disk (SelectedGame, etc.)
+            ApplySettings();           // Load settings from disk (SelectedGame, etc.) / Repopulates ComboBox
             SetWindowTitle();          // Update the window title everywhere
             await LoadAndBindGameUpdates(); // Reload news/patches for the selected server
             await CheckForFileUpdates();    // Check/download updates for selected server
@@ -478,7 +541,7 @@ namespace UnoraLaunchpad
         }
         public void ReloadSettingsAndRefreshLocal()
         {
-            ApplySettings(); // Reloads from disk into _launcherSettings
+            ApplySettings(); // Reloads from disk into _launcherSettings / Repopulates ComboBox
             // Optionally: Re-fetch game updates and other game-specific info
             _ = LoadAndBindGameUpdates();
         }
@@ -640,37 +703,104 @@ namespace UnoraLaunchpad
 
         #endregion
 
+        // Placeholder for ShowPasswordDialog in MainWindow.xaml.cs
+        private string ShowPasswordDialog(string username)
+        {
+            // This method will be fully implemented in the next step
+            // using the PasswordPromptDialog.
+            // For now, this placeholder allows compilation of LaunchSavedBtn_Click.
+            PasswordPromptDialog dialog = new PasswordPromptDialog(username);
+            dialog.Owner = this; // Set the owner to the MainWindow instance
+            if (dialog.ShowDialog() == true) // ShowDialog() returns a bool? (nullable boolean)
+            {
+                return dialog.Password;
+            }
+            return null; // Or string.Empty, depending on how cancellation should be handled
+        }
+
         private async void LaunchSavedBtn_Click(object sender, RoutedEventArgs e)
         {
-            ApplySettings(); // Ensure _launcherSettings and related properties are current
+            // Ensure _launcherSettings is up-to-date (though ApplySettings usually handles this on load)
+            // ApplySettings(); // Not strictly needed here if UI always reflects current _launcherSettings
 
-            if (_launcherSettings.SavedCharacters == null || !_launcherSettings.SavedCharacters.Any())
+            var selectedItem = SavedCharactersComboBox.SelectedItem as string;
+
+            if (string.IsNullOrEmpty(selectedItem) || _launcherSettings?.SavedCharacters == null || !_launcherSettings.SavedCharacters.Any())
             {
-                MessageBox.Show("No saved accounts. Please add accounts via Settings.", "Launch Saved Client", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("No saved accounts or no account selected. Please add accounts via Settings or select one.",
+                                "Launch Saved Client", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            Character characterToLaunch;
-            if (_launcherSettings.SavedCharacters.Count == 1)
-            {
-                characterToLaunch = _launcherSettings.SavedCharacters.First();
-            }
-            else
-            {
-                // For now, just take the first account if multiple exist.
-                // Future enhancement: Show a selection dialog.
-                characterToLaunch = _launcherSettings.SavedCharacters.First();
-                MessageBox.Show($"Multiple accounts found. Launching with the first account: '{characterToLaunch.Username}'.\nFull account selection will be implemented in a future update.", 
-                                "Multiple Accounts Notice", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            LaunchBtn.IsEnabled = false;
+            LaunchSavedBtn.IsEnabled = false;
 
-            if (characterToLaunch != null)
+            try
             {
-                LaunchBtn.IsEnabled = false; // Disable launch buttons during operation
-                LaunchSavedBtn.IsEnabled = false;
-                await LaunchAndLogin(characterToLaunch);
-                LaunchBtn.IsEnabled = true; // Re-enable
-                LaunchSavedBtn.IsEnabled = true;
+                if (selectedItem == "All")
+                {
+                    bool anyLaunched = false;
+                    foreach (var character in _launcherSettings.SavedCharacters.ToList()) // ToList to allow modification if needed, though not here
+                    {
+                        string password = ShowPasswordDialog(character.Username); // Placeholder
+                        if (!string.IsNullOrEmpty(password))
+                        {
+                            character.Password = password; // Temporarily set for LaunchAndLogin
+                            await LaunchAndLogin(character);
+                            character.Password = null; // Clear password after use
+                            anyLaunched = true;
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"Password not provided for {character.Username}. Skipping launch.");
+                            // Optionally, inform user via a non-blocking message or log
+                        }
+                    }
+                    if (!anyLaunched)
+                    {
+                         MessageBox.Show("No accounts were launched. Ensure passwords are provided when prompted.", "Launch All", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+                else // Specific character selected
+                {
+                    var characterToLaunch = _launcherSettings.SavedCharacters.FirstOrDefault(c => c.Username == selectedItem);
+                    if (characterToLaunch != null)
+                    {
+                        string password = ShowPasswordDialog(characterToLaunch.Username); // Placeholder
+                        if (!string.IsNullOrEmpty(password))
+                        {
+                            characterToLaunch.Password = password; // Temporarily set for LaunchAndLogin
+                            await LaunchAndLogin(characterToLaunch);
+                            characterToLaunch.Password = null; // Clear password after use
+                        }
+                        else
+                        {
+                            MessageBox.Show($"Launch canceled for {characterToLaunch.Username} as no password was provided.", "Launch Canceled", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Selected character '{selectedItem}' not found. Please check settings.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (NotImplementedException nie) // This catch block might no longer be necessary if the placeholder is fully replaced.
+                                                // However, other NotImplementedExceptions could occur if other parts are placeholders.
+                                                // For now, it's fine to leave it, or it can be removed if ShowPasswordDialog is the only source.
+                                                // Let's assume for now it might catch other issues, or we can remove it if confident.
+                                                // Given the task, this specific NIE for ShowPasswordDialog should be gone.
+            {
+                MessageBox.Show(this, $"Login for '{selectedItem}' requires password entry: {nie.Message}", "Password Dialog Missing", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                LogException(ex);
+            }
+            finally
+            {
+                LaunchBtn.IsEnabled = true;
+                LaunchSavedBtn.IsEnabled = _launcherSettings?.SavedCharacters != null && _launcherSettings.SavedCharacters.Any(); // Re-enable based on if characters exist
             }
         }
 

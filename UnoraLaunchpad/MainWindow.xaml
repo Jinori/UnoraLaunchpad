@@ -208,21 +208,26 @@
                    Margin="0,8,0,0"/>
     </Grid>
 
-    <!-- New "Launch Saved Clients" Button -->
-    <Button x:Name="LaunchSavedBtn"
-            Click="LaunchSavedBtn_Click"
-            Height="30"
-            Padding="10,0"
-            materialDesign:ButtonAssist.CornerRadius="5"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Foreground="{DynamicResource ButtonForegroundColor}"
-            Background="{DynamicResource ButtonBackgroundColor}"
-            Margin="0,0,110,0"
-            Style="{StaticResource MaterialDesignRaisedLightButton}"
-            ToolTip="Launch a client saved in Settings.">
-        <TextBlock Text="Launch Saved" />
-    </Button>
+    <!-- StackPanel for ComboBox and LaunchSavedBtn -->
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,110,0">
+        <ComboBox x:Name="SavedCharactersComboBox"
+                  Width="120"
+                  Height="30"
+                  VerticalContentAlignment="Center"
+                  Margin="0,0,5,0"
+                  ToolTip="Select a saved character or 'All'" />
+        <Button x:Name="LaunchSavedBtn"
+                Click="LaunchSavedBtn_Click"
+                Height="30"
+                Padding="10,0"
+                materialDesign:ButtonAssist.CornerRadius="5"
+                Foreground="{DynamicResource ButtonForegroundColor}"
+                Background="{DynamicResource ButtonBackgroundColor}"
+                Style="{StaticResource MaterialDesignRaisedLightButton}"
+                ToolTip="Launch the selected saved client(s).">
+            <TextBlock Text="Launch Saved" />
+        </Button>
+    </StackPanel>
 
     <!-- Existing Launch Button -->
     <Button x:Name="LaunchBtn"

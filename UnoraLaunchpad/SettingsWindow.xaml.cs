@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnoraLaunchpad; // Added for PasswordHelper
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -133,7 +134,8 @@ internal sealed partial class SettingsWindow : Window
         if (CharactersListBox.SelectedItem is Character selectedAccount)
         {
             UsernameTextBox.Text = selectedAccount.Username;
-            PasswordTextBox.Password = selectedAccount.Password;
+            // PasswordTextBox.Password = selectedAccount.Password; // Password is no longer stored directly
+            PasswordTextBox.Password = ""; // Clear password box or prompt for change
             EditAccountButton.IsEnabled = true;
             RemoveAccountButton.IsEnabled = true;
         }
@@ -164,7 +166,16 @@ internal sealed partial class SettingsWindow : Window
             return;
         }
 
-        var newAccount = new Character { Username = username, Password = password };
+        var salt = PasswordHelper.GenerateSalt();
+        var hashedPassword = PasswordHelper.HashPassword(password, salt);
+
+        var newAccount = new Character
+        {
+            Username = username,
+            PasswordHash = hashedPassword,
+            Salt = salt,
+            Password = null // Ensure plaintext password is not stored
+        };
         _settings.SavedCharacters.Add(newAccount);
 
         RefreshCharactersListBox();
@@ -194,7 +205,16 @@ internal sealed partial class SettingsWindow : Window
             }
 
             selectedAccount.Username = updatedUsername;
-            selectedAccount.Password = updatedPassword;
+            // Only update password hash and salt if a new password is provided
+            if (!string.IsNullOrWhiteSpace(updatedPassword))
+            {
+                var salt = PasswordHelper.GenerateSalt();
+                selectedAccount.PasswordHash = PasswordHelper.HashPassword(updatedPassword, salt);
+                selectedAccount.Salt = salt;
+                selectedAccount.Password = null; // Ensure plaintext password is not stored
+            }
+            // If updatedPassword is blank, we assume the user does not want to change the password.
+            // The existing PasswordHash and Salt remain.
 
             RefreshCharactersListBox();
             // Keep text boxes populated with edited info, user might want to edit further or deselect

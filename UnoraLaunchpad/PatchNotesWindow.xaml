@@ -5,7 +5,11 @@
         Height="500"
         Width="700"
         ResizeMode="CanMinimize"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        TextElement.Foreground="{DynamicResource PrimaryTextColor}"
+        Background="{DynamicResource PrimaryBackgroundColor}"
+        BorderBrush="{DynamicResource PrimaryBorderColor}"
+        BorderThickness="2">
     <Grid Margin="10">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="PatchNotesPanel" />

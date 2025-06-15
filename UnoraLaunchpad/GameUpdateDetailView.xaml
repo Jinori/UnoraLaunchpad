@@ -5,16 +5,16 @@
         Height="500"
         Width="600"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
-        Background="White"
-        BorderBrush="Black"
+        Background="{DynamicResource PrimaryBackgroundColor}"
+        BorderBrush="{DynamicResource PrimaryBorderColor}"
         BorderThickness="2"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}">
 
-    <Grid Background="Black">
+    <Grid Background="{DynamicResource SecondaryBackgroundColor}">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" /> <!-- Custom Title Bar -->
             <RowDefinition Height="*" /> <!-- Main Content -->
@@ -23,13 +23,13 @@
 
         <!-- Custom Title Bar -->
         <Grid Grid.Row="0"
-              Background="#333"
+              Background="{DynamicResource TitleBarColor}"
               MouseDown="TitleBar_MouseDown">
             <Button HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Foreground="White"
-                    Background="Transparent"
-                    BorderBrush="Transparent"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
                     Padding="0"
                     Margin="5"
                     Click="CloseButton_Click"
@@ -43,6 +43,7 @@
                    VerticalAlignment="Center"
                    Margin="10,0" />
             <Label Content="Game Update Details"
+                   Foreground="{DynamicResource TitleBarTextColor}"
                    HorizontalAlignment="Left"
                    VerticalAlignment="Center"
                    Margin="40,0,0,0" />
@@ -50,22 +51,21 @@
 
         <!-- Main Content -->
         <ScrollViewer Grid.Row="1"
-                      Background="#444">
+                      Background="{DynamicResource TertiaryBackgroundColor}">
             <StackPanel Margin="10">
                 <TextBlock Text="{Binding Title}"
                            HorizontalAlignment="Center"
                            FontWeight="Bold"
                            FontSize="16"
-                           Foreground="White" />
+                           Foreground="{DynamicResource PrimaryTextColor}" />
 
                 <!-- Image within a box -->
-                <Border Width="500"
-                        Height="300"
-                        BorderBrush="White"
+                <Border BorderBrush="{DynamicResource PrimaryBorderColor}"
                         BorderThickness="2"
                         HorizontalAlignment="Center">
                     <Image Source="{Binding Image}"
-                           Stretch="Fill" />
+                           Stretch="Uniform"
+                           MaxHeight="300" />
                 </Border>
 
                 <TextBlock Text="{Binding LongDescription}"
@@ -73,14 +73,14 @@
                            VerticalAlignment="Center"
                            TextWrapping="Wrap"
                            FontSize="12"
-                           Foreground="White"
+                           Foreground="{DynamicResource PrimaryTextColor}"
                            Margin="0,25,0,0" />
             </StackPanel>
         </ScrollViewer>
 
         <!-- Bottom Bar -->
         <Grid Grid.Row="2"
-              Background="#333">
+              Background="{DynamicResource TitleBarColor}">
             <!-- Additional content for the bottom bar can be added here -->
         </Grid>
     </Grid>

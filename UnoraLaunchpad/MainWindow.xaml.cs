@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.ComponentModel; // Added for CancelEventArgs
 using UnoraLaunchpad.Definitions;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
@@ -98,6 +99,29 @@ namespace UnoraLaunchpad
                     break;
             }
             App.ChangeTheme(themeUri);
+
+            // Apply window dimensions if they are valid
+            if (_launcherSettings.WindowWidth > 0 && _launcherSettings.WindowHeight > 0)
+            {
+                Width = _launcherSettings.WindowWidth;
+                Height = _launcherSettings.WindowHeight;
+            }
+
+            // Apply window position if it's valid and on-screen
+            // Avoid applying if both Left and Top are 0, as this might be an uninitialized state
+            // or could make the window appear at an awkward default position for some systems.
+            // WindowStartupLocation="CenterScreen" in XAML handles initial centering if position is not set.
+            if (_launcherSettings.WindowLeft != 0 || _launcherSettings.WindowTop != 0)
+            {
+                // Ensure the window is placed mostly on screen.
+                // Use current Width/Height which might have been set from settings or default XAML values.
+                double maxLeft = SystemParameters.VirtualScreenWidth - Width;
+                double maxTop = SystemParameters.VirtualScreenHeight - Height;
+
+                // Basic clamp to ensure top-left is within screen and not excessively off-screen
+                Left = Math.Min(Math.Max(0, _launcherSettings.WindowLeft), maxLeft);
+                Top = Math.Min(Math.Max(0, _launcherSettings.WindowTop), maxTop);
+            }
         }
 
 
@@ -669,6 +693,22 @@ namespace UnoraLaunchpad
             UseLocalhost = _launcherSettings.UseLocalhost;
             SkipIntro = _launcherSettings.SkipIntro;
             // Note: SelectedTheme is handled by App.ChangeTheme and ApplySettings directly.
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            if (_launcherSettings != null)
+            {
+                // Only save size and position if the window is in its normal state
+                if (WindowState == WindowState.Normal)
+                {
+                    _launcherSettings.WindowHeight = ActualHeight;
+                    _launcherSettings.WindowWidth = ActualWidth;
+                    _launcherSettings.WindowTop = Top;
+                    _launcherSettings.WindowLeft = Left;
+                }
+                FileService.SaveSettings(_launcherSettings, LauncherSettingsPath);
+            }
         }
     }
 }

@@ -7,12 +7,13 @@
         xmlns:local="clr-namespace:UnoraLaunchpad"
         mc:Ignorable="d"
         Title="Unora Launcher"
-        Height="733"
-        Width="1000"
+        Height="585"
+        Width="800"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
         Loaded="Launcher_Loaded"
+        Closing="Window_Closing"
         TextElement.Foreground="{DynamicResource PrimaryTextColor}"
         Background="{DynamicResource PrimaryBackgroundColor}"
         BorderBrush="{DynamicResource PrimaryBorderColor}"
@@ -37,24 +38,22 @@
                 <Grid>
                     <!-- Image stretched to fill the entire Grid -->
                     <Image Source="{Binding Image}"
-                           Stretch="UniformToFill"
-                           d:DataContext="{d:DesignInstance }" />
+                           Stretch="UniformToFill" />
 
                     <!-- Text overlay in a Viewbox -->
                     <Viewbox HorizontalAlignment="Stretch"
                              VerticalAlignment="Bottom"
                              Margin="0"
-                             MaxHeight="40">
+                             MaxHeight="30">
                         <Label Padding="0"
                                Margin="0"
                                Content="{Binding Description}"
                                FontFamily="Segue UI"
-                               FontSize="30"
+                               FontSize="20"
                                Foreground="{DynamicResource GameTileTextColor}"
                                HorizontalAlignment="Stretch"
                                HorizontalContentAlignment="Center"
-                               Background="{DynamicResource GameTileDescriptionBackgroundColor}"
-                               d:DataContext="{d:DesignInstance }" />
+                               Background="{DynamicResource GameTileDescriptionBackgroundColor}" />
                     </Viewbox>
                 </Grid>
             </Border>
@@ -139,7 +138,13 @@
                           HorizontalAlignment="Stretch">
                 <ItemsControl Name="GameUpdatesControl"
                               ItemsSource="{Binding GameUpdates}"
-                              ItemTemplate="{StaticResource GameUpdateTileTemplate}" />
+                              ItemTemplate="{StaticResource GameUpdateTileTemplate}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel HorizontalAlignment="Center" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
             </ScrollViewer>
         </Grid>
 
@@ -163,8 +168,6 @@
                            FontWeight="Bold"
                            Foreground="{DynamicResource PrimaryTextColor}"
                            FontSize="14"
-                           MinWidth="180"
-                           MaxWidth="320"
                            TextTrimming="CharacterEllipsis"/>
             </StackPanel>
             <!-- Progress Bar -->
@@ -178,14 +181,12 @@
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="ProgressBytes"
                            Foreground="{DynamicResource SecondaryTextColor}"
-                           FontSize="12"
-                           MinWidth="110"/>
+                           FontSize="12"/>
                 <TextBlock Text="  " />
                 <TextBlock x:Name="ProgressSpeed"
                            Foreground="{DynamicResource AccentColor2}"
                            FontWeight="SemiBold"
-                           FontSize="12"
-                           MinWidth="70"/>
+                           FontSize="12"/>
             </StackPanel>
         </StackPanel>
         <!-- Status label, hidden except when showing -->
@@ -199,8 +200,8 @@
     </Grid>
     <Button x:Name="LaunchBtn"
             Click="Launch"
-            Width="150"
             Height="30"
+            Padding="10,0"
             materialDesign:ButtonAssist.CornerRadius="5"
             HorizontalAlignment="Right"
             VerticalAlignment="Center"

@@ -5,7 +5,7 @@
         Height="500"
         Width="600"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource PrimaryBackgroundColor}"
         BorderBrush="{DynamicResource PrimaryBorderColor}"
@@ -60,13 +60,12 @@
                            Foreground="{DynamicResource PrimaryTextColor}" />
 
                 <!-- Image within a box -->
-                <Border Width="500"
-                        Height="300"
-                        BorderBrush="{DynamicResource PrimaryBorderColor}"
+                <Border BorderBrush="{DynamicResource PrimaryBorderColor}"
                         BorderThickness="2"
                         HorizontalAlignment="Center">
                     <Image Source="{Binding Image}"
-                           Stretch="Fill" />
+                           Stretch="Uniform"
+                           MaxHeight="300" />
                 </Border>
 
                 <TextBlock Text="{Binding LongDescription}"

@@ -241,6 +241,10 @@ namespace UnoraLaunchpad
 
         private bool ConfirmUpdateProceed()
         {
+            if (UseLocalhost) // or this.UseLocalhost, or _launcherSettings.UseLocalhost
+            {
+                return true; // Skip showing the window if UseLocalhost is true
+            }
             var lockWindow = new UpdateLockWindow();
             var result = lockWindow.ShowDialog();
             return result == true;

@@ -13,8 +13,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.ComponentModel; // Added for CancelEventArgs
 using UnoraLaunchpad.Definitions;
-using UnoraLaunchpad.Models; // For Settings, GameUpdate, FileDetail, GameApiRoutes
-using UnoraLaunchpad.Utils; // Added for LoggingService, RelayCommand
+using UnoraLaunchpad.Utils; // Added for LoggingService
 using UnoraLaunchpad.Services;
 using UnoraLaunchpad.Interfaces; // Required for service interfaces
 using Application = System.Windows.Application;

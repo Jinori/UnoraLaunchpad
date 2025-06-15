@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using UnoraLaunchpad.Models; // Required for Settings
 
 namespace UnoraLaunchpad
 {

@@ -1,6 +1,6 @@
 using System;
 using System.Windows;
-using UnoraLaunchpad.Models;    // For Settings, GameUpdate
+using UnoraLaunchpad.Definitions; // For Settings, GameUpdate
 using UnoraLaunchpad.Interfaces; // Required for INavigationService
 
 namespace UnoraLaunchpad.Services

@@ -1,10 +1,10 @@
-namespace UnoraLaunchpad.Models; // Updated namespace
+namespace UnoraLaunchpad;
 
 /// <summary>
 /// Represents the details of a game file, typically obtained from a file manifest.
 /// Includes information such as the file's path, hash, and size.
 /// </summary>
-public sealed class FileDetail
+public sealed class FileDetail // Made class sealed
 {
     /// <summary>
     /// Gets or sets the relative path of the file within the game's directory structure.

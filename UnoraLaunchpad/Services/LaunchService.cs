@@ -6,11 +6,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Windows; // For MessageBox if UserNotifierService is not used directly for all messages
-using UnoraLaunchpad.Models;    // For Settings
-using UnoraLaunchpad.Launcher;  // For ClientVersion, SuspendedProcess, ProcessMemoryStream, RuntimePatcher
+using UnoraLaunchpad.Definitions; // For Settings, SuspendedProcess, etc.
 using UnoraLaunchpad.Interfaces; // Required for ILaunchService
-using UnoraLaunchpad.Utils;     // For NativeMethods, LoggingService
-// UnoraLaunchpad.Definitions is not directly used now, CONSTANTS etc. are in their respective places.
+using UnoraLaunchpad.Utils;     // For NativeMethods if still used directly by any moved logic, LoggingService
 
 namespace UnoraLaunchpad.Services
 {
@@ -107,8 +105,8 @@ namespace UnoraLaunchpad.Services
         private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
         {
             // Use CurrentSettings property
-            using var stream = new ProcessMemoryStream(process.ProcessId); // From UnoraLaunchpad.Launcher
-            using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true); // From UnoraLaunchpad.Launcher
+            using var stream = new ProcessMemoryStream(process.ProcessId);
+            using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true); // Assumes ClientVersion.Version741 is accessible
 
             if (serverIPAddress == null)
             {

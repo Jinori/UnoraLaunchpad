@@ -5,11 +5,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Unora Launcher"
-        Height="300"
-        Width="400"
+        Title="Settings"
+        Height="550"
+        Width="450"
         WindowStyle="None"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource PrimaryTextColor}"
         Background="{DynamicResource PrimaryBackgroundColor}"
@@ -61,59 +61,142 @@
                    VerticalAlignment="Center" />
         </Grid>
 
-<!-- Main Content -->
-<Grid Grid.Row="1"
-      Background="{DynamicResource SecondaryBackgroundColor}">
-    <StackPanel HorizontalAlignment="Center"
-                VerticalAlignment="Center">
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Background="{DynamicResource SecondaryBackgroundColor}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10">
 
-        <CheckBox x:Name="DawndCheckBox"
-                  Content="Use Dawnd Windower"
-                  Foreground="{DynamicResource IconForegroundColor}"
-                  Background="{DynamicResource PrimaryTextColor}"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center" />
+                    <!-- Existing settings like CheckBoxes and ComboBoxes -->
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top">
+                        <CheckBox x:Name="DawndCheckBox"
+                                  Content="Use Dawnd Windower"
+                                  Foreground="{DynamicResource IconForegroundColor}"
+                                  Background="{DynamicResource PrimaryTextColor}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
 
-        <CheckBox x:Name="SkipIntroCheckBox"
-                  Content="Skip Intro"
-                  Foreground="{DynamicResource IconForegroundColor}"
-                  Background="{DynamicResource PrimaryTextColor}"
-                  Margin="0,20, 0, 0"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center" />
+                        <CheckBox x:Name="SkipIntroCheckBox"
+                                  Content="Skip Intro"
+                                  Foreground="{DynamicResource IconForegroundColor}"
+                                  Background="{DynamicResource PrimaryTextColor}"
+                                  Margin="0,10,0,0"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-            <Label Content="Theme:" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextColor}"/>
-            <ComboBox x:Name="ThemeComboBox" Width="150" VerticalAlignment="Center" SelectionChanged="ThemeComboBox_SelectionChanged" Foreground="{DynamicResource IconForegroundColor}">
-                <ComboBoxItem Content="Amber"/>
-                <ComboBoxItem Content="Dark"/>
-                <ComboBoxItem Content="Emerald"/>
-                <ComboBoxItem Content="Light"/>
-                <ComboBoxItem Content="Teal"/>
-                <ComboBoxItem Content="Violet"/>
-            </ComboBox>
-        </StackPanel>
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,10,0,0">
+                            <Label Content="Theme:"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource PrimaryTextColor}" />
+                            <ComboBox x:Name="ThemeComboBox"
+                                      Width="150"
+                                      VerticalAlignment="Center"
+                                      SelectionChanged="ThemeComboBox_SelectionChanged"
+                                      Foreground="{DynamicResource IconForegroundColor}">
+                                <ComboBoxItem Content="Amber"/>
+                                <ComboBoxItem Content="Dark"/>
+                                <ComboBoxItem Content="Emerald"/>
+                                <ComboBoxItem Content="Light"/>
+                                <ComboBoxItem Content="Teal"/>
+                                <ComboBoxItem Content="Violet"/>
+                            </ComboBox>
+                        </StackPanel>
 
-        <!-- === NEW: Game Selector === -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-            <Label Content="Game:" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextColor}"/>
-            <ComboBox x:Name="GameComboBox" Width="150" VerticalAlignment="Center">
-                <ComboBoxItem Content="Unora"/>
-                <!-- Add more games here if needed -->
-            </ComboBox>
-        </StackPanel>
-        <!-- === END NEW === -->
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,10,0,0">
+                            <Label Content="Game:"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource PrimaryTextColor}" />
+                            <ComboBox x:Name="GameComboBox"
+                                      Width="150"
+                                      VerticalAlignment="Center">
+                                <ComboBoxItem Content="Unora"/>
+                                <!-- Add more games here if needed -->
+                            </ComboBox>
+                        </StackPanel>
+                        <CheckBox x:Name="LocalhostCheckBox"
+                                  Foreground="{DynamicResource IconForegroundColor}"
+                                  Background="{DynamicResource PrimaryTextColor}"
+                                  Margin="0,20,0,0"
+                                  Content="Localhost"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+                    </StackPanel>
 
-        <CheckBox x:Name="LocalhostCheckBox"
-                  Foreground="{DynamicResource IconForegroundColor}"
-                  Background="{DynamicResource PrimaryTextColor}"
-                  Margin="0,60, 0, 0"
-                  Content="Localhost"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center" />
-    </StackPanel>
-</Grid>
-
+                    <!-- New Account Management Section -->
+                    <GroupBox Header="Saved Accounts"
+                              Margin="0,20,0,0"
+                              Foreground="{DynamicResource PrimaryTextColor}"
+                              BorderBrush="{DynamicResource PrimaryBorderColor}">
+                        <StackPanel>
+                            <ListBox x:Name="AccountsListBox"
+                                     Height="100"
+                                     Margin="5"
+                                     Background="{DynamicResource SecondaryBackgroundColor}"
+                                     Foreground="{DynamicResource PrimaryTextColor}"
+                                     BorderBrush="{DynamicResource PrimaryBorderColor}"
+                                     SelectionChanged="AccountsListBox_SelectionChanged"/>
+                            <Grid Margin="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0"
+                                            Margin="0,0,10,0">
+                                    <TextBlock Text="Username:"
+                                               Foreground="{DynamicResource PrimaryTextColor}" />
+                                    <TextBox x:Name="UsernameTextBox"
+                                             Background="{DynamicResource SecondaryBackgroundColor}"
+                                             Foreground="{DynamicResource PrimaryTextColor}"
+                                             BorderBrush="{DynamicResource PrimaryBorderColor}" />
+                                    <TextBlock Text="Password:"
+                                               Margin="0,5,0,0"
+                                               Foreground="{DynamicResource PrimaryTextColor}" />
+                                    <PasswordBox x:Name="PasswordTextBox"
+                                                 Background="{DynamicResource SecondaryBackgroundColor}"
+                                                 Foreground="{DynamicResource PrimaryTextColor}"
+                                                 BorderBrush="{DynamicResource PrimaryBorderColor}" />
+                                </StackPanel>
+                                <Button x:Name="AddAccountButton"
+                                        Content="Add"
+                                        Grid.Column="1"
+                                        Click="AddAccountButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                                <Button x:Name="EditAccountButton"
+                                        Content="Update"
+                                        Grid.Column="2"
+                                        Click="EditAccountButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                                <Button x:Name="RemoveAccountButton"
+                                        Content="Remove"
+                                        Grid.Column="3"
+                                        Click="RemoveAccountButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
 
         <!-- Bottom Bar -->
         <Grid Grid.Row="2"

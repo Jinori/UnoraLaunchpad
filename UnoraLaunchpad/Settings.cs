@@ -1,3 +1,5 @@
+using System.Collections.Generic; // Required for List
+
 ﻿namespace UnoraLaunchpad;
 
 public sealed class Settings
@@ -11,4 +13,5 @@ public sealed class Settings
     public double WindowWidth { get; set; }
     public double WindowTop { get; set; }
     public double WindowLeft { get; set; }
+    public List<Account> SavedAccounts { get; set; } = new List<Account>(); // Added this line
 }

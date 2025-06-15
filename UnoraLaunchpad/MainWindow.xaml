@@ -75,7 +75,16 @@
         <Grid Grid.Row="0"
               Background="{DynamicResource TitleBarColor}"
               MouseDown="TitleBar_MouseDown">
-            <!-- Settings Button -->
+            <!-- Patch Notes Button -->
+            <Button HorizontalAlignment="Right"
+                    Margin="0, 0, 190, 0"
+                    Click="PatchNotesButton_Click"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
+                <materialDesign:PackIcon Kind="Assignment" />
+            </Button>
+            <!-- Discord Button -->
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 147, 0"
                     Click="DiscordButton_Click"

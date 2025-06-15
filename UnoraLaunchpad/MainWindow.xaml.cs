@@ -125,6 +125,14 @@ namespace UnoraLaunchpad
         }
 
 
+        private void PatchNotesButton_Click(object sender, RoutedEventArgs e)
+        {
+            var patchWindow = new PatchNotesWindow();
+            patchWindow.Owner = this;
+            patchWindow.ShowDialog();
+        }
+
+        
         /// <summary>
         /// Calculates an MD5 hash for a file.
         /// </summary>
@@ -694,7 +702,7 @@ namespace UnoraLaunchpad
             SkipIntro = _launcherSettings.SkipIntro;
             // Note: SelectedTheme is handled by App.ChangeTheme and ApplySettings directly.
         }
-
+        
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (_launcherSettings != null)

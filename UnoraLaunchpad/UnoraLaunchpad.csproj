@@ -55,6 +55,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GameApiRoutes.cs" />
+    <Compile Include="PatchNotesWindow.xaml.cs">
+      <DependentUpon>PatchNotesWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SwirlLoader.xaml.cs">
       <DependentUpon>SwirlLoader.xaml</DependentUpon>
     </Compile>
@@ -105,6 +108,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="PatchNotesWindow.xaml" />
     <Page Include="Resources\AmberTheme.xaml" />
     <Page Include="Resources\DarkTheme.xaml" />
     <Page Include="Resources\EmeraldTheme.xaml" />

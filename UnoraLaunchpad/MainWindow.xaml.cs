@@ -405,10 +405,12 @@ namespace UnoraLaunchpad
             {
                 DownloadProgressPanel.Visibility = Visibility.Visible;
                 StatusLabel.Visibility = Visibility.Collapsed;
-                LaunchBtn.IsEnabled = false;
+                LaunchSavedBtn.Visibility = Visibility.Collapsed;
+                LaunchBtn.Visibility = Visibility.Collapsed;
+                DiamondText.Visibility = Visibility.Collapsed;
+                SavedCharactersComboBox.Visibility = Visibility.Collapsed;
                 ProgressFileName.Text = string.Empty;
                 ProgressBytes.Text = "Checking for updates...";
-                ProgressSpeed.Text = string.Empty;
                 DownloadProgressBar.IsIndeterminate = true;
             });
 
@@ -419,7 +421,10 @@ namespace UnoraLaunchpad
             DownloadProgressPanel.Visibility = Visibility.Collapsed;
             StatusLabel.Text = "Update complete.";
             StatusLabel.Visibility = Visibility.Visible;
-            LaunchBtn.IsEnabled = true;
+            LaunchSavedBtn.Visibility = Visibility.Visible;
+            LaunchBtn.Visibility = Visibility.Visible;
+            DiamondText.Visibility = Visibility.Visible;
+            SavedCharactersComboBox.Visibility = Visibility.Visible;
         }
 
         private void PrepareProgressBar(long totalBytesToDownload) =>
@@ -427,7 +432,6 @@ namespace UnoraLaunchpad
             {
                 ProgressFileName.Text = string.Empty;
                 ProgressBytes.Text = "Applying updates...";
-                ProgressSpeed.Text = string.Empty;
                 DownloadProgressBar.IsIndeterminate = false;
                 DownloadProgressBar.Minimum = 0;
                 DownloadProgressBar.Maximum = totalBytesToDownload > 0 ? totalBytesToDownload : 1;
@@ -438,7 +442,6 @@ namespace UnoraLaunchpad
             {
                 ProgressFileName.Text = fileName;
                 ProgressBytes.Text = $"{FormatBytes(downloaded)} of {FormatBytes(total)}";
-                ProgressSpeed.Text = string.Empty;
                 DownloadProgressBar.Value = downloaded;
             });
 
@@ -451,7 +454,6 @@ namespace UnoraLaunchpad
             {
                 ProgressBytes.Text =
                     $"{FormatBytes(totalDownloaded + bytesReceived)} of {FormatBytes(totalBytesToDownload)}";
-                ProgressSpeed.Text = $"@ {FormatSpeed(speedBytesPerSec)}";
                 DownloadProgressBar.Value = totalDownloaded + bytesReceived;
             });
 

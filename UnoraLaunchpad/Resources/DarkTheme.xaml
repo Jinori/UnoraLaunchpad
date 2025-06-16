@@ -26,7 +26,6 @@
 
     <!-- Accent Colors -->
     <SolidColorBrush x:Key="AccentColor1" Color="#FFC107"/> <!-- Yellowish, e.g., ProgressBar Foreground -->
-    <SolidColorBrush x:Key="AccentColor2" Color="#48F772"/> <!-- Greenish, e.g., ProgressSpeed Text -->
 
     <!-- Game Update Tile Specific -->
     <SolidColorBrush x:Key="GameTileBackgroundColor" Color="#444444"/>

@@ -18,7 +18,17 @@ internal sealed partial class SettingsWindow : Window
         { "Teal",  "pack://application:,,,/Resources/TealTheme.xaml" },
         { "Violet", "pack://application:,,,/Resources/VioletTheme.xaml" },
         { "Amber", "pack://application:,,,/Resources/AmberTheme.xaml" },
-        { "Emerald", "pack://application:,,,/Resources/EmeraldTheme.xaml" }
+        { "Emerald", "pack://application:,,,/Resources/EmeraldTheme.xaml" },
+        { "Ruby", "pack://application:,,,/Resources/RubyTheme.xaml" },
+        { "Sapphire", "pack://application:,,,/Resources/SapphireTheme.xaml" },
+        { "Topaz", "pack://application:,,,/Resources/TopazTheme.xaml" },
+        { "Amethyst", "pack://application:,,,/Resources/AmethystTheme.xaml" },
+        { "Garnet", "pack://application:,,,/Resources/GarnetTheme.xaml" },
+        { "Pearl", "pack://application:,,,/Resources/PearlTheme.xaml" },
+        { "Obsidian", "pack://application:,,,/Resources/ObsidianTheme.xaml" },
+        { "Citrine", "pack://application:,,,/Resources/CitrineTheme.xaml" },
+        { "Peridot", "pack://application:,,,/Resources/PeridotTheme.xaml" },
+        { "Aquamarine", "pack://application:,,,/Resources/AquamarineTheme.xaml" }
     };
 
 

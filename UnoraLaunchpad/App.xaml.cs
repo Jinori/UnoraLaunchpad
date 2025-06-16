@@ -63,6 +63,16 @@ namespace UnoraLaunchpad
                 "Violet"  => "VioletTheme.xaml",
                 "Amber"   => "AmberTheme.xaml",
                 "Emerald" => "EmeraldTheme.xaml",
+                "Ruby"    => "RubyTheme.xaml",
+                "Sapphire" => "SapphireTheme.xaml",
+                "Topaz"   => "TopazTheme.xaml",
+                "Amethyst" => "AmethystTheme.xaml",
+                "Garnet"  => "GarnetTheme.xaml",
+                "Pearl"   => "PearlTheme.xaml",
+                "Obsidian" => "ObsidianTheme.xaml",
+                "Citrine" => "CitrineTheme.xaml",
+                "Peridot" => "PeridotTheme.xaml",
+                "Aquamarine" => "AquamarineTheme.xaml",
                 _         => "DarkTheme.xaml"
             };
 

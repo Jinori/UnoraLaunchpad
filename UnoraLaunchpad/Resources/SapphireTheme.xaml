@@ -1,0 +1,44 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Background Colors -->
+    <SolidColorBrush x:Key="PrimaryBackgroundColor" Color="#001F3B"/>
+    <SolidColorBrush x:Key="SecondaryBackgroundColor" Color="#003366"/>
+    <SolidColorBrush x:Key="TertiaryBackgroundColor" Color="#004080"/>
+
+    <!-- Title Bar Colors -->
+    <SolidColorBrush x:Key="TitleBarColor" Color="#0059b3"/>
+    <SolidColorBrush x:Key="TitleBarTextColor" Color="#D1E0FF"/>
+
+    <!-- Text Colors -->
+    <SolidColorBrush x:Key="PrimaryTextColor" Color="#D1E0FF"/>
+    <SolidColorBrush x:Key="SecondaryTextColor" Color="#B3CCFF"/>
+    <SolidColorBrush x:Key="IconForegroundColor" Color="#B3CCFF"/>
+
+    <!-- Button Colors -->
+    <SolidColorBrush x:Key="ButtonBackgroundColor" Color="#0059b3"/>
+    <SolidColorBrush x:Key="ButtonForegroundColor" Color="#D1E0FF"/>
+    <SolidColorBrush x:Key="ButtonTransparentBackgroundColor" Color="Transparent"/>
+
+    <!-- Border Colors -->
+    <SolidColorBrush x:Key="PrimaryBorderColor" Color="#B3CCFF"/>
+    <SolidColorBrush x:Key="SecondaryBorderColor" Color="#0059b3"/>
+
+    <!-- Accent Colors -->
+    <SolidColorBrush x:Key="AccentColor1" Color="#007FFF"/> <!-- Bright Blue -->
+    <SolidColorBrush x:Key="AccentColor2" Color="#0066CC"/>
+
+    <!-- Game Update Tile Specific -->
+    <SolidColorBrush x:Key="GameTileBackgroundColor" Color="#003366"/>
+    <SolidColorBrush x:Key="GameTileBorderColor" Color="#B3CCFF"/>
+    <SolidColorBrush x:Key="GameTileTextColor" Color="#D1E0FF"/>
+    <SolidColorBrush x:Key="GameTileDescriptionBackgroundColor" Color="#99001F3B"/>
+
+    <!-- MaterialDesign Checkbox Colors -->
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxOff" Color="#B3CCFF"/>
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxChecked" Color="#007FFF"/>
+    <SolidColorBrush x:Key="MaterialDesignCheckBoxDisabled" Color="#0059b3"/>
+    <SolidColorBrush x:Key="MaterialDesignBody" Color="#D1E0FF"/>
+    <SolidColorBrush x:Key="MaterialDesignBodyLight" Color="#B3CCFF"/>
+    <SolidColorBrush x:Key="MaterialDesignPaper" Color="#003366"/>
+</ResourceDictionary>

@@ -95,10 +95,20 @@
                                       SelectionChanged="ThemeComboBox_SelectionChanged"
                                       Foreground="{DynamicResource IconForegroundColor}">
                                 <ComboBoxItem Content="Amber"/>
+                                <ComboBoxItem Content="Amethyst"/>
+                                <ComboBoxItem Content="Aquamarine"/>
+                                <ComboBoxItem Content="Citrine"/>
                                 <ComboBoxItem Content="Dark"/>
                                 <ComboBoxItem Content="Emerald"/>
+                                <ComboBoxItem Content="Garnet"/>
                                 <ComboBoxItem Content="Light"/>
+                                <ComboBoxItem Content="Obsidian"/>
+                                <ComboBoxItem Content="Pearl"/>
+                                <ComboBoxItem Content="Peridot"/>
+                                <ComboBoxItem Content="Ruby"/>
+                                <ComboBoxItem Content="Sapphire"/>
                                 <ComboBoxItem Content="Teal"/>
+                                <ComboBoxItem Content="Topaz"/>
                                 <ComboBoxItem Content="Violet"/>
                             </ComboBox>
                         </StackPanel>

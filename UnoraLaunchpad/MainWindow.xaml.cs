@@ -136,6 +136,36 @@ namespace UnoraLaunchpad
                 case "Emerald":
                     themeUri = new Uri("pack://application:,,,/Resources/EmeraldTheme.xaml", UriKind.Absolute);
                     break;
+                case "Ruby":
+                    themeUri = new Uri("pack://application:,,,/Resources/RubyTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Sapphire":
+                    themeUri = new Uri("pack://application:,,,/Resources/SapphireTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Topaz":
+                    themeUri = new Uri("pack://application:,,,/Resources/TopazTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Amethyst":
+                    themeUri = new Uri("pack://application:,,,/Resources/AmethystTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Garnet":
+                    themeUri = new Uri("pack://application:,,,/Resources/GarnetTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Pearl":
+                    themeUri = new Uri("pack://application:,,,/Resources/PearlTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Obsidian":
+                    themeUri = new Uri("pack://application:,,,/Resources/ObsidianTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Citrine":
+                    themeUri = new Uri("pack://application:,,,/Resources/CitrineTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Peridot":
+                    themeUri = new Uri("pack://application:,,,/Resources/PeridotTheme.xaml", UriKind.Absolute);
+                    break;
+                case "Aquamarine":
+                    themeUri = new Uri("pack://application:,,,/Resources/AquamarineTheme.xaml", UriKind.Absolute);
+                    break;
                 default:
                     themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
                     break;

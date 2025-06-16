@@ -119,6 +119,16 @@
     <Page Include="Resources\LightTheme.xaml" />
     <Page Include="Resources\TealTheme.xaml" />
     <Page Include="Resources\VioletTheme.xaml" />
+    <Page Include="Resources\RubyTheme.xaml" />
+    <Page Include="Resources\SapphireTheme.xaml" />
+    <Page Include="Resources\TopazTheme.xaml" />
+    <Page Include="Resources\AmethystTheme.xaml" />
+    <Page Include="Resources\GarnetTheme.xaml" />
+    <Page Include="Resources\PearlTheme.xaml" />
+    <Page Include="Resources\ObsidianTheme.xaml" />
+    <Page Include="Resources\CitrineTheme.xaml" />
+    <Page Include="Resources\PeridotTheme.xaml" />
+    <Page Include="Resources\AquamarineTheme.xaml" />
     <Page Include="SettingsWindow.xaml" />
     <Page Include="SwirlLoader.xaml" />
     <Page Include="UpdateLockWIndow.xaml" />

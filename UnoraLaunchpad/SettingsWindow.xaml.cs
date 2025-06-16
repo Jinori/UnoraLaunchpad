@@ -226,7 +226,7 @@ internal sealed partial class SettingsWindow : Window
     {
         if (CharactersListBox.SelectedItem is Character selectedAccount)
         {
-            var result = MessageBox.Show($"Are you sure you want to remove the account '{selectedAccount.Username}'?",
+            var result = MessageBox.Show($"Are you sure you want to remove the character '{selectedAccount.Username}'?",
                                          "Remove Account", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes)
             {

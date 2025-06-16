@@ -85,16 +85,17 @@ namespace UnoraLaunchpad
                     if (!string.IsNullOrEmpty(character.Password)) // Plaintext password exists (oldest format)
                     {
                         // Prioritize migrating plaintext if it exists
-                        System.Diagnostics.Debug.WriteLine($"Migrating plaintext password for character: {character.Username} to encrypted format.");
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Migrating plaintext password for character: {character.Username} to encrypted format.");
                         try
                         {
                             character.EncryptedPassword = PasswordHelper.EncryptString(character.Password);
-                            character.Password = null;      // Clear old plaintext
+                            character.Password = null; // Clear old plaintext
                             settingsModified = true;
                         }
                         catch (Exception ex)
                         {
-                             
+
                         }
                     }
                     // If EncryptedPassword is already populated, and Password/PasswordHash are null, nothing to do.
@@ -140,6 +141,7 @@ namespace UnoraLaunchpad
                     themeUri = new Uri("pack://application:,,,/Resources/DarkTheme.xaml", UriKind.Absolute);
                     break;
             }
+
             App.ChangeTheme(themeUri);
 
             // Apply window dimensions if they are valid
@@ -187,7 +189,8 @@ namespace UnoraLaunchpad
             SavedCharactersComboBox.SelectedItem = "All";
 
             // Optionally, disable LaunchSavedBtn if no characters exist beyond "All"
-            LaunchSavedBtn.IsEnabled = _launcherSettings?.SavedCharacters != null && _launcherSettings.SavedCharacters.Any();
+            LaunchSavedBtn.IsEnabled =
+                _launcherSettings?.SavedCharacters != null && _launcherSettings.SavedCharacters.Any();
         }
 
 
@@ -198,7 +201,7 @@ namespace UnoraLaunchpad
             patchWindow.ShowDialog();
         }
 
-        
+
         /// <summary>
         /// Calculates an MD5 hash for a file.
         /// </summary>
@@ -221,7 +224,8 @@ namespace UnoraLaunchpad
 
             if (serverVersion != localVersion)
             {
-                var bootstrapperPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Unora\\UnoraBootstrapper.exe");
+                var bootstrapperPath =
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Unora\\UnoraBootstrapper.exe");
                 var currentLauncherPath = Process.GetCurrentProcess().MainModule!.FileName!;
                 var currentProcessId = Process.GetCurrentProcess().Id;
 
@@ -299,8 +303,10 @@ namespace UnoraLaunchpad
 
                     try
                     {
-                        await UnoraClient.DownloadFileAsync(apiRoutes.GameFile(fileDetail.RelativePath), filePath, progress);
-                    } catch (Exception ex)
+                        await UnoraClient.DownloadFileAsync(apiRoutes.GameFile(fileDetail.RelativePath), filePath,
+                            progress);
+                    }
+                    catch (Exception ex)
                     {
                         Debug.WriteLine($"[Launcher] Download failed: {ex.Message}");
                         ShowMessage($"Failed to download {fileDetail.RelativePath}: {ex.Message}", "Update Error");
@@ -329,7 +335,7 @@ namespace UnoraLaunchpad
 
         private string GetFilePath(string relativePath) =>
             Path.Combine(_launcherSettings?.SelectedGame ?? CONSTANTS.UNORA_FOLDER_NAME, relativePath);
-        
+
         private void EnsureDirectoryExists(string filePath)
         {
             var directory = Path.GetDirectoryName(filePath)!;
@@ -343,6 +349,7 @@ namespace UnoraLaunchpad
             {
                 return true; // Skip showing the window if UseLocalhost is true
             }
+
             var lockWindow = new UpdateLockWindow();
             var result = lockWindow.ShowDialog();
 
@@ -412,10 +419,12 @@ namespace UnoraLaunchpad
             double speedBytesPerSec) =>
             Dispatcher.Invoke(() =>
             {
-                ProgressBytes.Text = $"{FormatBytes(totalDownloaded + bytesReceived)} of {FormatBytes(totalBytesToDownload)}";
+                ProgressBytes.Text =
+                    $"{FormatBytes(totalDownloaded + bytesReceived)} of {FormatBytes(totalBytesToDownload)}";
                 ProgressSpeed.Text = $"@ {FormatSpeed(speedBytesPerSec)}";
                 DownloadProgressBar.Value = totalDownloaded + bytesReceived;
             });
+
         #endregion
 
         #region Formatting
@@ -454,25 +463,30 @@ namespace UnoraLaunchpad
             if (_launcherSettings == null)
             {
                 // Attempt to load or use defaults if ApplySettings hasn't run or failed
-                try {
+                try
+                {
                     _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
                     if (_launcherSettings == null) // If still null after attempting load
                     {
                         _launcherSettings = new Settings(); // Fallback to default settings
                     }
-                } catch { 
+                }
+                catch
+                {
                     _launcherSettings = new Settings(); // Fallback to default settings on error
                 }
             }
+
             var settingsWindow = new SettingsWindow(this, _launcherSettings);
             settingsWindow.Owner = this; // Ensure SettingsWindow is owned by MainWindow
             settingsWindow.Show();
         }
-        
+
         private void InitializeTrayIcon()
         {
             // Create an icon from a resource
-            var iconUri = new Uri("pack://application:,,,/UnoraLaunchpad;component/favicon.ico", UriKind.RelativeOrAbsolute);
+            var iconUri = new Uri("pack://application:,,,/UnoraLaunchpad;component/favicon.ico",
+                UriKind.RelativeOrAbsolute);
             var iconStream = Application.GetResourceStream(iconUri)?.Stream;
 
             if (iconStream != null)
@@ -529,14 +543,16 @@ namespace UnoraLaunchpad
         #endregion
 
         #region Launcher Core
+
         public async void ReloadSettingsAndRefresh()
         {
-            ApplySettings();           // Load settings from disk (SelectedGame, etc.) / Repopulates ComboBox
-            SetWindowTitle();          // Update the window title everywhere
+            ApplySettings(); // Load settings from disk (SelectedGame, etc.) / Repopulates ComboBox
+            SetWindowTitle(); // Update the window title everywhere
             await LoadAndBindGameUpdates(); // Reload news/patches for the selected server
-            await CheckForFileUpdates();    // Check/download updates for selected server
+            await CheckForFileUpdates(); // Check/download updates for selected server
             Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
         }
+
         public void ReloadSettingsAndRefreshLocal()
         {
             ApplySettings(); // Reloads from disk into _launcherSettings / Repopulates ComboBox
@@ -548,7 +564,7 @@ namespace UnoraLaunchpad
             // You can load this from a config file for extensibility if needed.
             selectedGame switch
             {
-                "Unora"   => ("Unora", "Unora.exe"),
+                "Unora" => ("Unora", "Unora.exe"),
                 "Legends" => ("Legends", "Client.exe"),
                 // Add more as needed
                 _ => ("Unora", "Unora.exe") // Fallback
@@ -569,7 +585,7 @@ namespace UnoraLaunchpad
 
             try
             {
-                PatchClient(process, ipAddress, serverPort);
+                PatchClient(process, ipAddress, serverPort, false);
 
                 if (UseDawndWindower)
                 {
@@ -609,7 +625,7 @@ namespace UnoraLaunchpad
             return ipAddresses.FirstOrDefault();
         }
 
-        private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort)
+        private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort, bool autologin)
         {
             using var stream = new ProcessMemoryStream(process.ProcessId);
             using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true);
@@ -617,7 +633,7 @@ namespace UnoraLaunchpad
             patcher.ApplyServerHostnamePatch(serverIPAddress);
             patcher.ApplyServerPortPatch(serverPort);
 
-            if (SkipIntro)
+            if (SkipIntro || autologin)
                 patcher.ApplySkipIntroVideoPatch();
 
             patcher.ApplyMultipleInstancesPatch();
@@ -657,7 +673,8 @@ namespace UnoraLaunchpad
 
             if (result != WaitEventResult.Signaled)
             {
-                MessageBox.Show(this, "Injection thread timed out, or signaled incorrectly. Try again...", "Injection Error");
+                MessageBox.Show(this, "Injection thread timed out, or signaled incorrectly. Try again...",
+                    "Injection Error");
                 if (thread != IntPtr.Zero)
                     NativeMethods.CloseHandle(thread);
                 return;
@@ -679,6 +696,7 @@ namespace UnoraLaunchpad
                     NativeMethods.SetWindowText(process.MainWindowHandle, newTitle);
                     break;
                 }
+
                 await Task.Delay(100);
             }
         }
@@ -689,8 +707,8 @@ namespace UnoraLaunchpad
             var title = selectedGame switch
             {
                 "Legends" => "Legends: Age of Chaos",
-                "Unora"   => "Unora: Elemental Harmony",
-                _         => $"Unora Launcher"
+                "Unora" => "Unora: Elemental Harmony",
+                _ => $"Unora Launcher"
             };
 
             Title = title; // OS-level window title
@@ -708,10 +726,12 @@ namespace UnoraLaunchpad
 
             var selectedItem = SavedCharactersComboBox.SelectedItem as string;
 
-            if (string.IsNullOrEmpty(selectedItem) || _launcherSettings?.SavedCharacters == null || !_launcherSettings.SavedCharacters.Any())
+            if (string.IsNullOrEmpty(selectedItem) || _launcherSettings?.SavedCharacters == null ||
+                !_launcherSettings.SavedCharacters.Any())
             {
-                MessageBox.Show("No saved accounts or no account selected. Please add accounts via Settings or select one.",
-                                "Launch Saved Client", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(
+                    "No saved accounts or no account selected. Please add accounts via Settings or select one.",
+                    "Launch Saved Client", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -737,22 +757,28 @@ namespace UnoraLaunchpad
                             }
                             else
                             {
-                                System.Diagnostics.Debug.WriteLine($"Failed to decrypt password for {character.Username} during 'Launch All'. Skipping.");
+                                System.Diagnostics.Debug.WriteLine(
+                                    $"Failed to decrypt password for {character.Username} during 'Launch All'. Skipping.");
                             }
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine($"No encrypted password for {character.Username} during 'Launch All'. Skipping.");
+                            System.Diagnostics.Debug.WriteLine(
+                                $"No encrypted password for {character.Username} during 'Launch All'. Skipping.");
                         }
                     }
+
                     if (!anyLaunched)
                     {
-                         MessageBox.Show("No accounts could be launched. Check passwords in Settings or ensure they are saved correctly.", "Launch All", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show(
+                            "No accounts could be launched. Check passwords in Settings or ensure they are saved correctly.",
+                            "Launch All", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
                 else // Specific character selected
                 {
-                    var characterToLaunch = _launcherSettings.SavedCharacters.FirstOrDefault(c => c.Username == selectedItem);
+                    var characterToLaunch =
+                        _launcherSettings.SavedCharacters.FirstOrDefault(c => c.Username == selectedItem);
                     if (characterToLaunch != null)
                     {
                         if (!string.IsNullOrEmpty(characterToLaunch.EncryptedPassword))
@@ -766,32 +792,38 @@ namespace UnoraLaunchpad
                             }
                             else
                             {
-                                MessageBox.Show($"Failed to decrypt password for {characterToLaunch.Username}. The password may be corrupted, or settings might have been moved from another user/computer. Please re-save the password in Settings.",
-                                                "Decryption Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                MessageBox.Show(
+                                    $"Failed to decrypt password for {characterToLaunch.Username}. The password may be corrupted, or settings might have been moved from another user/computer. Please re-save the password in Settings.",
+                                    "Decryption Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
                             }
                         }
                         else
                         {
-                            MessageBox.Show($"No saved (encrypted) password found for {characterToLaunch.Username}. Please save the password in Settings.",
-                                            "Password Not Found", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show(
+                                $"No saved (encrypted) password found for {characterToLaunch.Username}. Please save the password in Settings.",
+                                "Password Not Found", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                     }
                     else
                     {
-                        MessageBox.Show($"Selected character '{selectedItem}' not found. Please check settings.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"Selected character '{selectedItem}' not found. Please check settings.",
+                            "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
             // Removed NotImplementedException catch block as ShowPasswordDialog is no longer called.
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(this, $"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
                 LogException(ex);
             }
             finally
             {
                 LaunchBtn.IsEnabled = true;
-                LaunchSavedBtn.IsEnabled = _launcherSettings?.SavedCharacters != null && _launcherSettings.SavedCharacters.Any(); // Re-enable based on if characters exist
+                LaunchSavedBtn.IsEnabled = _launcherSettings?.SavedCharacters != null &&
+                                           _launcherSettings.SavedCharacters
+                                               .Any(); // Re-enable based on if characters exist
             }
         }
 
@@ -801,7 +833,7 @@ namespace UnoraLaunchpad
             {
                 var (ipAddress, serverPort) = GetServerConnection();
                 // Ensure _launcherSettings is used, ApplySettings() at start of LaunchSaveBtn_Click should handle this.
-                var selectedGame = _launcherSettings.SelectedGame ?? "Unora"; 
+                var selectedGame = _launcherSettings.SelectedGame ?? "Unora";
                 var (gameFolder, gameExe) = GetGameLaunchInfo(selectedGame);
                 var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gameFolder, gameExe);
 
@@ -809,12 +841,13 @@ namespace UnoraLaunchpad
                 using (var suspendedProcess = SuspendedProcess.Start(exePath))
                 {
                     gameProcessId = suspendedProcess.ProcessId; // Capture PID
-                    PatchClient(suspendedProcess, ipAddress, serverPort);
+                    PatchClient(suspendedProcess, ipAddress, serverPort, true);
 
                     // Use 'this.UseDawndWindower' which is synced by ApplySettings()
-                    if (this.UseDawndWindower) 
+                    if (UseDawndWindower)
                     {
-                        var processHandleForInjection = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, gameProcessId);
+                        var processHandleForInjection =
+                            NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, gameProcessId);
                         if (processHandleForInjection != IntPtr.Zero)
                         {
                             InjectDll(processHandleForInjection);
@@ -823,8 +856,10 @@ namespace UnoraLaunchpad
                     }
                 } // suspendedProcess is disposed and resumed here
 
-                if (gameProcessId == 0) {
-                    MessageBox.Show("Failed to get game process ID during launch.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (gameProcessId == 0)
+                {
+                    MessageBox.Show("Failed to get game process ID during launch.", "Launch Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
                     return;
                 }
 
@@ -835,36 +870,43 @@ namespace UnoraLaunchpad
                 }
                 catch (ArgumentException) // Catches if process isn't running
                 {
-                    MessageBox.Show("Game process is not running after launch attempt. It might have crashed or failed to start.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(
+                        "Game process is not running after launch attempt. It might have crashed or failed to start.",
+                        "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-                
-                if (gameProcess == null || gameProcess.HasExited) { 
-                    MessageBox.Show("Failed to start or patch the game process, or it exited prematurely.", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                if (gameProcess == null || gameProcess.HasExited)
+                {
+                    MessageBox.Show("Failed to start or patch the game process, or it exited prematurely.",
+                        "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-                
+
                 // This method already waits for MainWindowHandle to be available
-                await RenameGameWindowAsync(gameProcess, selectedGame); 
+                await RenameGameWindowAsync(gameProcess, selectedGame);
 
                 if (gameProcess.MainWindowHandle == IntPtr.Zero)
                 {
                     // If RenameGameWindowAsync didn't find it (it should have after its loop), try one more time.
-                    await Task.Delay(2000); 
-                    gameProcess.Refresh(); 
-                    if (gameProcess.MainWindowHandle == IntPtr.Zero) {
-                         MessageBox.Show("Game window handle could not be found. Cannot proceed with automated login.", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                         return;
+                    await Task.Delay(2000);
+                    gameProcess.Refresh();
+                    if (gameProcess.MainWindowHandle == IntPtr.Zero)
+                    {
+                        MessageBox.Show("Game window handle could not be found. Cannot proceed with automated login.",
+                            "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
                     }
                 }
-                
+
                 await PerformAutomatedLogin(character.Username, character.Password, gameProcess);
                 await RenameGameWindowAsync(gameProcess, character.Username);
                 await WaitForClientReady(gameProcess);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred while launching or logging in: {ex.Message}", "Launch Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"An error occurred while launching or logging in: {ex.Message}", "Launch Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
                 LogException(ex); // MainWindow.LogException is static
             }
         }
@@ -873,49 +915,45 @@ namespace UnoraLaunchpad
         {
             try
             {
-                BlockInput(true);
-
                 if (gameProc.MainWindowHandle == IntPtr.Zero)
                 {
                     gameProc.Refresh();
-                    await Task.Delay(1500);
+                    await Task.Delay(2000);
                     if (gameProc.MainWindowHandle == IntPtr.Zero)
                     {
-                        MessageBox.Show("Game window not found.", "Login Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Game window not found.", "Login Error", MessageBoxButton.OK,
+                            MessageBoxImage.Error);
                         return;
                     }
                 }
 
+                BlockInput(true);
                 NativeMethods.SetForegroundWindow(gameProc.MainWindowHandle.ToInt32());
-                await Task.Delay(1500);
+                await Task.Delay(2500);
 
                 var inputSimulator = new InputSimulator();
 
-                await Task.Delay(200);
                 inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
-                await Task.Delay(500);
+                await Task.Delay(1500);
 
                 var screenPoint = GetRelativeScreenPoint(gameProc.MainWindowHandle, 0.20, 0.66);
                 MoveAndClickPoint(screenPoint);
-                await Task.Delay(500);
+                await Task.Delay(750);
 
                 inputSimulator.Keyboard.TextEntry(username);
-                await Task.Delay(250);
+                await Task.Delay(750);
                 inputSimulator.Keyboard.KeyPress(VirtualKeyCode.TAB);
-                await Task.Delay(400);
+                await Task.Delay(750);
 
-                foreach (var c in password)
-                {
-                    inputSimulator.Keyboard.KeyPress((VirtualKeyCode)VkKeyScan(c));
-                    await Task.Delay(50);
-                }
+                await TypePasswordAsync(inputSimulator.Keyboard, password);
 
                 await Task.Delay(200);
                 inputSimulator.Keyboard.KeyPress(VirtualKeyCode.RETURN);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Login automation failed: {ex.Message}", "Login Automation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Login automation failed: {ex.Message}", "Login Automation Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             finally
             {
@@ -923,7 +961,51 @@ namespace UnoraLaunchpad
             }
         }
 
+        [DllImport("user32.dll")]
+        private static extern short VkKeyScan(char ch);
 
+        /// <summary>
+        /// Sends a single character through an <see cref="IKeyboardSimulator"/>,
+        /// automatically holding <c>SHIFT</c> when the scan-code says it’s required
+        /// (e.g. uppercase letters or symbols like “!”).
+        /// </summary>
+        private static async Task SendCharAsync(
+            IKeyboardSimulator keyboard,
+            char character,
+            int interKeyDelayMs = 50)
+        {
+            var scan = VkKeyScan(character);
+            if (scan == -1)
+            {
+                Debug.WriteLine($"[SendCharAsync] Unsupported character: '{character}'");
+                return;
+            }
+
+            var vkCode = (VirtualKeyCode)(scan & 0xFF);
+            var shiftNeeded = (scan & 0x0100) != 0;
+
+            Debug.WriteLine($"Typing: '{character}' (VK: {vkCode}, Shift: {shiftNeeded})");
+
+            if (shiftNeeded)
+                keyboard.ModifiedKeyStroke(VirtualKeyCode.SHIFT, vkCode);
+            else
+                keyboard.KeyPress(vkCode);
+
+            await Task.Delay(interKeyDelayMs);
+        }
+
+        private static async Task TypePasswordAsync(
+            IKeyboardSimulator keyboard,
+            string password)
+        {
+            Debug.WriteLine($"[TypePasswordAsync] Typing password: {password}");
+
+            foreach (var c in password)
+                await SendCharAsync(keyboard, c);
+        }
+
+
+        
         private async Task WaitForClientReady(Process gameProc, int timeoutMs = 10000)
         {
             var sw = Stopwatch.StartNew();
@@ -953,11 +1035,7 @@ namespace UnoraLaunchpad
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool BlockInput(bool fBlockIt);
-
         
-        [DllImport("user32.dll")]
-        private static extern short VkKeyScan(char ch);
-
         
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);

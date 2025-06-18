@@ -14,9 +14,8 @@ namespace UnoraLaunchpad
             // Find and remove existing theme dictionary if any
             var existingThemeDictionary = Current.Resources.MergedDictionaries
                                                  .FirstOrDefault(d =>
-                                                     d.Source != null
-                                                     && (d.Source.ToString().EndsWith("DarkTheme.xaml")
-                                                         || d.Source.ToString().EndsWith("LightTheme.xaml")));
+                                                     d.Source != null &&
+                                                     d.Source.ToString().EndsWith("Theme.xaml", StringComparison.OrdinalIgnoreCase));
 
             if (existingThemeDictionary != null)
             {

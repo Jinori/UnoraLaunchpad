@@ -5,12 +5,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:UnoraLaunchpad"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="Unora Launcher"
         Height="585"
         Width="800"
         WindowStyle="None"
-        ResizeMode="CanResizeWithGrip"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Loaded="Launcher_Loaded"
         Closing="Window_Closing"
@@ -21,6 +22,13 @@
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome ResizeBorderThickness="6"
+                            CaptionHeight="30"
+                            GlassFrameThickness="1"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
 
     <Window.Resources>
         <!-- Data Template for Tiles -->
@@ -81,7 +89,8 @@
                     Click="PatchNotesButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
-                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="Assignment" />
             </Button>
             <!-- Discord Button -->
@@ -90,7 +99,8 @@
                     Click="DiscordButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
-                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="MessageText" />
             </Button>
 
@@ -100,7 +110,8 @@
                     Click="CogButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
-                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="Cog" />
             </Button>
 
@@ -110,7 +121,8 @@
                     Click="MinimizeButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
-                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="WindowMinimize" />
             </Button>
 
@@ -120,7 +132,8 @@
                     Click="CloseButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
-                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}">
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="Close" />
             </Button>
             <Image Source="favicon.ico"

@@ -85,7 +85,7 @@
               MouseDown="TitleBar_MouseDown">
             <!-- Patch Notes Button -->
             <Button HorizontalAlignment="Right"
-                    Margin="0, 0, 190, 0"
+                    Margin="0, 0, 235, 0" <!-- Adjusted Margin -->
                     Click="PatchNotesButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
@@ -95,7 +95,7 @@
             </Button>
             <!-- Discord Button -->
             <Button HorizontalAlignment="Right"
-                    Margin="0, 0, 147, 0"
+                    Margin="0, 0, 191, 0" <!-- Adjusted Margin -->
                     Click="DiscordButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
@@ -104,9 +104,21 @@
                 <materialDesign:PackIcon Kind="MessageText" />
             </Button>
 
+            <!-- Macro Settings Button -->
+            <Button HorizontalAlignment="Right"
+                    Margin="0, 0, 147, 0" <!-- Correct Margin -->
+                    Click="MacroButton_Click"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                    ToolTip="Open Macro Settings">
+                <materialDesign:PackIcon Kind="KeyboardSettings" />
+            </Button>
+
             <!-- Settings Button -->
             <Button HorizontalAlignment="Right"
-                    Margin="0, 0, 103, 0"
+                    Margin="0, 0, 103, 0" <!-- Unchanged -->
                     Click="CogButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"

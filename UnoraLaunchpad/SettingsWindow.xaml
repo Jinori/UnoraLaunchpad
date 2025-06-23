@@ -204,6 +204,81 @@
                             </Grid>
                         </StackPanel>
                     </GroupBox>
+
+                    <!-- New Macros Section -->
+                    <GroupBox Header="Macros"
+                              Margin="0,20,0,0"
+                              Foreground="{DynamicResource PrimaryTextColor}"
+                              BorderBrush="{DynamicResource PrimaryBorderColor}">
+                        <StackPanel>
+                            <ListBox x:Name="MacrosListBox"
+                                     Height="100"
+                                     Margin="5"
+                                     Background="{DynamicResource SecondaryBackgroundColor}"
+                                     Foreground="{DynamicResource PrimaryTextColor}"
+                                     BorderBrush="{DynamicResource PrimaryBorderColor}"
+                                     SelectionChanged="MacrosListBox_SelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Key}" FontWeight="Bold" Margin="0,0,5,0" />
+                                            <TextBlock Text="{Binding Value}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Grid Margin="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Trigger Key:" Foreground="{DynamicResource PrimaryTextColor}" />
+                                    <TextBox x:Name="MacroTriggerKeyTextBox"
+                                             Background="{DynamicResource SecondaryBackgroundColor}"
+                                             Foreground="{DynamicResource PrimaryTextColor}"
+                                             BorderBrush="{DynamicResource PrimaryBorderColor}" />
+                                    <TextBlock Text="Action Sequence:" Margin="0,5,0,0" Foreground="{DynamicResource PrimaryTextColor}" />
+                                    <TextBox x:Name="MacroActionSequenceTextBox"
+                                             Background="{DynamicResource SecondaryBackgroundColor}"
+                                             Foreground="{DynamicResource PrimaryTextColor}"
+                                             BorderBrush="{DynamicResource PrimaryBorderColor}" />
+                                </StackPanel>
+                                <Button x:Name="AddMacroButton"
+                                        Content="Add"
+                                        Grid.Column="1"
+                                        Click="AddMacroButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                                <Button x:Name="EditMacroButton"
+                                        Content="Update"
+                                        Grid.Column="2"
+                                        Click="EditMacroButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                                <Button x:Name="RemoveMacroButton"
+                                        Content="Remove"
+                                        Grid.Column="3"
+                                        Click="RemoveMacroButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

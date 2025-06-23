@@ -7,66 +7,136 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using Tesseract; // Added for Tesseract OCR
+using System.Drawing; // Added for System.Drawing.Rectangle and System.Drawing.Bitmap
+using System.ComponentModel; // Added for Closing event
 
 namespace UnoraLaunchpad
 {
-    public partial class ScreenshotBrowserWindow : Window
+    public partial class ScreenshotBrowserWindow : Window, IDisposable
     {
         public ObservableCollection<ScreenshotInfo> Screenshots { get; set; }
-        private string _screenshotsFolderPath; // To be configured, e.g., "Unora/screenshots"
-        private string _gameFolderName; // e.g., "Unora"
+        private string _screenshotsFolderPath;
+        private string _gameFolderName;
+        private TesseractEngine _ocrEngine;
+        private bool _disposed = false; // To detect redundant calls to Dispose
 
-        // Constructor that accepts the game folder name
-        public ScreenshotBrowserWindow(string gameFolderName = "Unora") // Default to "Unora" for now
+        // Define the ROI for map name extraction. This is a guess and likely needs adjustment.
+        // Assuming image width around 800-1024px.
+        // X: (800/2) - (200/2) = 300. Y: 10 (near top). Width: 200. Height: 30.
+        private readonly System.Drawing.Rectangle _mapNameRoi = new System.Drawing.Rectangle(300, 10, 200, 40);
+
+
+        public ScreenshotBrowserWindow(string gameFolderName = "Unora")
         {
             InitializeComponent();
             _gameFolderName = gameFolderName;
-            // It's common for games to save screenshots directly in the main game folder or a subfolder.
-            // Let's assume a "screenshots" subfolder first. If not found, try the game root.
-            string screenshotsSubfolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _gameFolderName, "screenshots");
-            string gameRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _gameFolderName);
+            SetupPaths();
+            InitializeOcrEngine();
+
+            Screenshots = new ObservableCollection<ScreenshotInfo>();
+            ThumbnailsItemsControl.ItemsSource = Screenshots;
+
+            LoadScreenshots();
+            this.Closing += ScreenshotBrowserWindow_Closing;
+        }
+
+        private void SetupPaths()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string screenshotsSubfolderPath = Path.Combine(baseDir, _gameFolderName, "screenshots");
+            string gameRootPath = Path.Combine(baseDir, _gameFolderName);
 
             if (Directory.Exists(screenshotsSubfolderPath))
             {
                 _screenshotsFolderPath = screenshotsSubfolderPath;
             }
-            else if (Directory.Exists(gameRootPath)) // Fallback to game root if "screenshots" subfolder doesn't exist
+            else if (Directory.Exists(gameRootPath))
             {
                 _screenshotsFolderPath = gameRootPath;
             }
             else
             {
-                // Neither path exists, disable functionality or show error
-                _screenshotsFolderPath = gameRootPath; // Default to gameRoot for creation attempt
+                _screenshotsFolderPath = gameRootPath; // Default for creation attempt
                 StatusTextBlock.Text = $"Screenshots folder not found for '{_gameFolderName}'. Will attempt to use/create default.";
-                // Optionally disable buttons if folder is critical and not found
             }
-
-            Screenshots = new ObservableCollection<ScreenshotInfo>();
-            ThumbnailsItemsControl.ItemsSource = Screenshots;
-            DataContext = this; // Not strictly necessary here as ItemsSource is set directly
-
-            LoadScreenshots();
         }
 
+        private void InitializeOcrEngine()
+        {
+            try
+            {
+                var tessDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tessdata");
+                if (!Directory.Exists(tessDataPath) || !File.Exists(Path.Combine(tessDataPath, "eng.traineddata")))
+                {
+                    StatusTextBlock.Text = "Error: tessdata folder or eng.traineddata not found. OCR will not function.";
+                    MessageBox.Show("Tesseract language data (tessdata/eng.traineddata) not found. OCR for map names will be disabled.", "OCR Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    _ocrEngine = null; // Ensure engine is null if setup fails
+                    return;
+                }
+                _ocrEngine = new TesseractEngine(tessDataPath, "eng", EngineMode.Default);
+            }
+            catch (Exception ex)
+            {
+                StatusTextBlock.Text = $"OCR Engine Error: {ex.Message}";
+                MessageBox.Show($"Failed to initialize Tesseract OCR engine: {ex.Message}", "OCR Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _ocrEngine = null; // Ensure engine is null on error
+            }
+        }
+        private string PerformOcr(string imagePath)
+        {
+            if (_ocrEngine == null) return "OCR Disabled";
+
+            try
+            {
+                using (var img = Pix.LoadFromFile(imagePath))
+                {
+                    // Define ROI for map name (example: top-middle of the image)
+                    // This ROI is relative to the image being processed.
+                    // Ensure ROI coordinates are within image bounds.
+                    int roiX = Math.Max(0, Math.Min(_mapNameRoi.X, img.Width - 1));
+                    int roiY = Math.Max(0, Math.Min(_mapNameRoi.Y, img.Height - 1));
+                    int roiWidth = Math.Min(_mapNameRoi.Width, img.Width - roiX);
+                    int roiHeight = Math.Min(_mapNameRoi.Height, img.Height - roiY);
+
+                    if (roiWidth <= 0 || roiHeight <= 0) {
+                        Debug.WriteLine($"Invalid ROI for image {imagePath}. Image: {img.Width}x{img.Height}, ROI: {_mapNameRoi}");
+                        return "ROI Error";
+                    }
+
+                    var rect = new Rect(roiX, roiY, roiWidth, roiHeight);
+
+                    using (var page = _ocrEngine.Process(img, rect, PageSegMode.SingleLine))
+                    {
+                        var text = page.GetText()?.Trim();
+                        return string.IsNullOrEmpty(text) ? "Unknown" : text;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"OCR processing error for {imagePath}: {ex.Message}");
+                return "OCR Error";
+            }
+        }
 
         private void LoadScreenshots()
         {
             Screenshots.Clear();
-            LargePreviewImage.Source = null; // Clear previous large preview
+            LargePreviewImage.Source = null;
 
             if (!Directory.Exists(_screenshotsFolderPath))
             {
-                StatusTextBlock.Text = $"Screenshots folder '{_screenshotsFolderPath}' not found.";
+                StatusTextBlock.Text = $"Folder '{_screenshotsFolderPath}' not found.";
                 try
                 {
                     Directory.CreateDirectory(_screenshotsFolderPath);
-                    StatusTextBlock.Text = $"Created screenshots folder: '{_screenshotsFolderPath}'. No screenshots yet.";
+                    StatusTextBlock.Text = $"Created folder: '{_screenshotsFolderPath}'. No screenshots yet.";
                 }
                 catch (Exception ex)
                 {
                     StatusTextBlock.Text = $"Error creating folder '{_screenshotsFolderPath}': {ex.Message}";
-                    MessageBox.Show($"Could not create screenshots directory: {_screenshotsFolderPath}\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Could not create directory: {_screenshotsFolderPath}\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
                 return;
@@ -84,34 +154,45 @@ namespace UnoraLaunchpad
                     return;
                 }
 
-                foreach (var fileInfo in screenshotFiles.OrderByDescending(f => f.CreationTime)) // Default sort: newest first
+                StatusTextBlock.Text = "Loading screenshots and performing OCR...";
+                // To avoid blocking UI for too long, consider Task.Run for OCR, but that adds complexity with dispatcher.
+                // For now, direct processing.
+                Mouse.OverrideCursor = Cursors.Wait; // Show wait cursor
+
+                foreach (var fileInfo in screenshotFiles.OrderByDescending(f => f.CreationTime))
                 {
                     var screenshotInfo = new ScreenshotInfo(fileInfo.FullName, fileInfo.CreationTime);
 
-                    // Create and cache thumbnail
+                    // Perform OCR
+                    if (_ocrEngine != null) // Only if OCR engine initialized successfully
+                    {
+                        screenshotInfo.MapName = PerformOcr(fileInfo.FullName);
+                    }
+                    else
+                    {
+                        screenshotInfo.MapName = "OCR N/A";
+                    }
+
                     try
                     {
                         BitmapImage thumbnail = new BitmapImage();
                         thumbnail.BeginInit();
                         thumbnail.UriSource = new Uri(fileInfo.FullName);
-                        thumbnail.DecodePixelWidth = 100; // Create a smaller image for thumbnail
-                        thumbnail.CacheOption = BitmapCacheOption.OnLoad; // Cache it in memory
+                        thumbnail.DecodePixelWidth = 100;
+                        thumbnail.CacheOption = BitmapCacheOption.OnLoad;
                         thumbnail.EndInit();
-                        thumbnail.Freeze(); // Important for performance in collections
+                        thumbnail.Freeze();
                         screenshotInfo.Thumbnail = thumbnail;
                         Screenshots.Add(screenshotInfo);
                     }
                     catch (Exception ex)
                     {
-                        // Log or handle error for individual file loading
                         Debug.WriteLine($"Error loading thumbnail for {fileInfo.FullName}: {ex.Message}");
-                        // Optionally, add a placeholder or skip this screenshot
                     }
                 }
-                StatusTextBlock.Text = $"Loaded {Screenshots.Count} screenshots.";
+                StatusTextBlock.Text = $"Loaded {Screenshots.Count} screenshots. OCR complete.";
                 if (Screenshots.Any())
                 {
-                    // Display the first screenshot's full image by default
                     DisplayFullImage(Screenshots.First());
                 }
             }
@@ -119,6 +200,10 @@ namespace UnoraLaunchpad
             {
                 StatusTextBlock.Text = $"Error loading screenshots: {ex.Message}";
                 MessageBox.Show($"Error accessing screenshots directory: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null; // Restore cursor
             }
         }
 
@@ -171,6 +256,15 @@ namespace UnoraLaunchpad
             if (Screenshots.Any()) DisplayFullImage(Screenshots.First());
         }
 
+        private void SortMapNameButton_Click(object sender, RoutedEventArgs e)
+        {
+            var sortedScreenshots = new ObservableCollection<ScreenshotInfo>(Screenshots.OrderBy(s => s.MapName));
+            Screenshots.Clear();
+            foreach (var s in sortedScreenshots) Screenshots.Add(s);
+            StatusTextBlock.Text = "Sorted by map name (A-Z).";
+            if (Screenshots.Any()) DisplayFullImage(Screenshots.First());
+        }
+
         private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
             LoadScreenshots();
@@ -212,5 +306,39 @@ namespace UnoraLaunchpad
         {
             this.Close();
         }
+
+        private void ScreenshotBrowserWindow_Closing(object sender, CancelEventArgs e)
+        {
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed state (managed objects).
+                    if (_ocrEngine != null)
+                    {
+                        _ocrEngine.Dispose();
+                        _ocrEngine = null;
+                    }
+                }
+                _disposed = true;
+            }
+        }
+
+        // Optional: Finalizer, if you have unmanaged resources directly in this class
+        // ~ScreenshotBrowserWindow()
+        // {
+        //     Dispose(false);
+        // }
     }
 }

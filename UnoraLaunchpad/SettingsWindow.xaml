@@ -205,19 +205,19 @@
                         </StackPanel>
                     </GroupBox>
 
-                    <!-- New Macros Section -->
-                    <GroupBox Header="Macros"
+                    <!-- New Combos Section -->
+                    <GroupBox Header="Combos"
                               Margin="0,20,0,0"
                               Foreground="{DynamicResource PrimaryTextColor}"
                               BorderBrush="{DynamicResource PrimaryBorderColor}">
                         <StackPanel>
-                            <ListBox x:Name="MacrosListBox"
+                            <ListBox x:Name="CombosListBox"
                                      Height="100"
                                      Margin="5"
                                      Background="{DynamicResource SecondaryBackgroundColor}"
                                      Foreground="{DynamicResource PrimaryTextColor}"
                                      BorderBrush="{DynamicResource PrimaryBorderColor}"
-                                     SelectionChanged="MacrosListBox_SelectionChanged">
+                                     SelectionChanged="CombosListBox_SelectionChanged">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
@@ -236,40 +236,40 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                                     <TextBlock Text="Trigger Key:" Foreground="{DynamicResource PrimaryTextColor}" />
-                                    <TextBox x:Name="MacroTriggerKeyTextBox"
+                                    <TextBox x:Name="ComboTriggerKeyTextBox"
                                              Background="{DynamicResource SecondaryBackgroundColor}"
                                              Foreground="{DynamicResource PrimaryTextColor}"
                                              BorderBrush="{DynamicResource PrimaryBorderColor}" />
                                     <TextBlock Text="Action Sequence:" Margin="0,5,0,0" Foreground="{DynamicResource PrimaryTextColor}" />
-                                    <TextBox x:Name="MacroActionSequenceTextBox"
+                                    <TextBox x:Name="ComboActionSequenceTextBox"
                                              Background="{DynamicResource SecondaryBackgroundColor}"
                                              Foreground="{DynamicResource PrimaryTextColor}"
                                              BorderBrush="{DynamicResource PrimaryBorderColor}" />
                                 </StackPanel>
-                                <Button x:Name="AddMacroButton"
+                                <Button x:Name="AddComboButton"
                                         Content="Add"
                                         Grid.Column="1"
-                                        Click="AddMacroButton_Click"
+                                        Click="AddComboButton_Click"
                                         VerticalAlignment="Bottom"
                                         Margin="5,0"
                                         Style="{StaticResource MaterialDesignRaisedLightButton}"
                                         Background="{DynamicResource ButtonBackgroundColor}"
                                         Foreground="{DynamicResource ButtonForegroundColor}"
                                         materialDesign:ButtonAssist.CornerRadius="5"/>
-                                <Button x:Name="EditMacroButton"
+                                <Button x:Name="EditComboButton"
                                         Content="Update"
                                         Grid.Column="2"
-                                        Click="EditMacroButton_Click"
+                                        Click="EditComboButton_Click"
                                         VerticalAlignment="Bottom"
                                         Margin="5,0"
                                         Style="{StaticResource MaterialDesignRaisedLightButton}"
                                         Background="{DynamicResource ButtonBackgroundColor}"
                                         Foreground="{DynamicResource ButtonForegroundColor}"
                                         materialDesign:ButtonAssist.CornerRadius="5"/>
-                                <Button x:Name="RemoveMacroButton"
+                                <Button x:Name="RemoveComboButton"
                                         Content="Remove"
                                         Grid.Column="3"
-                                        Click="RemoveMacroButton_Click"
+                                        Click="RemoveComboButton_Click"
                                         VerticalAlignment="Bottom"
                                         Margin="5,0"
                                         Style="{StaticResource MaterialDesignRaisedLightButton}"
@@ -277,6 +277,23 @@
                                         Foreground="{DynamicResource ButtonForegroundColor}"
                                         materialDesign:ButtonAssist.CornerRadius="5"/>
                             </Grid>
+                            <Expander Header="Combos Help" Margin="5" Foreground="{DynamicResource PrimaryTextColor}">
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource SecondaryTextColor}" Margin="5">
+                                    Available actions:
+                                    - Type text directly, e.g., "Hello world"
+                                    - Send special keys: {ENTER}, {TAB}, {ESC}, {F1} - {F12}, etc.
+                                    - Wait: {WAIT=500} (milliseconds)
+                                    - Key press (down and up): {KEYPRESS=LCONTROL}
+                                    - Key down: {KEYDOWN=LSHIFT}
+                                    - Key up: {KEYUP=RALT}
+
+                                    Combine actions: "Hello{ENTER}{WAIT=1000}World"
+
+                                    Trigger Keys:
+                                    - Use modifiers like CTRL+, SHIFT+, ALT+
+                                    - Examples: "CTRL+F1", "ALT+SHIFT+X", "F5"
+                                </TextBlock>
+                            </Expander>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>

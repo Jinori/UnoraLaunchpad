@@ -7,7 +7,7 @@ using InputSimulatorStandard.Native; // For VirtualKeyCode
 
 namespace UnoraLaunchpad
 {
-    internal static class MacroParser
+    internal static class ComboParser
     {
         // Regex for parsing commands within {braces}
         // Simplified to focus on Wait, KeyPress, KeyDown, KeyUp.
@@ -38,7 +38,7 @@ namespace UnoraLaunchpad
                 // Check for common names like PageDown, PageUp, etc.
                 // WPF's Key enum is quite comprehensive.
                 // This could be expanded if specific non-standard names are used.
-                System.Diagnostics.Debug.WriteLine($"[MacroParser] Could not parse key: {keyPart}");
+                System.Diagnostics.Debug.WriteLine($"[ComboParser] Could not parse key: {keyPart}");
                 return false;
             }
 
@@ -65,7 +65,7 @@ namespace UnoraLaunchpad
                         modifiers |= NativeMethods.MOD_WIN;
                         break;
                     // default: // Unknown modifier
-                        // System.Diagnostics.Debug.WriteLine($"[MacroParser] Unknown modifier: {parts[i]}");
+                        // System.Diagnostics.Debug.WriteLine($"[ComboParser] Unknown modifier: {parts[i]}");
                         // return false;
                         // Allow unknown parts for now, maybe they are part of the key name if not split well.
                 }
@@ -73,9 +73,9 @@ namespace UnoraLaunchpad
             return true;
         }
 
-        public static List<MacroAction> ParseActionSequence(string sequence)
+        public static List<ComboAction> ParseActionSequence(string sequence)
         {
-            var actions = new List<MacroAction>();
+            var actions = new List<ComboAction>();
             if (string.IsNullOrWhiteSpace(sequence)) return actions;
 
             int currentIndex = 0;
@@ -94,13 +94,13 @@ namespace UnoraLaunchpad
                     int closingBraceIndex = sequence.IndexOf('}', currentIndex);
                     if (closingBraceIndex == -1)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[MacroParser] Mismatched '{{' at index {currentIndex}. Treating rest of sequence as literal characters.");
+                        System.Diagnostics.Debug.WriteLine($"[ComboParser] Mismatched '{{' at index {currentIndex}. Treating rest of sequence as literal characters.");
                         // Add remaining characters as SendChar actions
                         for (int i = currentIndex; i < sequence.Length; i++)
                         {
                             if (!char.IsWhiteSpace(sequence[i])) // Avoid adding whitespace if it was part of the unterminated block start
                             {
-                                actions.Add(new MacroAction { Type = MacroActionType.SendChar, Argument = sequence[i] });
+                                actions.Add(new ComboAction { Type = ComboActionType.SendChar, Argument = sequence[i] });
                             }
                         }
                         break; // End parsing
@@ -113,26 +113,26 @@ namespace UnoraLaunchpad
                 else
                 {
                     // Literal character to be pressed
-                    actions.Add(new MacroAction { Type = MacroActionType.SendChar, Argument = currentChar });
+                    actions.Add(new ComboAction { Type = ComboActionType.SendChar, Argument = currentChar });
                     currentIndex++;
                 }
             }
             return actions;
         }
 
-        private static void ParseAndAddBracedCommand(string commandBlock, List<MacroAction> actions)
+        private static void ParseAndAddBracedCommand(string commandBlock, List<ComboAction> actions)
         {
             Match match = BracedCommandRegex.Match(commandBlock);
 
             if (!match.Success)
             {
-                System.Diagnostics.Debug.WriteLine($"[MacroParser] Unknown or malformed command in braces: {{{commandBlock}}}. Interpreting as literal text.");
+                System.Diagnostics.Debug.WriteLine($"[ComboParser] Unknown or malformed command in braces: {{{commandBlock}}}. Interpreting as literal text.");
                 // Fallback: treat the content of unknown/malformed braces as literal characters
                 foreach (char c in commandBlock)
                 {
                     if (!char.IsWhiteSpace(c)) // Avoid adding whitespace from the command block itself
                     {
-                        actions.Add(new MacroAction { Type = MacroActionType.SendChar, Argument = c });
+                        actions.Add(new ComboAction { Type = ComboActionType.SendChar, Argument = c });
                     }
                 }
                 return;
@@ -150,50 +150,50 @@ namespace UnoraLaunchpad
             {
                 if (int.TryParse(match.Groups[2].Value, out int delay))
                 {
-                    actions.Add(new MacroAction { Type = MacroActionType.Wait, Argument = delay });
+                    actions.Add(new ComboAction { Type = ComboActionType.Wait, Argument = delay });
                 }
             }
             else if (commandTypeStr.StartsWith("KeyPress", StringComparison.OrdinalIgnoreCase))
             {
                 if (Enum.TryParse<VirtualKeyCode>(match.Groups[3].Value, true, out var vk))
                 {
-                    actions.Add(new MacroAction { Type = MacroActionType.KeyPress, Argument = vk });
+                    actions.Add(new ComboAction { Type = ComboActionType.KeyPress, Argument = vk });
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"[MacroParser] Failed to parse VirtualKeyCode for KeyPress: {match.Groups[3].Value}");
+                    System.Diagnostics.Debug.WriteLine($"[ComboParser] Failed to parse VirtualKeyCode for KeyPress: {match.Groups[3].Value}");
                 }
             }
             else if (commandTypeStr.StartsWith("KeyDown", StringComparison.OrdinalIgnoreCase))
             {
                  if (Enum.TryParse<VirtualKeyCode>(match.Groups[4].Value, true, out var vk))
                 {
-                    actions.Add(new MacroAction { Type = MacroActionType.KeyDown, Argument = vk });
+                    actions.Add(new ComboAction { Type = ComboActionType.KeyDown, Argument = vk });
                 }
                  else
                  {
-                     System.Diagnostics.Debug.WriteLine($"[MacroParser] Failed to parse VirtualKeyCode for KeyDown: {match.Groups[4].Value}");
+                     System.Diagnostics.Debug.WriteLine($"[ComboParser] Failed to parse VirtualKeyCode for KeyDown: {match.Groups[4].Value}");
                  }
             }
             else if (commandTypeStr.StartsWith("KeyUp", StringComparison.OrdinalIgnoreCase))
             {
                  if (Enum.TryParse<VirtualKeyCode>(match.Groups[5].Value, true, out var vk))
                 {
-                    actions.Add(new MacroAction { Type = MacroActionType.KeyUp, Argument = vk });
+                    actions.Add(new ComboAction { Type = ComboActionType.KeyUp, Argument = vk });
                 }
                  else
                  {
-                     System.Diagnostics.Debug.WriteLine($"[MacroParser] Failed to parse VirtualKeyCode for KeyUp: {match.Groups[5].Value}");
+                     System.Diagnostics.Debug.WriteLine($"[ComboParser] Failed to parse VirtualKeyCode for KeyUp: {match.Groups[5].Value}");
                  }
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"[MacroParser] Unhandled matched command in ParseAndAddBracedCommand: {commandTypeStr}");
+                System.Diagnostics.Debug.WriteLine($"[ComboParser] Unhandled matched command in ParseAndAddBracedCommand: {commandTypeStr}");
             }
         }
     }
 
-    public enum MacroActionType
+    public enum ComboActionType
     {
         SendText,        // Argument is string (Legacy, prefer SendChar for new parser output)
         Wait,            // Argument is int (milliseconds)
@@ -204,9 +204,9 @@ namespace UnoraLaunchpad
         SendChar         // Argument is char
     }
 
-    public struct MacroAction
+    public struct ComboAction
     {
-        public MacroActionType Type { get; set; }
+        public ComboActionType Type { get; set; }
         public object Argument { get; set; }
     }
 }

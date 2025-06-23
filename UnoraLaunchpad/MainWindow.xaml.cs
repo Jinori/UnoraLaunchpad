@@ -26,28 +26,70 @@ namespace UnoraLaunchpad
 {
     public sealed partial class MainWindow
     {
+        #region Fields and Properties
+
+        /// <summary>
+        /// Path to the launcher settings file.
+        /// </summary>
         private static readonly string LauncherSettingsPath = "LauncherSettings/settings.json";
 
+        /// <summary>
+        /// Provides file-related services.
+        /// </summary>
         private readonly FileService FileService = new();
+
+        /// <summary>
+        /// Provides Unora client-related services.
+        /// </summary>
         private readonly UnoraClient UnoraClient = new();
-        private Settings _launcherSettings; // Added field for settings
+
+        /// <summary>
+        /// Stores the current launcher settings.
+        /// </summary>
+        private Settings _launcherSettings;
+
+        /// <summary>
+        /// The system tray icon for the launcher.
+        /// </summary>
         private NotifyIcon NotifyIcon;
 
+        /// <summary>
+        /// Collection of game updates for binding to the UI.
+        /// </summary>
         public ObservableCollection<GameUpdate> GameUpdates { get; } = new();
+
+        /// <summary>
+        /// Indicates whether to skip the intro.
+        /// </summary>
         public bool SkipIntro { get; set; }
+
+        /// <summary>
+        /// Indicates whether to use Dawnd Windower.
+        /// </summary>
         public bool UseDawndWindower { get; set; }
+
+        /// <summary>
+        /// Indicates whether to use localhost for connections.
+        /// </summary>
         public bool UseLocalhost { get; set; }
+
+        /// <summary>
+        /// Command to open a game update detail view.
+        /// </summary>
         public ICommand OpenGameUpdateCommand { get; }
+
+        /// <summary>
+        /// Synchronization object for thread safety.
+        /// </summary>
         public object Sync { get; } = new();
 
-        private void DiscordButton_Click(object sender, RoutedEventArgs e) =>
-            // Replace with your Discord invite link
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://discord.gg/WkqbMVvDJq",
-                UseShellExecute = true
-            });
+        #endregion
 
+        #region Constructor
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MainWindow"/> class.
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -56,9 +98,10 @@ namespace UnoraLaunchpad
             DataContext = this;
         }
 
-        /// <summary>
-        /// Loads and applies launcher settings from disk.
-        /// </summary>
+        #endregion
+
+        #region Settings
+
         /// <summary>
         /// Loads and applies launcher settings from disk.
         /// </summary>
@@ -200,6 +243,9 @@ namespace UnoraLaunchpad
             RefreshSavedCharactersComboBox(); // Populate/update the ComboBox
         }
 
+        /// <summary>
+        /// Refreshes the saved characters ComboBox.
+        /// </summary>
         private void RefreshSavedCharactersComboBox()
         {
             SavedCharactersComboBox.Items.Clear();
@@ -223,297 +269,13 @@ namespace UnoraLaunchpad
                 _launcherSettings?.SavedCharacters != null && _launcherSettings.SavedCharacters.Any();
         }
 
-
-        private void PatchNotesButton_Click(object sender, RoutedEventArgs e)
-        {
-            var patchWindow = new PatchNotesWindow();
-            patchWindow.Owner = this;
-            patchWindow.ShowDialog();
-        }
-
-
-        /// <summary>
-        /// Calculates an MD5 hash for a file.
-        /// </summary>
-        private static string CalculateHash(string filePath)
-        {
-            using var md5 = MD5.Create();
-            using var stream = File.OpenRead(filePath);
-            return BitConverter.ToString(md5.ComputeHash(stream));
-        }
-
-        private async Task CheckAndUpdateLauncherAsync()
-        {
-            // Only run the update check if Unora is the selected game
-            var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
-            if (!selectedGame.Equals("Unora", StringComparison.OrdinalIgnoreCase))
-                return;
-
-            var serverVersion = await UnoraClient.GetLauncherVersionAsync();
-            var localVersion = GetLocalLauncherVersion();
-
-            if (serverVersion != localVersion)
-            {
-                var bootstrapperPath =
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Unora\\UnoraBootstrapper.exe");
-                var currentLauncherPath = Process.GetCurrentProcess().MainModule!.FileName!;
-                var currentProcessId = Process.GetCurrentProcess().Id;
-
-                var psi = new ProcessStartInfo
-                {
-                    FileName = bootstrapperPath,
-                    Arguments = $"\"{currentLauncherPath}\" {Process.GetCurrentProcess().Id}",
-                    UseShellExecute = true
-                };
-                Process.Start(psi);
-
-                Application.Current.Shutdown();
-                Environment.Exit(0);
-            }
-        }
-
-
-        private string GetLocalLauncherVersion()
-        {
-            var exePath = Process.GetCurrentProcess().MainModule!.FileName!;
-            return FileVersionInfo.GetVersionInfo(exePath).FileVersion ?? "0";
-        }
-
-        /// <summary>
-        /// Checks for file updates, downloads any required updates, and updates the UI accordingly.
-        /// </summary>
-        private async Task CheckForFileUpdates()
-        {
-            ApplySettings();
-            SetUiStateUpdating();
-
-            var apiRoutes = GetCurrentApiRoutes();
-            var fileDetails = await UnoraClient.GetFileDetailsAsync(apiRoutes.GameDetails);
-
-            Debug.WriteLine($"[Launcher] Downloading {fileDetails.Count} files for {apiRoutes.GameDetails}");
-
-            var filesToUpdate = fileDetails.Where(NeedsUpdate).ToList();
-            Debug.WriteLine($"[Launcher] Files to update: {filesToUpdate.Count}");
-
-            var totalBytesToDownload = filesToUpdate.Sum(f => f.Size);
-            var totalDownloaded = 0L;
-
-            if (filesToUpdate.Any() && !ConfirmUpdateProceed())
-            {
-                ShowMessage("Update cancelled. Please update later.", "Unora Launcher");
-                SetUiStateIdle();
-
-                return;
-            }
-
-            PrepareProgressBar(totalBytesToDownload);
-
-            await Task.Run(async () =>
-            {
-                foreach (var fileDetail in filesToUpdate)
-                {
-                    Debug.WriteLine($"[Launcher] Downloading file: {fileDetail.RelativePath}");
-                    PrepareFileProgress(fileDetail.RelativePath, totalDownloaded, totalBytesToDownload);
-
-                    var filePath = GetFilePath(fileDetail.RelativePath);
-                    EnsureDirectoryExists(filePath);
-
-                    var fileBytesDownloaded = 0L;
-
-                    var progress = new Progress<UnoraClient.DownloadProgress>(p =>
-                    {
-                        fileBytesDownloaded = p.BytesReceived;
-
-                        UpdateFileProgress(
-                            p.BytesReceived,
-                            totalDownloaded,
-                            totalBytesToDownload,
-                            p.SpeedBytesPerSec);
-                    });
-
-                    try
-                    {
-                        await UnoraClient.DownloadFileAsync(apiRoutes.GameFile(fileDetail.RelativePath), filePath,
-                            progress);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"[Launcher] Download failed: {ex.Message}");
-                        ShowMessage($"Failed to download {fileDetail.RelativePath}: {ex.Message}", "Update Error");
-                        // Optionally, break/continue/return depending on your tolerance for errors.
-                    }
-
-                    totalDownloaded += fileBytesDownloaded;
-                }
-            });
-
-            Debug.WriteLine($"[Launcher] All updates completed.");
-        }
-
-
-        /// <summary>
-        /// Determines if a file needs to be updated based on its hash.
-        /// </summary>
-        private bool NeedsUpdate(FileDetail fileDetail)
-        {
-            var filePath = GetFilePath(fileDetail.RelativePath);
-            if (!File.Exists(filePath))
-                return true;
-
-            return !CalculateHash(filePath).Equals(fileDetail.Hash, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private string GetFilePath(string relativePath) =>
-            Path.Combine(_launcherSettings?.SelectedGame ?? CONSTANTS.UNORA_FOLDER_NAME, relativePath);
-
-        private void EnsureDirectoryExists(string filePath)
-        {
-            var directory = Path.GetDirectoryName(filePath)!;
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-        }
-
-        private bool ConfirmUpdateProceed()
-        {
-            if (UseLocalhost) // or this.UseLocalhost, or _launcherSettings.UseLocalhost
-            {
-                return true; // Skip showing the window if UseLocalhost is true
-            }
-
-            var lockWindow = new UpdateLockWindow();
-            var result = lockWindow.ShowDialog();
-
-            if (lockWindow.UserSkippedClosingClients) // Added this block
-            {
-                MessageBox.Show(
-                    "You've chosen to skip closing active game clients. Game files may not update correctly, and you might encounter incorrect assets in-game until all clients are closed and the launcher performs a full update check.",
-                    "Update Warning",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-            }
-
-            return result == true;
-        }
-
-        private void ShowMessage(string message, string title) =>
-            MessageBox.Show(message, title);
-
-        #region Progress UI Helpers
-
-        private void SetUiStateUpdating() =>
-            Dispatcher.Invoke(() =>
-            {
-                DownloadProgressPanel.Visibility = Visibility.Visible;
-                StatusLabel.Visibility = Visibility.Collapsed;
-                LaunchSavedBtn.Visibility = Visibility.Collapsed;
-                LaunchBtn.Visibility = Visibility.Collapsed;
-                DiamondText.Visibility = Visibility.Collapsed;
-                SavedCharactersComboBox.Visibility = Visibility.Collapsed;
-                ProgressFileName.Text = string.Empty;
-                ProgressBytes.Text = "Checking for updates...";
-                DownloadProgressBar.IsIndeterminate = true;
-            });
-
-        private void SetUiStateIdle() => Dispatcher.Invoke(() => LaunchBtn.IsEnabled = true);
-
-        private void SetUiStateComplete()
-        {
-            DownloadProgressPanel.Visibility = Visibility.Collapsed;
-            StatusLabel.Text = "Update complete.";
-            StatusLabel.Visibility = Visibility.Visible;
-            LaunchSavedBtn.Visibility = Visibility.Visible;
-            LaunchBtn.Visibility = Visibility.Visible;
-            DiamondText.Visibility = Visibility.Visible;
-            SavedCharactersComboBox.Visibility = Visibility.Visible;
-        }
-
-        private void PrepareProgressBar(long totalBytesToDownload) =>
-            Dispatcher.Invoke(() =>
-            {
-                ProgressFileName.Text = string.Empty;
-                ProgressBytes.Text = "Applying updates...";
-                DownloadProgressBar.IsIndeterminate = false;
-                DownloadProgressBar.Minimum = 0;
-                DownloadProgressBar.Maximum = totalBytesToDownload > 0 ? totalBytesToDownload : 1;
-            });
-
-        private void PrepareFileProgress(string fileName, long downloaded, long total) =>
-            Dispatcher.Invoke(() =>
-            {
-                ProgressFileName.Text = fileName;
-                ProgressBytes.Text = $"{FormatBytes(downloaded)} of {FormatBytes(total)}";
-                DownloadProgressBar.Value = downloaded;
-            });
-
-        private void UpdateFileProgress(
-            long bytesReceived,
-            long totalDownloaded,
-            long totalBytesToDownload,
-            double speedBytesPerSec) =>
-            Dispatcher.Invoke(() =>
-            {
-                ProgressBytes.Text =
-                    $"{FormatBytes(totalDownloaded + bytesReceived)} of {FormatBytes(totalBytesToDownload)}";
-                DownloadProgressBar.Value = totalDownloaded + bytesReceived;
-            });
-
         #endregion
 
-        #region Formatting
+        #region Tray Icon
 
-        private static string FormatBytes(long bytes)
-        {
-            if (bytes < 0) return "??";
-            if (bytes > 1024 * 1024 * 1024)
-                return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
-            if (bytes > 1024 * 1024)
-                return $"{bytes / (1024.0 * 1024.0):F2} MB";
-            if (bytes > 1024)
-                return $"{bytes / 1024.0:F2} KB";
-
-            return $"{bytes} B";
-        }
-
-        private static string FormatSpeed(double bytesPerSec)
-        {
-            if (bytesPerSec > 1024 * 1024)
-                return $"{bytesPerSec / (1024.0 * 1024.0):F2} MB/s";
-            if (bytesPerSec > 1024)
-                return $"{bytesPerSec / 1024.0:F2} KB/s";
-
-            return $"{bytesPerSec:F2} B/s";
-        }
-
-        #endregion
-
-        #region System Tray / UI Initialization
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
-
-        private void CogButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_launcherSettings == null)
-            {
-                // Attempt to load or use defaults if ApplySettings hasn't run or failed
-                try
-                {
-                    _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
-                    if (_launcherSettings == null) // If still null after attempting load
-                    {
-                        _launcherSettings = new Settings(); // Fallback to default settings
-                    }
-                }
-                catch
-                {
-                    _launcherSettings = new Settings(); // Fallback to default settings on error
-                }
-            }
-
-            var settingsWindow = new SettingsWindow(this, _launcherSettings);
-            settingsWindow.Owner = this; // Ensure SettingsWindow is owned by MainWindow
-            settingsWindow.Show();
-        }
-
+        /// <summary>
+        /// Initializes the system tray icon and menu.
+        /// </summary>
         private void InitializeTrayIcon()
         {
             // Create an icon from a resource
@@ -538,14 +300,23 @@ namespace UnoraLaunchpad
             NotifyIcon.DoubleClick += (_, _) => ShowWindow();
         }
 
+        /// <summary>
+        /// Handles the tray menu exit click event.
+        /// </summary>
         private void TrayMenu_Exit_Click(object sender, EventArgs e)
         {
             NotifyIcon.Dispose();
             Application.Current.Shutdown();
         }
 
+        /// <summary>
+        /// Handles the tray menu open click event.
+        /// </summary>
         private void TrayMenu_Open_Click(object sender, EventArgs e) => ShowWindow();
 
+        /// <summary>
+        /// Shows the main window from the tray.
+        /// </summary>
         private void ShowWindow()
         {
             Show();
@@ -554,210 +325,33 @@ namespace UnoraLaunchpad
 
         #endregion
 
-        #region Window/Launcher Logic
+        #region Game Updates
 
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-
-        protected override void OnStateChanged(EventArgs e)
+        /// <summary>
+        /// Loads and binds game updates to the UI.
+        /// </summary>
+        public async Task LoadAndBindGameUpdates()
         {
-            if (WindowState == WindowState.Minimized)
-                Hide();
-
-            base.OnStateChanged(e);
+            var apiRoutes = GetCurrentApiRoutes();
+            var gameUpdates = await UnoraClient.GetGameUpdatesAsync(apiRoutes.GameUpdates);
+            GameUpdatesControl.DataContext = new { GameUpdates = gameUpdates };
         }
 
-        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        /// <summary>
+        /// Opens the game update detail view.
+        /// </summary>
+        private void OpenGameUpdate(GameUpdate gameUpdate)
         {
-            if (e.ChangedButton == MouseButton.Left)
-                DragMove();
+            var detailView = new GameUpdateDetailView(gameUpdate);
+            detailView.ShowDialog();
         }
 
-        #endregion
-
-        #region Launcher Core
-
-        public async void ReloadSettingsAndRefresh()
-        {
-            ApplySettings(); // Load settings from disk (SelectedGame, etc.) / Repopulates ComboBox
-            SetWindowTitle(); // Update the window title everywhere
-            await LoadAndBindGameUpdates(); // Reload news/patches for the selected server
-            await CheckForFileUpdates(); // Check/download updates for selected server
-            Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
-        }
-
-        public void ReloadSettingsAndRefreshLocal()
-        {
-            ApplySettings(); // Reloads from disk into _launcherSettings / Repopulates ComboBox
-            // Optionally: Re-fetch game updates and other game-specific info
-            _ = LoadAndBindGameUpdates();
-        }
-
-        private (string folder, string exe) GetGameLaunchInfo(string selectedGame) =>
-            // You can load this from a config file for extensibility if needed.
-            selectedGame switch
-            {
-                "Unora" => ("Unora", "Unora.exe"),
-                "Legends" => ("Legends", "Client.exe"),
-                // Add more as needed
-                _ => ("Unora", "Unora.exe") // Fallback
-            };
-
-        private void Launch(object sender, EventArgs e)
-        {
-            var (ipAddress, serverPort) = GetServerConnection();
-
-            // Use SelectedGame from your settings
-            var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
-            var (gameFolder, gameExe) = GetGameLaunchInfo(selectedGame);
-
-            // Build the full path to the executable
-            var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gameFolder, gameExe);
-
-            using var process = SuspendedProcess.Start(exePath);
-
-            try
-            {
-                PatchClient(process, ipAddress, serverPort, false);
-
-                if (UseDawndWindower)
-                {
-                    var processPtr = NativeMethods.OpenProcess(ProcessAccessFlags.FullAccess, true, process.ProcessId);
-                    InjectDll(processPtr);
-                }
-
-                // Optionally, set window title to the selected game name
-                _ = RenameGameWindowAsync(Process.GetProcessById(process.ProcessId), selectedGame);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"UnableToPatchClient: {ex.Message}");
-            }
-        }
-
-
-        private (IPAddress, int) GetServerConnection()
-        {
-            if (UseLocalhost)
-                return (ResolveHostname("127.0.0.1"), 4200);
-
-            return (ResolveHostname("chaotic-minds.dynu.net"), 6900);
-        }
-
-        private static IPAddress ResolveHostname(string hostname)
-        {
-            // Lookup the server hostname (via DNS)
-            var hostEntry = Dns.GetHostEntry(hostname);
-
-            // Find the IPv4 addresses
-            var ipAddresses =
-                from ip in hostEntry.AddressList
-                where ip.AddressFamily == AddressFamily.InterNetwork
-                select ip;
-
-            return ipAddresses.FirstOrDefault();
-        }
-
-        private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort, bool autologin)
-        {
-            using var stream = new ProcessMemoryStream(process.ProcessId);
-            using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true);
-
-            patcher.ApplyServerHostnamePatch(serverIPAddress);
-            patcher.ApplyServerPortPatch(serverPort);
-
-            if (SkipIntro || autologin)
-                patcher.ApplySkipIntroVideoPatch();
-
-            patcher.ApplyMultipleInstancesPatch();
-        }
-
-        private void InjectDll(IntPtr accessHandle)
-        {
-            const string DLL_NAME = "dawnd.dll";
-            var nameLength = DLL_NAME.Length + 1;
-
-            // Allocate memory and write the DLL name to target process
-            var allocate = NativeMethods.VirtualAllocEx(
-                accessHandle, IntPtr.Zero, (IntPtr)nameLength, 0x1000, 0x40);
-
-            NativeMethods.WriteProcessMemory(
-                accessHandle, allocate, DLL_NAME, (UIntPtr)nameLength, out _);
-
-            var injectionPtr = NativeMethods.GetProcAddress(
-                NativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-
-            if (injectionPtr == UIntPtr.Zero)
-            {
-                MessageBox.Show(this, "Injection pointer was null.", "Injection Error");
-                return;
-            }
-
-            var thread = NativeMethods.CreateRemoteThread(
-                accessHandle, IntPtr.Zero, IntPtr.Zero, injectionPtr, allocate, 0, out _);
-
-            if (thread == IntPtr.Zero)
-            {
-                MessageBox.Show(this, "Remote injection thread was null. Try again...", "Injection Error");
-                return;
-            }
-
-            var result = NativeMethods.WaitForSingleObject(thread, 10 * 1000);
-
-            if (result != WaitEventResult.Signaled)
-            {
-                MessageBox.Show(this, "Injection thread timed out, or signaled incorrectly. Try again...",
-                    "Injection Error");
-                if (thread != IntPtr.Zero)
-                    NativeMethods.CloseHandle(thread);
-                return;
-            }
-
-            NativeMethods.VirtualFreeEx(accessHandle, allocate, (UIntPtr)0, 0x8000);
-            if (thread != IntPtr.Zero)
-                NativeMethods.CloseHandle(thread);
-        }
-
-        private async Task RenameGameWindowAsync(Process process, string newTitle)
-        {
-            for (var i = 0; i < 20; i++)
-            {
-                process.Refresh();
-
-                if (process.MainWindowHandle != IntPtr.Zero)
-                {
-                    NativeMethods.SetWindowText(process.MainWindowHandle, newTitle);
-                    break;
-                }
-
-                await Task.Delay(100);
-            }
-        }
-
-        private void SetWindowTitle()
-        {
-            var selectedGame = _launcherSettings?.SelectedGame?.Trim() ?? "Unora";
-            var title = selectedGame switch
-            {
-                "Legends" => "Legends: Age of Chaos",
-                "Unora" => "Unora: Elemental Harmony",
-                _ => $"Unora Launcher"
-            };
-
-            Title = title; // OS-level window title
-            WindowTitleLabel.Content = title; // Custom title bar label
-        }
-
-
-
-        #endregion
-
+        /// <summary>
+        /// Handles the auto-login button click event.
+        /// </summary>
         private async void LaunchSavedBtn_Click(object sender, RoutedEventArgs e)
         {
-            // Ensure _launcherSettings is up-to-date (though ApplySettings usually handles this on load)
-            // ApplySettings(); // Not strictly needed here if UI always reflects current _launcherSettings
-
             var selectedItem = SavedCharactersComboBox.SelectedItem as string;
-
             if (string.IsNullOrEmpty(selectedItem) || _launcherSettings?.SavedCharacters == null ||
                 !_launcherSettings.SavedCharacters.Any())
             {
@@ -766,10 +360,8 @@ namespace UnoraLaunchpad
                     "Launch Saved Client", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-
             LaunchBtn.IsEnabled = false;
             LaunchSavedBtn.IsEnabled = false;
-
             try
             {
                 if (selectedItem == "All")
@@ -782,9 +374,9 @@ namespace UnoraLaunchpad
                             var decryptedPassword = PasswordHelper.DecryptString(character.EncryptedPassword);
                             if (!string.IsNullOrEmpty(decryptedPassword))
                             {
-                                character.Password = decryptedPassword; // Temporarily set for LaunchAndLogin
+                                character.Password = decryptedPassword;
                                 await LaunchAndLogin(character);
-                                character.Password = null; // Clear password after use
+                                character.Password = null;
                                 anyLaunched = true;
                             }
                             else
@@ -799,7 +391,6 @@ namespace UnoraLaunchpad
                                 $"No encrypted password for {character.Username} during 'Launch All'. Skipping.");
                         }
                     }
-
                     if (!anyLaunched)
                     {
                         MessageBox.Show(
@@ -807,7 +398,7 @@ namespace UnoraLaunchpad
                             "Launch All", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
-                else // Specific character selected
+                else
                 {
                     var characterToLaunch =
                         _launcherSettings.SavedCharacters.FirstOrDefault(c => c.Username == selectedItem);
@@ -818,9 +409,9 @@ namespace UnoraLaunchpad
                             var decryptedPassword = PasswordHelper.DecryptString(characterToLaunch.EncryptedPassword);
                             if (!string.IsNullOrEmpty(decryptedPassword))
                             {
-                                characterToLaunch.Password = decryptedPassword; // Temporarily set for LaunchAndLogin
+                                characterToLaunch.Password = decryptedPassword;
                                 await LaunchAndLogin(characterToLaunch);
-                                characterToLaunch.Password = null; // Clear password after use
+                                characterToLaunch.Password = null;
                             }
                             else
                             {
@@ -843,7 +434,6 @@ namespace UnoraLaunchpad
                     }
                 }
             }
-            // Removed NotImplementedException catch block as ShowPasswordDialog is no longer called.
             catch (Exception ex)
             {
                 MessageBox.Show(this, $"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK,
@@ -854,11 +444,13 @@ namespace UnoraLaunchpad
             {
                 LaunchBtn.IsEnabled = true;
                 LaunchSavedBtn.IsEnabled = _launcherSettings?.SavedCharacters != null &&
-                                           _launcherSettings.SavedCharacters
-                                               .Any(); // Re-enable based on if characters exist
+                                           _launcherSettings.SavedCharacters.Any();
             }
         }
 
+        /// <summary>
+        /// Launches and logs in a character asynchronously.
+        /// </summary>
         private async Task LaunchAndLogin(Character character)
         {
             try
@@ -943,6 +535,9 @@ namespace UnoraLaunchpad
             }
         }
 
+        /// <summary>
+        /// Performs automated login for a character.
+        /// </summary>
         private async Task PerformAutomatedLogin(string username, string password, Process gameProc)
         {
             try
@@ -993,51 +588,143 @@ namespace UnoraLaunchpad
             }
         }
 
-        [DllImport("user32.dll")]
-        private static extern short VkKeyScan(char ch);
+        #endregion
+
+        #region Launcher Core
 
         /// <summary>
-        /// Sends a single character through an <see cref="IKeyboardSimulator"/>,
-        /// automatically holding <c>SHIFT</c> when the scan-code says it’s required
-        /// (e.g. uppercase letters or symbols like “!”).
+        /// Gets the server connection IP and port.
         /// </summary>
-        private static async Task SendCharAsync(
-            IKeyboardSimulator keyboard,
-            char character,
-            int interKeyDelayMs = 50)
+        private (IPAddress, int) GetServerConnection()
         {
-            var scan = VkKeyScan(character);
-            if (scan == -1)
+            if (UseLocalhost)
+                return (ResolveHostname("127.0.0.1"), 4200);
+
+            return (ResolveHostname("chaotic-minds.dynu.net"), 6900);
+        }
+
+        /// <summary>
+        /// Resolves a hostname to an IP address.
+        /// </summary>
+        private static IPAddress ResolveHostname(string hostname)
+        {
+            // Lookup the server hostname (via DNS)
+            var hostEntry = Dns.GetHostEntry(hostname);
+
+            // Find the IPv4 addresses
+            var ipAddresses =
+                from ip in hostEntry.AddressList
+                where ip.AddressFamily == AddressFamily.InterNetwork
+                select ip;
+
+            return ipAddresses.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Patches the client process for launching.
+        /// </summary>
+        private void PatchClient(SuspendedProcess process, IPAddress serverIPAddress, int serverPort, bool autologin)
+        {
+            using var stream = new ProcessMemoryStream(process.ProcessId);
+            using var patcher = new RuntimePatcher(ClientVersion.Version741, stream, true);
+
+            patcher.ApplyServerHostnamePatch(serverIPAddress);
+            patcher.ApplyServerPortPatch(serverPort);
+
+            if (SkipIntro || autologin)
+                patcher.ApplySkipIntroVideoPatch();
+
+            patcher.ApplyMultipleInstancesPatch();
+        }
+
+        /// <summary>
+        /// Injects a DLL into the process if needed.
+        /// </summary>
+        private void InjectDll(IntPtr accessHandle)
+        {
+            const string DLL_NAME = "dawnd.dll";
+            var nameLength = DLL_NAME.Length + 1;
+
+            // Allocate memory and write the DLL name to target process
+            var allocate = NativeMethods.VirtualAllocEx(
+                accessHandle, IntPtr.Zero, (IntPtr)nameLength, 0x1000, 0x40);
+
+            NativeMethods.WriteProcessMemory(
+                accessHandle, allocate, DLL_NAME, (UIntPtr)nameLength, out _);
+
+            var injectionPtr = NativeMethods.GetProcAddress(
+                NativeMethods.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+
+            if (injectionPtr == UIntPtr.Zero)
             {
-                Debug.WriteLine($"[SendCharAsync] Unsupported character: '{character}'");
+                MessageBox.Show(this, "Injection pointer was null.", "Injection Error");
                 return;
             }
 
-            var vkCode = (VirtualKeyCode)(scan & 0xFF);
-            var shiftNeeded = (scan & 0x0100) != 0;
+            var thread = NativeMethods.CreateRemoteThread(
+                accessHandle, IntPtr.Zero, IntPtr.Zero, injectionPtr, allocate, 0, out _);
 
-            Debug.WriteLine($"Typing: '{character}' (VK: {vkCode}, Shift: {shiftNeeded})");
+            if (thread == IntPtr.Zero)
+            {
+                MessageBox.Show(this, "Remote injection thread was null. Try again...", "Injection Error");
+                return;
+            }
 
-            if (shiftNeeded)
-                keyboard.ModifiedKeyStroke(VirtualKeyCode.SHIFT, vkCode);
-            else
-                keyboard.KeyPress(vkCode);
+            var result = NativeMethods.WaitForSingleObject(thread, 10 * 1000);
 
-            await Task.Delay(interKeyDelayMs);
+            if (result != WaitEventResult.Signaled)
+            {
+                MessageBox.Show(this, "Injection thread timed out, or signaled incorrectly. Try again...",
+                    "Injection Error");
+                if (thread != IntPtr.Zero)
+                    NativeMethods.CloseHandle(thread);
+                return;
+            }
+
+            NativeMethods.VirtualFreeEx(accessHandle, allocate, (UIntPtr)0, 0x8000);
+            if (thread != IntPtr.Zero)
+                NativeMethods.CloseHandle(thread);
         }
 
-        private static async Task TypePasswordAsync(
-            IKeyboardSimulator keyboard,
-            string password)
+        /// <summary>
+        /// Renames the game window asynchronously.
+        /// </summary>
+        private async Task RenameGameWindowAsync(Process process, string newTitle)
         {
-            Debug.WriteLine($"[TypePasswordAsync] Typing password: {password}");
+            for (var i = 0; i < 20; i++)
+            {
+                process.Refresh();
 
-            foreach (var c in password)
-                await SendCharAsync(keyboard, c);
+                if (process.MainWindowHandle != IntPtr.Zero)
+                {
+                    NativeMethods.SetWindowText(process.MainWindowHandle, newTitle);
+                    break;
+                }
+
+                await Task.Delay(100);
+            }
         }
 
+        /// <summary>
+        /// Sets the window title based on the selected game.
+        /// </summary>
+        private void SetWindowTitle()
+        {
+            var selectedGame = _launcherSettings?.SelectedGame?.Trim() ?? "Unora";
+            var title = selectedGame switch
+            {
+                "Legends" => "Legends: Age of Chaos",
+                "Unora" => "Unora: Elemental Harmony",
+                _ => $"Unora Launcher"
+            };
 
-        
+            Title = title; // OS-level window title
+            WindowTitleLabel.Content = title; // Custom title bar label
+        }
+
+        /// <summary>
+        /// Waits for the client process to be ready for login.
+        /// </summary>
         private async Task WaitForClientReady(Process gameProc, int timeoutMs = 10000)
         {
             var sw = Stopwatch.StartNew();
@@ -1062,22 +749,32 @@ namespace UnoraLaunchpad
 
             throw new TimeoutException("Client did not appear ready within timeout.");
         }
-        
-        
+
+        /// <summary>
+        /// Blocks or unblocks user input at the OS level.
+        /// </summary>
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool BlockInput(bool fBlockIt);
-        
-        
+
+        /// <summary>
+        /// Sets the cursor position on the screen.
+        /// </summary>
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int X, int Y);
 
+        /// <summary>
+        /// Simulates mouse events at the OS level.
+        /// </summary>
         [DllImport("user32.dll")]
         private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
 
         private const uint MouseeventfLeftdown = 0x0002;
         private const uint MouseeventfLeftup = 0x0004;
 
+        /// <summary>
+        /// Moves the mouse to a point and simulates a left click.
+        /// </summary>
         private void MoveAndClickPoint(System.Drawing.Point point)
         {
             SetCursorPos(point.X, point.Y);
@@ -1087,7 +784,9 @@ namespace UnoraLaunchpad
             mouse_event(MouseeventfLeftup, (uint)point.X, (uint)point.Y, 0, 0);
         }
 
-        
+        /// <summary>
+        /// Gets a screen point relative to a window handle.
+        /// </summary>
         private System.Drawing.Point GetRelativeScreenPoint(IntPtr hwnd, double relativeX, double relativeY)
         {
             var rect = new NativeMethods.Rect();
@@ -1102,8 +801,9 @@ namespace UnoraLaunchpad
 
             return new System.Drawing.Point(screenX, screenY);
         }
-        
-        
+
+        #endregion
+
         #region Game Updates
 
         private async void Launcher_Loaded(object sender, RoutedEventArgs e)
@@ -1127,7 +827,6 @@ namespace UnoraLaunchpad
             }
         }
 
-
         private GameApiRoutes GetCurrentApiRoutes()
         {
             // Use your actual API base URL; this will pick the right one for Debug/Release from CONSTANTS
@@ -1137,20 +836,6 @@ namespace UnoraLaunchpad
                 : _launcherSettings.SelectedGame;
 
             return new GameApiRoutes(baseUrl, selectedGame);
-        }
-
-        
-        public async Task LoadAndBindGameUpdates()
-        {
-            var apiRoutes = GetCurrentApiRoutes();
-            var gameUpdates = await UnoraClient.GetGameUpdatesAsync(apiRoutes.GameUpdates);
-            GameUpdatesControl.DataContext = new { GameUpdates = gameUpdates };
-        }
-
-        private void OpenGameUpdate(GameUpdate gameUpdate)
-        {
-            var detailView = new GameUpdateDetailView(gameUpdate);
-            detailView.ShowDialog();
         }
 
         public static void LogException(Exception e)
@@ -1181,7 +866,7 @@ namespace UnoraLaunchpad
             SkipIntro = _launcherSettings.SkipIntro;
             // Note: SelectedTheme is handled by App.ChangeTheme and ApplySettings directly.
         }
-        
+
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (_launcherSettings != null)
@@ -1196,6 +881,325 @@ namespace UnoraLaunchpad
                 }
                 FileService.SaveSettings(_launcherSettings, LauncherSettingsPath);
             }
+        }
+
+        #region Progress UI Helpers
+
+        /// <summary>
+        /// Sets the UI state to updating.
+        /// </summary>
+        private void SetUiStateUpdating() =>
+            Dispatcher.Invoke(() =>
+            {
+                DownloadProgressPanel.Visibility = Visibility.Visible;
+                StatusLabel.Visibility = Visibility.Collapsed;
+                LaunchSavedBtn.Visibility = Visibility.Collapsed;
+                LaunchBtn.Visibility = Visibility.Collapsed;
+                DiamondText.Visibility = Visibility.Collapsed;
+                SavedCharactersComboBox.Visibility = Visibility.Collapsed;
+                ProgressFileName.Text = string.Empty;
+                ProgressBytes.Text = "Checking for updates...";
+                DownloadProgressBar.IsIndeterminate = true;
+            });
+
+        /// <summary>
+        /// Sets the UI state to idle.
+        /// </summary>
+        private void SetUiStateIdle() => Dispatcher.Invoke(() => LaunchBtn.IsEnabled = true);
+
+        /// <summary>
+        /// Sets the UI state to complete.
+        /// </summary>
+        private void SetUiStateComplete()
+        {
+            DownloadProgressPanel.Visibility = Visibility.Collapsed;
+            StatusLabel.Text = "Update complete.";
+            StatusLabel.Visibility = Visibility.Visible;
+            LaunchSavedBtn.Visibility = Visibility.Visible;
+            LaunchBtn.Visibility = Visibility.Visible;
+            DiamondText.Visibility = Visibility.Visible;
+            SavedCharactersComboBox.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>
+        /// Prepares the progress bar for updates.
+        /// </summary>
+        private void PrepareProgressBar(long totalBytesToDownload) =>
+            Dispatcher.Invoke(() =>
+            {
+                ProgressFileName.Text = string.Empty;
+                ProgressBytes.Text = "Applying updates...";
+                DownloadProgressBar.IsIndeterminate = false;
+                DownloadProgressBar.Minimum = 0;
+                DownloadProgressBar.Maximum = totalBytesToDownload > 0 ? totalBytesToDownload : 1;
+            });
+
+        /// <summary>
+        /// Prepares the file progress UI.
+        /// </summary>
+        private void PrepareFileProgress(string fileName, long downloaded, long total) =>
+            Dispatcher.Invoke(() =>
+            {
+                ProgressFileName.Text = fileName;
+                ProgressBytes.Text = $"{FormatBytes(downloaded)} of {FormatBytes(total)}";
+                DownloadProgressBar.Value = downloaded;
+            });
+
+        /// <summary>
+        /// Updates the file progress UI.
+        /// </summary>
+        private void UpdateFileProgress(
+            long bytesReceived,
+            long totalDownloaded,
+            long totalBytesToDownload,
+            double speedBytesPerSec) =>
+            Dispatcher.Invoke(() =>
+            {
+                ProgressBytes.Text =
+                    $"{FormatBytes(totalDownloaded + bytesReceived)} of {FormatBytes(totalBytesToDownload)}";
+                DownloadProgressBar.Value = totalDownloaded + bytesReceived;
+            });
+
+        #endregion
+
+        #region Formatting
+
+        /// <summary>
+        /// Formats a byte value as a human-readable string.
+        /// </summary>
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes < 0) return "??";
+            if (bytes > 1024 * 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
+            if (bytes > 1024 * 1024)
+                return $"{bytes / (1024.0 * 1024.0):F2} MB";
+            if (bytes > 1024)
+                return $"{bytes / 1024.0:F2} KB";
+
+            return $"{bytes} B";
+        }
+
+        /// <summary>
+        /// Formats a speed value as a human-readable string.
+        /// </summary>
+        private static string FormatSpeed(double bytesPerSec)
+        {
+            if (bytesPerSec > 1024 * 1024)
+                return $"{bytesPerSec / (1024.0 * 1024.0):F2} MB/s";
+            if (bytesPerSec > 1024)
+                return $"{bytesPerSec / 1024.0:F2} KB/s";
+
+            return $"{bytesPerSec:F2} B/s";
+        }
+
+        #endregion
+
+        // --- Restored event handlers and logic methods for XAML/code references ---
+
+        /// <summary>
+        /// Handles the title bar mouse down event for window dragging.
+        /// </summary>
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
+        }
+
+        /// <summary>
+        /// Handles the Patch Notes button click event.
+        /// </summary>
+        private void PatchNotesButton_Click(object sender, RoutedEventArgs e)
+        {
+            var patchWindow = new PatchNotesWindow();
+            patchWindow.Owner = this;
+            patchWindow.ShowDialog();
+        }
+
+        /// <summary>
+        /// Handles the Discord button click event.
+        /// </summary>
+        private void DiscordButton_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://discord.gg/WkqbMVvDJq",
+                UseShellExecute = true
+            });
+        }
+
+        /// <summary>
+        /// Handles the settings (cog) button click event.
+        /// </summary>
+        private void CogButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_launcherSettings == null)
+            {
+                // Attempt to load or use defaults if ApplySettings hasn't run or failed
+                try
+                {
+                    _launcherSettings = FileService.LoadSettings(LauncherSettingsPath);
+                    if (_launcherSettings == null)
+                    {
+                        _launcherSettings = new Settings();
+                    }
+                }
+                catch
+                {
+                    _launcherSettings = new Settings();
+                }
+            }
+            var settingsWindow = new SettingsWindow(this, _launcherSettings);
+            settingsWindow.Owner = this;
+            settingsWindow.Show();
+        }
+
+        /// <summary>
+        /// Handles the minimize button click event.
+        /// </summary>
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        /// <summary>
+        /// Handles the close button click event.
+        /// </summary>
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        /// <summary>
+        /// Gets the game launch info (folder, exe) for the selected game.
+        /// </summary>
+        private (string folder, string exe) GetGameLaunchInfo(string selectedGame)
+        {
+            return selectedGame switch
+            {
+                "Unora" => ("Unora", "Unora.exe"),
+                "Legends" => ("Legends", "Client.exe"),
+                _ => ("Unora", "Unora.exe")
+            };
+        }
+
+        /// <summary>
+        /// Types a password asynchronously using a keyboard simulator.
+        /// </summary>
+        private static async Task TypePasswordAsync(InputSimulatorStandard.IKeyboardSimulator keyboard, string password)
+        {
+            foreach (var c in password)
+            {
+                var scan = VkKeyScan(c);
+                if (scan == -1)
+                {
+                    Debug.WriteLine($"[SendCharAsync] Unsupported character: '{c}'");
+                    continue;
+                }
+                var vkCode = (VirtualKeyCode)(scan & 0xFF);
+                var shiftNeeded = (scan & 0x0100) != 0;
+                Debug.WriteLine($"Typing: '{c}' (VK: {vkCode}, Shift: {shiftNeeded})");
+                if (shiftNeeded)
+                    keyboard.ModifiedKeyStroke(VirtualKeyCode.SHIFT, vkCode);
+                else
+                    keyboard.KeyPress(vkCode);
+                await Task.Delay(50);
+            }
+        }
+
+        /// <summary>
+        /// Checks for file updates and updates the UI.
+        /// </summary>
+        private async Task CheckForFileUpdates()
+        {
+            ApplySettings();
+            SetUiStateUpdating();
+            var apiRoutes = GetCurrentApiRoutes();
+            var fileDetails = await UnoraClient.GetFileDetailsAsync(apiRoutes.GameDetails);
+            Debug.WriteLine($"[Launcher] Downloading {fileDetails.Count} files for {apiRoutes.GameDetails}");
+            var filesToUpdate = fileDetails.Where(NeedsUpdate).ToList();
+            Debug.WriteLine($"[Launcher] Files to update: {filesToUpdate.Count}");
+            var totalBytesToDownload = filesToUpdate.Sum(f => f.Size);
+            var totalDownloaded = 0L;
+            if (filesToUpdate.Any() && !ConfirmUpdateProceed())
+            {
+                ShowMessage("Update cancelled. Please update later.", "Unora Launcher");
+                SetUiStateIdle();
+                return;
+            }
+            PrepareProgressBar(totalBytesToDownload);
+            await Task.Run(async () =>
+            {
+                foreach (var fileDetail in filesToUpdate)
+                {
+                    Debug.WriteLine($"[Launcher] Downloading file: {fileDetail.RelativePath}");
+                    PrepareFileProgress(fileDetail.RelativePath, totalDownloaded, totalBytesToDownload);
+                    var filePath = GetFilePath(fileDetail.RelativePath);
+                    EnsureDirectoryExists(filePath);
+                    var fileBytesDownloaded = 0L;
+                    var progress = new Progress<UnoraClient.DownloadProgress>(p =>
+                    {
+                        fileBytesDownloaded = p.BytesReceived;
+                        UpdateFileProgress(
+                            p.BytesReceived,
+                            totalDownloaded,
+                            totalBytesToDownload,
+                            p.SpeedBytesPerSec);
+                    });
+                    try
+                    {
+                        await UnoraClient.DownloadFileAsync(apiRoutes.GameFile(fileDetail.RelativePath), filePath,
+                            progress);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[Launcher] Download failed: {ex.Message}");
+                        ShowMessage($"Failed to download {fileDetail.RelativePath}: {ex.Message}", "Update Error");
+                    }
+                    totalDownloaded += fileBytesDownloaded;
+                }
+            });
+            Debug.WriteLine($"[Launcher] All updates completed.");
+        }
+
+        /// <summary>
+        /// Checks and updates the launcher asynchronously.
+        /// </summary>
+        private async Task CheckAndUpdateLauncherAsync()
+        {
+            var selectedGame = _launcherSettings?.SelectedGame ?? "Unora";
+            if (!selectedGame.Equals("Unora", StringComparison.OrdinalIgnoreCase))
+                return;
+            var serverVersion = await UnoraClient.GetLauncherVersionAsync();
+            var localVersion = GetLocalLauncherVersion();
+            if (serverVersion != localVersion)
+            {
+                var bootstrapperPath =
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Unora\\UnoraBootstrapper.exe");
+                var currentLauncherPath = Process.GetCurrentProcess().MainModule!.FileName!;
+                var currentProcessId = Process.GetCurrentProcess().Id;
+                var psi = new ProcessStartInfo
+                {
+                    FileName = bootstrapperPath,
+                    Arguments = $"\"{currentLauncherPath}\" {Process.GetCurrentProcess().Id}",
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+                Application.Current.Shutdown();
+                Environment.Exit(0);
+            }
+        }
+
+        /// <summary>
+        /// Reloads settings and refreshes the UI.
+        /// </summary>
+        public async void ReloadSettingsAndRefresh()
+        {
+            ApplySettings();
+            SetWindowTitle();
+            await LoadAndBindGameUpdates();
+            await CheckForFileUpdates();
+            Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
         }
     }
 }

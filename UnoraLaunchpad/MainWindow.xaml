@@ -118,24 +118,46 @@
               Background="{DynamicResource TitleBarColor}"
               MouseDown="TitleBar_MouseDown">
             <!-- Patch Notes Button -->
-            <Button Style="{StaticResource TitleBarIconButtonStyle}"
-                    HorizontalAlignment="Right"
-                    Margin="0, 0, 190, 0"
-                    Click="PatchNotesButton_Click">
+            <Button HorizontalAlignment="Right"
+                    Margin="0, 0, 235, 0" <!-- Adjusted Margin -->
+                    Click="PatchNotesButton_Click"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="Assignment" />
             </Button>
             <!-- Discord Button -->
-            <Button Style="{StaticResource TitleBarIconButtonStyle}"
-                    HorizontalAlignment="Right"
-                    Margin="0, 0, 147, 0"
-                    Click="DiscordButton_Click">
+            <Button HorizontalAlignment="Right"
+                    Margin="0, 0, 191, 0" <!-- Adjusted Margin -->
+                    Click="DiscordButton_Click"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="MessageText" />
             </Button>
+
+            <!-- Macro Settings Button -->
+            <Button HorizontalAlignment="Right"
+                    Margin="0, 0, 147, 0" <!-- Correct Margin -->
+                    Click="MacroButton_Click"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                    ToolTip="Open Macro Settings">
+                <materialDesign:PackIcon Kind="KeyboardSettings" />
+            </Button>
+
             <!-- Settings Button -->
-            <Button Style="{StaticResource TitleBarIconButtonStyle}"
-                    HorizontalAlignment="Right"
+            <Button HorizontalAlignment="Right"
                     Margin="0, 0, 103, 0"
-                    Click="CogButton_Click">
+                    Click="CogButton_Click"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
                 <materialDesign:PackIcon Kind="Cog" />
             </Button>
             <!-- Minimize Button -->

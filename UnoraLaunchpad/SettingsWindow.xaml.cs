@@ -45,6 +45,7 @@ internal sealed partial class SettingsWindow : Window
         LoadSettings();
         // Add at the end of SettingsWindow_Loaded:
         AccountsListBox_SelectionChanged(null, null); // To set initial state of buttons and textboxes
+        MacrosListBox_SelectionChanged(null, null); // To set initial state for macro buttons and textboxes
     }
 
     private void LoadSettings()
@@ -79,6 +80,15 @@ internal sealed partial class SettingsWindow : Window
         CharactersListBox.ItemsSource = _settings.SavedCharacters;
         CharactersListBox.DisplayMemberPath = "Username";
         // === End of new lines for account management ===
+
+        // === Add these lines for macro management ===
+        if (_settings.Macros == null)
+        {
+            _settings.Macros = new Dictionary<string, string>();
+        }
+        MacrosListBox.ItemsSource = _settings.Macros.ToList(); // Bind to a list of KeyValuePair
+        // MacrosListBox.DisplayMemberPath = "Key"; // Using DataTemplate instead
+        // === End of new lines for macro management ===
     }
 
 
@@ -259,4 +269,131 @@ internal sealed partial class SettingsWindow : Window
         CharactersListBox.ItemsSource = _settings.SavedCharacters;
         CharactersListBox.DisplayMemberPath = "Username";
     }
+
+    // === New event handlers for macros ===
+    private void MacrosListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (MacrosListBox.SelectedItem is KeyValuePair<string, string> selectedMacro)
+        {
+            MacroTriggerKeyTextBox.Text = selectedMacro.Key;
+            MacroActionSequenceTextBox.Text = selectedMacro.Value;
+            EditMacroButton.IsEnabled = true;
+            RemoveMacroButton.IsEnabled = true;
+        }
+        else
+        {
+            MacroTriggerKeyTextBox.Text = string.Empty;
+            MacroActionSequenceTextBox.Text = string.Empty;
+            EditMacroButton.IsEnabled = false;
+            RemoveMacroButton.IsEnabled = false;
+        }
+    }
+
+    private void AddMacroButton_Click(object sender, RoutedEventArgs e)
+    {
+        var triggerKey = MacroTriggerKeyTextBox.Text.Trim();
+        var actionSequence = MacroActionSequenceTextBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(triggerKey))
+        {
+            MessageBox.Show("Trigger key cannot be empty.", "Add Macro", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(actionSequence))
+        {
+            MessageBox.Show("Action sequence cannot be empty.", "Add Macro", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (_settings.Macros.ContainsKey(triggerKey))
+        {
+            MessageBox.Show("A macro with this trigger key already exists.", "Add Macro", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        _settings.Macros.Add(triggerKey, actionSequence);
+        RefreshMacrosListBox();
+        MacroTriggerKeyTextBox.Text = string.Empty;
+        MacroActionSequenceTextBox.Text = string.Empty;
+    }
+
+    private void EditMacroButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (MacrosListBox.SelectedItem is KeyValuePair<string, string> selectedMacro)
+        {
+            var originalKey = selectedMacro.Key;
+            var updatedTriggerKey = MacroTriggerKeyTextBox.Text.Trim();
+            var updatedActionSequence = MacroActionSequenceTextBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(updatedTriggerKey))
+            {
+                MessageBox.Show("Trigger key cannot be empty.", "Update Macro", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(updatedActionSequence))
+            {
+                MessageBox.Show("Action sequence cannot be empty.", "Update Macro", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // If the key is changed, remove the old entry and add a new one
+            // Also, check for conflicts if the key is changed to an existing key
+            if (originalKey != updatedTriggerKey)
+            {
+                if (_settings.Macros.ContainsKey(updatedTriggerKey))
+                {
+                    MessageBox.Show("Another macro with this trigger key already exists.", "Update Macro", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                _settings.Macros.Remove(originalKey);
+                _settings.Macros.Add(updatedTriggerKey, updatedActionSequence);
+            }
+            else
+            {
+                // Key is the same, just update the value
+                _settings.Macros[updatedTriggerKey] = updatedActionSequence;
+            }
+
+            RefreshMacrosListBox();
+        }
+        else
+        {
+            MessageBox.Show("Please select a macro to update.", "Update Macro", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private void RemoveMacroButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (MacrosListBox.SelectedItem is KeyValuePair<string, string> selectedMacro)
+        {
+            var result = MessageBox.Show($"Are you sure you want to remove the macro for '{selectedMacro.Key}'?",
+                                         "Remove Macro", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Yes)
+            {
+                _settings.Macros.Remove(selectedMacro.Key);
+                RefreshMacrosListBox();
+                MacroTriggerKeyTextBox.Text = string.Empty;
+                MacroActionSequenceTextBox.Text = string.Empty;
+            }
+        }
+        else
+        {
+            MessageBox.Show("Please select a macro to remove.", "Remove Macro", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private void RefreshMacrosListBox()
+    {
+        MacrosListBox.ItemsSource = null;
+        MacrosListBox.ItemsSource = _settings.Macros.ToList(); // Refresh with a new list of KeyValuePairs
+        // Ensure selection behavior is reset or maintained as desired
+        if (MacrosListBox.Items.Count > 0)
+        {
+            MacrosListBox.SelectedIndex = -1; // Or reselect the previously selected/edited item if complex logic is needed
+        }
+        MacrosListBox_SelectionChanged(null, null); // Update button states
+    }
+    // === End of new event handlers for macros ===
 }

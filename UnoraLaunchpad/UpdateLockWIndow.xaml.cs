@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Windows;
 
@@ -17,7 +16,17 @@ namespace UnoraLaunchpad
             { "Teal", "pack://application:,,,/Resources/TealTheme.xaml" },
             { "Violet", "pack://application:,,,/Resources/VioletTheme.xaml" },
             { "Amber", "pack://application:,,,/Resources/AmberTheme.xaml" },
-            { "Emerald", "pack://application:,,,/Resources/EmeraldTheme.xaml" }
+            { "Emerald", "pack://application:,,,/Resources/EmeraldTheme.xaml" },
+            { "Ruby", "pack://application:,,,/Resources/RubyTheme.xaml" },
+            { "Sapphire", "pack://application:,,,/Resources/SapphireTheme.xaml" },
+            { "Topaz", "pack://application:,,,/Resources/TopazTheme.xaml" },
+            { "Amethyst", "pack://application:,,,/Resources/AmethystTheme.xaml" },
+            { "Garnet", "pack://application:,,,/Resources/GarnetTheme.xaml" },
+            { "Pearl", "pack://application:,,,/Resources/PearlTheme.xaml" },
+            { "Obsidian", "pack://application:,,,/Resources/ObsidianTheme.xaml" },
+            { "Citrine", "pack://application:,,,/Resources/CitrineTheme.xaml" },
+            { "Peridot", "pack://application:,,,/Resources/PeridotTheme.xaml" },
+            { "Aquamarine", "pack://application:,,,/Resources/AquamarineTheme.xaml" }
         };
 
         public UpdateLockWindow()
@@ -28,18 +37,9 @@ namespace UnoraLaunchpad
 
         private void UpdateLockWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // Apply Theme
-            var settingsPath = "LauncherSettings/settings.json";
-            Settings launcherSettings = null;
-            if (File.Exists(settingsPath))
-                launcherSettings = FileService.LoadSettings(settingsPath);
-            launcherSettings ??= new Settings();
-
-            var themeName = launcherSettings.SelectedTheme;
-            if (string.IsNullOrEmpty(themeName))
-                themeName = "Dark"; // Default theme
-
-            App.ChangeTheme(GetThemeUri(themeName));
+            // Theme should be inherited from the application context.
+            // No need to load settings or change theme here.
+            // App.Current.Resources should already have the correct theme.
 
             // Original Loaded logic
             UpdateStatus();
@@ -47,8 +47,10 @@ namespace UnoraLaunchpad
 
         private static Uri GetThemeUri(string themeName)
         {
-            if (!ThemeResourceMap.TryGetValue(themeName, out var uriString))
-                uriString = ThemeResourceMap["Dark"]; // Default fallback
+            // This method is kept for potential future use or as a fallback,
+            // but UpdateLockWindow should primarily rely on the app-level theme.
+            if (!ThemeResourceMap.TryGetValue(themeName, out var uriString) || string.IsNullOrEmpty(uriString))
+                uriString = ThemeResourceMap["Dark"]; // Default fallback if themeName not in map or URI is invalid
             return new Uri(uriString, UriKind.Absolute);
         }
 

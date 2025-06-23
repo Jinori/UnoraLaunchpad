@@ -189,7 +189,18 @@ internal static class NativeMethods
     public static extern int SetWindowText(IntPtr hWnd, string text);
 
     [DllImport("User32.dll")]
-    public static extern int SetForegroundWindow(int hWnd);
+    public static extern int SetForegroundWindow(int hWnd); // Note: This takes int, consider IntPtr if consistency is needed.
+                                                            // For the new GetForegroundWindow, it returns IntPtr.
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+
+    // It's also useful to have GetWindowTextLength to correctly size the buffer for GetWindowText
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern int GetWindowTextLength(IntPtr hWnd);
     #endregion
 
     #region Global Hotkeys
@@ -276,6 +287,9 @@ internal static class NativeMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern short VkKeyScan(char ch);
 
     #endregion
 }

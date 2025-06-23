@@ -100,6 +100,10 @@
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ScreenshotInfo.cs" />
+    <Compile Include="ScreenshotBrowserWindow.xaml.cs">
+      <DependentUpon>ScreenshotBrowserWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="GameUpdateDetailView.xaml" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -131,6 +135,10 @@
     <Page Include="Resources\PeridotTheme.xaml" />
     <Page Include="Resources\AquamarineTheme.xaml" />
     <Page Include="SettingsWindow.xaml" />
+    <Page Include="ScreenshotBrowserWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SwirlLoader.xaml" />
     <Page Include="UpdateLockWIndow.xaml" />
   </ItemGroup>

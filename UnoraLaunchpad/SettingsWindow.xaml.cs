@@ -82,6 +82,7 @@ internal sealed partial class SettingsWindow : Window
         // === End of new lines for account management ===
 
         // === Add these lines for combo management ===
+        EnableComboSystemCheckBox.IsChecked = _settings.IsComboSystemEnabled; // Bind checkbox state
         if (_settings.Combos == null)
         {
             _settings.Combos = new Dictionary<string, string>();
@@ -117,6 +118,7 @@ internal sealed partial class SettingsWindow : Window
         _settings.UseDawndWindower = DawndCheckBox.IsChecked ?? false;
         _settings.SkipIntro = SkipIntroCheckBox.IsChecked ?? false;
         _settings.UseLocalhost = LocalhostCheckBox.IsChecked ?? false;
+        _settings.IsComboSystemEnabled = EnableComboSystemCheckBox.IsChecked ?? false; // Save checkbox state
 
         if (GameComboBox.SelectedItem is ComboBoxItem selectedGameItem)
             _settings.SelectedGame = selectedGameItem.Content.ToString();

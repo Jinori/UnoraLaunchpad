@@ -847,6 +847,7 @@ namespace UnoraLaunchpad
             SetWindowTitle(); // Update the window title everywhere
             await LoadAndBindGameUpdates(); // Reload news/patches for the selected server
             await CheckForFileUpdates(); // Check/download updates for selected server
+            RegisterGlobalHotkeys();
             Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
         }
 

@@ -211,6 +211,13 @@
                               Foreground="{DynamicResource PrimaryTextColor}"
                               BorderBrush="{DynamicResource PrimaryBorderColor}">
                         <StackPanel>
+                            <CheckBox x:Name="EnableComboSystemCheckBox"
+                                      Content="Enable Combo System"
+                                      Foreground="{DynamicResource IconForegroundColor}"
+                                      Background="{DynamicResource PrimaryTextColor}"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Center" 
+                                      Margin="5,5,0,5"/>
                             <ListBox x:Name="CombosListBox"
                                      Height="100"
                                      Margin="5"
@@ -286,9 +293,9 @@
                                     - Key press (down and up): {KEYPRESS=LCONTROL}
                                     - Key down: {KEYDOWN=LSHIFT}
                                     - Key up: {KEYUP=RALT}
-
+                                    
                                     Combine actions: "Hello{ENTER}{WAIT=1000}World"
-
+                                    
                                     Trigger Keys:
                                     - Use modifiers like CTRL+, SHIFT+, ALT+
                                     - Examples: "CTRL+F1", "ALT+SHIFT+X", "F5"

@@ -175,7 +175,7 @@
                     Style="{StaticResource MaterialDesignRaisedLightButton}"
                     ToolTip="Save macro settings and close.">
                 <TextBlock Text="Save &amp; Close" />
-            </Button>
+            </Button></StackPanel>
         </Grid>
     </Grid>
 </Window>

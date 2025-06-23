@@ -117,10 +117,22 @@
         <Grid Grid.Row="0"
               Background="{DynamicResource TitleBarColor}"
               MouseDown="TitleBar_MouseDown">
+            <!-- Screenshots Button -->
+            <Button HorizontalAlignment="Right"
+                    Margin="0, 0, 195, 0" <!-- Adjusted margin for new button -->
+                    Click="ScreenshotsButton_Click"
+                    ToolTip="Open Screenshot Browser"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <materialDesign:PackIcon Kind="ImageMultipleOutline" />
+            </Button>
             <!-- Patch Notes Button -->
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 165, 0"
                     Click="PatchNotesButton_Click"
+                    ToolTip="View Patch Notes"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"
                     BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
@@ -130,6 +142,7 @@
             <!-- Discord Button -->
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 135, 0"
+                    ToolTip="Join Discord"
                     Click="DiscordButton_Click"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"
                     Foreground="{DynamicResource IconForegroundColor}"

@@ -109,24 +109,51 @@ namespace UnoraLaunchpad
 
         private async void ExecuteMacroAction(string actionSequence)
         {
-            // Attempt to find the Unora game window
-            // TODO: Make "Unora" configurable or more robust if window titles vary.
-            var gameWindowHandle = NativeMethods.FindWindow(null, "Darkages"); // This might need to be more specific, e.g. class name
-
-            if (gameWindowHandle == IntPtr.Zero)
+            IntPtr activeWindowHandle = NativeMethods.GetForegroundWindow();
+            if (activeWindowHandle == IntPtr.Zero)
             {
-                // Fallback: Try to find any window that might be a game client if main title fails
-                // This is a placeholder for more sophisticated game window detection logic.
-                // For now, if "Unora" isn't found, we won't send keys.
-                // Consider iterating processes named "Unora.exe" and checking their MainWindowHandle.
-                System.Diagnostics.Debug.WriteLine("Unora game window not found. Macro not executed.");
-                // Optionally, notify the user via a less intrusive method than MessageBox
-                // StatusLabel.Text = "Macro Error: Unora window not found.";
+                System.Diagnostics.Debug.WriteLine("No active window found. Macro not executed.");
                 return;
             }
 
-            NativeMethods.SetForegroundWindow(gameWindowHandle.ToInt32());
-            await Task.Delay(100); // Small delay to ensure window is focused
+            int length = NativeMethods.GetWindowTextLength(activeWindowHandle);
+            if (length == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("Active window has no title. Macro not executed.");
+                return;
+            }
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(length + 1);
+            NativeMethods.GetWindowText(activeWindowHandle, sb, sb.Capacity);
+            string activeWindowTitle = sb.ToString();
+
+            bool isGameWindow = false;
+            if (activeWindowTitle.Equals("Darkages", StringComparison.OrdinalIgnoreCase) ||
+                activeWindowTitle.Equals("Unora", StringComparison.OrdinalIgnoreCase))
+            {
+                isGameWindow = true;
+            }
+            else if (_launcherSettings?.SavedCharacters != null)
+            {
+                foreach (var character in _launcherSettings.SavedCharacters)
+                {
+                    if (activeWindowTitle.Equals(character.Username, StringComparison.OrdinalIgnoreCase))
+                    {
+                        isGameWindow = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isGameWindow)
+            {
+                System.Diagnostics.Debug.WriteLine($"Active window ('{activeWindowTitle}') is not a recognized game window. Macro not executed.");
+                return;
+            }
+
+            // The window is already active, so no need to call SetForegroundWindow.
+            // A small delay might still be beneficial for reliability with SendInput.
+            await Task.Delay(50);
 
             var inputSimulator = new InputSimulator();
             var actions = MacroParser.ParseActionSequence(actionSequence);
@@ -136,7 +163,13 @@ namespace UnoraLaunchpad
                 switch (action.Type)
                 {
                     case MacroActionType.SendText:
-                        inputSimulator.Keyboard.TextEntry((string)action.Argument);
+                        await SendStringAsKeyPressesAsync(inputSimulator, (string)action.Argument);
+                        break;
+                    case MacroActionType.SendChar: // New case for individual characters
+                        if (action.Argument is char charToSend)
+                        {
+                            await SendCharAsync(inputSimulator.Keyboard, charToSend);
+                        }
                         break;
                     case MacroActionType.Wait:
                         await Task.Delay((int)action.Argument);
@@ -151,18 +184,68 @@ namespace UnoraLaunchpad
                         inputSimulator.Keyboard.KeyUp((VirtualKeyCode)action.Argument);
                         break;
                     case MacroActionType.SendKeySequence:
-                        // This allows for sequences like "CTRL+C" or "{F5}" that TextEntry might not handle as directly
-                        // For simple text, TextEntry is better. For special keys/combos, this can be expanded.
-                        // The current MacroParser puts the raw string here.
-                        // InputSimulator.Keyboard.TextEntry can handle some special keys like {ENTER} if they are part of the text.
-                        // For more direct control over modifiers with keys, specific KeyDown/KeyUp/KeyPress is better.
-                        // Example: if action.Argument is "CTRL+V", we'd need to parse that further here or in MacroParser
-                        // For now, treating it as text input which might work for simple keys or TextEntry's special sequences.
-                        inputSimulator.Keyboard.TextEntry((string)action.Argument);
+                        // This case might become obsolete or less used with the new parser,
+                        // but keeping it for now for any legacy macros or specific uses.
+                        await ProcessSendKeySequenceAsync(inputSimulator, (string)action.Argument);
                         System.Diagnostics.Debug.WriteLine($"Executing SendKeySequence: {(string)action.Argument}");
                         break;
                 }
                 await Task.Delay(50); // Small delay between actions
+            }
+        }
+
+        private async Task SendStringAsKeyPressesAsync(InputSimulator simulator, string textToSend)
+        {
+            foreach (char c in textToSend)
+            {
+                await SendCharAsync(simulator.Keyboard, c);
+            }
+        }
+
+        private async Task ProcessSendKeySequenceAsync(InputSimulator simulator, string sequence)
+        {
+            // Simple parser for {KEY} syntax combined with literal strings
+            // Example: "Hello{ENTER}World{TAB}"
+            int i = 0;
+            while (i < sequence.Length)
+            {
+                if (sequence[i] == '{')
+                {
+                    int endIndex = sequence.IndexOf('}', i);
+                    if (endIndex == -1) // No closing brace, treat rest as literal
+                    {
+                        await SendStringAsKeyPressesAsync(simulator, sequence.Substring(i));
+                        break;
+                    }
+
+                    string keyName = sequence.Substring(i + 1, endIndex - i - 1);
+                    if (Enum.TryParse<VirtualKeyCode>(keyName, true, out var vkCode))
+                    {
+                        simulator.Keyboard.KeyPress(vkCode);
+                    }
+                    else
+                    {
+                        // If not a VK code, could be a special command or just literal text like "{literal}"
+                        // For now, sending as literal if not a VK.
+                        await SendStringAsKeyPressesAsync(simulator, $"{{{keyName}}}");
+                    }
+                    i = endIndex + 1;
+                }
+                else
+                {
+                    int nextBrace = sequence.IndexOf('{', i);
+                    if (nextBrace == -1) // No more special keys, send rest of string
+                    {
+                        await SendStringAsKeyPressesAsync(simulator, sequence.Substring(i));
+                        break;
+                    }
+                    else // Send text up to the next special key
+                    {
+                        await SendStringAsKeyPressesAsync(simulator, sequence.Substring(i, nextBrace - i));
+                        i = nextBrace;
+                    }
+                }
+                await Task.Delay(20); // Small delay between parts of a sequence
             }
         }
 
@@ -1174,23 +1257,31 @@ namespace UnoraLaunchpad
             }
         }
 
-        [DllImport("user32.dll")]
-        private static extern short VkKeyScan(char ch);
+        // Removed DllImport for VkKeyScan as it's now in NativeMethods
 
         /// <summary>
         /// Sends a single character through an <see cref="IKeyboardSimulator"/>,
         /// automatically holding <c>SHIFT</c> when the scan-code says it’s required
         /// (e.g. uppercase letters or symbols like “!”).
         /// </summary>
-        private static async Task SendCharAsync(
+        private static async Task SendCharAsync( // This method is used by SendStringAsKeyPressesAsync
             IKeyboardSimulator keyboard,
             char character,
-            int interKeyDelayMs = 50)
+            int interKeyDelayMs = 50) // Default interKeyDelayMs matches original TypePasswordAsync
         {
-            var scan = VkKeyScan(character);
+            // Use the VkKeyScan from NativeMethods
+            var scan = NativeMethods.VkKeyScan(character);
             if (scan == -1)
             {
-                Debug.WriteLine($"[SendCharAsync] Unsupported character: '{character}'");
+                 // This can happen for characters not directly on the keyboard layout
+                 // or requiring AltGr, which VkKeyScan doesn't fully handle by itself.
+                Debug.WriteLine($"[SendCharAsync] VkKeyScan returned -1 for character: '{character}'. Attempting direct TextEntry as fallback for this char.");
+                // Fallback for characters VkKeyScan can't handle (e.g. some special symbols or unicode chars)
+                // This is not ideal if TextEntry is the root problem, but for single complex chars it might be different.
+                // Or, consider logging an error and skipping the character.
+                // For now, let's try TextEntry for this single char. If it fails, the issue is deeper.
+                keyboard.TextEntry(character.ToString());
+                await Task.Delay(interKeyDelayMs);
                 return;
             }
 

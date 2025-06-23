@@ -82,6 +82,17 @@ namespace UnoraLaunchpad
             _registeredHotkeys = new Dictionary<int, string>();
         }
 
+        private void ScreenshotsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Determine the selected game's folder name.
+            // Fallback to "Unora" if not found or if settings are null.
+            var selectedGameFolder = _launcherSettings?.SelectedGame ?? CONSTANTS.UNORA_FOLDER_NAME;
+
+            var screenshotBrowser = new ScreenshotBrowserWindow(selectedGameFolder);
+            screenshotBrowser.Owner = this; // Set the owner for proper dialog behavior
+            screenshotBrowser.Show();
+        }
+
 
         // === Global Hotkey System ===
          protected override void OnSourceInitialized(EventArgs e)

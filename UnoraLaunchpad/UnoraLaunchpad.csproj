@@ -81,6 +81,7 @@
     </Compile>
     <Compile Include="EncryptionHelper.cs" />
     <Compile Include="UnoraClient.cs" />
+	<Compile Include="MacroParser.cs" />
     <Compile Include="Launcher\ClientVersion.cs" />
     <Compile Include="Launcher\Flags.cs" />
     <Compile Include="Launcher\NativeMethods.cs" />
@@ -104,12 +105,20 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+	    <Page Include="MacroWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+	    <Compile Include="MacroWindow.xaml.cs">
+      <DependentUpon>MacroWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Page Include="PatchNotesWindow.xaml" />

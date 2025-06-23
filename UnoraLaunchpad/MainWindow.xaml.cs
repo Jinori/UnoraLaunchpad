@@ -80,13 +80,11 @@ namespace UnoraLaunchpad
             OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate);
             DataContext = this;
             _registeredHotkeys = new Dictionary<int, string>();
-            // Hook into SourceInitialized to set up WndProc hook
-            SourceInitialized += OnSourceInitialized;
         }
 
 
         // === Global Hotkey System ===
-        protected override void OnSourceInitialized(EventArgs e)
+         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
             _hwndSource = PresentationSource.FromVisual(this) as HwndSource;
@@ -113,7 +111,7 @@ namespace UnoraLaunchpad
         {
             // Attempt to find the Unora game window
             // TODO: Make "Unora" configurable or more robust if window titles vary.
-            IntPtr gameWindowHandle = NativeMethods.FindWindow(null, "Unora"); // This might need to be more specific, e.g. class name
+            var gameWindowHandle = NativeMethods.FindWindow(null, "Darkages"); // This might need to be more specific, e.g. class name
 
             if (gameWindowHandle == IntPtr.Zero)
             {

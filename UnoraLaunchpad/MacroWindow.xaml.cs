@@ -182,5 +182,53 @@ namespace UnoraLaunchpad
             EditMacroButton.IsEnabled = isItemSelected;
             RemoveMacroButton.IsEnabled = isItemSelected;
         }
+
+        private void HelpButton_Click(object sender, RoutedEventArgs e)
+        {
+            string helpTitle = "Macro Syntax Help";
+            string helpMessage = @"
+Macro sequences are strings of characters and commands.
+
+1. Literal Characters:
+   - Any character outside of {} braces is typed directly.
+   - Example: `Hello123` will type H, e, l, l, o, 1, 2, 3.
+   - Case is respected: `aBc` types 'a', then SHIFT+'B', then 'c'.
+   - Spaces outside of {} are ignored and can be used to format your macro string. `a b c` is same as `abc`.
+
+2. Commands in Braces {}:
+   - Commands allow for special actions like waiting or pressing specific keys.
+
+   - {Wait Nms}: Pauses execution for N milliseconds.
+     Example: `abc{Wait 500ms}def` (types abc, waits 0.5s, types def)
+
+   - {KeyPress VK_CODE}: Simulates a full key press (down and up).
+     VK_CODE is a Virtual Key Code name (e.g., RETURN, LCONTROL, SHIFT, F1, VK_A, VK_1).
+     Example: `Name{KeyPress RETURN}` (types Name, then presses Enter)
+     Example: `Chat{KeyPress VK_T}/say Hello{KeyPress RETURN}`
+
+   - {KeyDown VK_CODE}: Simulates pressing a key down and holding it.
+     Example: `Clip{KeyDown LCONTROL}{KeyPress VK_C}{KeyUp LCONTROL}` (Ctrl+C for copy)
+     (The LCONTROL key is held down while C is pressed, then LCONTROL is released)
+
+   - {KeyUp VK_CODE}: Simulates releasing a key.
+     Example: `{KeyDown LSHIFT}abc{KeyUp LSHIFT}` (types ABC)
+
+3. Combining:
+   You can mix literal characters and commands.
+   Example: `USE{KeyDown LSHIFT}SKILL1{KeyUp LSHIFT}{KeyPress RETURN}{Wait 500ms}Ready!`
+   This types 'USE', holds SHIFT to type 'SKILL1', releases SHIFT, presses RETURN, waits 0.5s, then types 'Ready!'.
+
+Common Virtual Key Codes (VK_CODE):
+  - Letters: VK_A, VK_B, ..., VK_Z
+  - Numbers: VK_0, VK_1, ..., VK_9 (above letters)
+  - Numpad: NUMPAD0, NUMPAD1, ...
+  - Function Keys: F1, F2, ..., F12
+  - Modifiers: LSHIFT (Left Shift), RSHIFT (Right Shift), LCONTROL (Left Ctrl), RCONTROL (Right Ctrl), LMENU (Left Alt), RMENU (Right Alt)
+  - Navigation: HOME, END, LEFT, RIGHT, UP, DOWN, PRIOR (PageUp), NEXT (PageDown)
+  - Action: RETURN (Enter), TAB, ESCAPE, SPACE, BACK (Backspace), DELETE
+  (Search 'VirtualKeyCode C#' for a more complete list from InputSimulatorStandard)
+";
+            MessageBox.Show(this, helpMessage, helpTitle, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
 }

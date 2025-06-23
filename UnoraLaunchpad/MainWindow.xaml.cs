@@ -165,6 +165,12 @@ namespace UnoraLaunchpad
                     case MacroActionType.SendText:
                         await SendStringAsKeyPressesAsync(inputSimulator, (string)action.Argument);
                         break;
+                    case MacroActionType.SendChar: // New case for individual characters
+                        if (action.Argument is char charToSend)
+                        {
+                            await SendCharAsync(inputSimulator.Keyboard, charToSend);
+                        }
+                        break;
                     case MacroActionType.Wait:
                         await Task.Delay((int)action.Argument);
                         break;
@@ -178,6 +184,8 @@ namespace UnoraLaunchpad
                         inputSimulator.Keyboard.KeyUp((VirtualKeyCode)action.Argument);
                         break;
                     case MacroActionType.SendKeySequence:
+                        // This case might become obsolete or less used with the new parser,
+                        // but keeping it for now for any legacy macros or specific uses.
                         await ProcessSendKeySequenceAsync(inputSimulator, (string)action.Argument);
                         System.Diagnostics.Debug.WriteLine($"Executing SendKeySequence: {(string)action.Argument}");
                         break;

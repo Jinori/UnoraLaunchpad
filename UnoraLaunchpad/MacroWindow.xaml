@@ -6,8 +6,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Macro Settings"
-        Height="550"
-        Width="450"
+        Height="700"
+        Width="600"
         WindowStyle="None"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
@@ -149,9 +149,22 @@
 
         <!-- Bottom Bar -->
         <Grid Grid.Row="2" Background="{DynamicResource TitleBarColor}">
-            <Button x:Name="SaveAndCloseBtn"
-                    Click="SaveAndCloseBtn_Click"
-                    Width="120"
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+                <Button x:Name="HelpButton"
+                        Click="HelpButton_Click"
+                        Width="30"
+                        Height="30"
+                        materialDesign:ButtonAssist.CornerRadius="15"
+                        ToolTip="Help with Macro Syntax"
+                        Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                        Background="{DynamicResource SecondaryAccentColor}"
+                        Foreground="{DynamicResource PrimaryHueLightForegroundBrush}"
+                        Margin="0,0,10,0">
+                    <materialDesign:PackIcon Kind="QuestionMark" Width="20" Height="20" />
+                </Button>
+                <Button x:Name="SaveAndCloseBtn"
+                        Click="SaveAndCloseBtn_Click"
+                        Width="120"
                     Height="30"
                     materialDesign:ButtonAssist.CornerRadius="5"
                     HorizontalAlignment="Right"

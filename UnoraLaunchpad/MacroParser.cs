@@ -9,6 +9,13 @@ namespace UnoraLaunchpad
 {
     internal static class MacroParser
     {
+        // Regex for parsing commands within {braces}
+        // Simplified to focus on Wait, KeyPress, KeyDown, KeyUp.
+        // SendText and SendKey are removed from here as the outer parser handles text-like input.
+        private static readonly Regex BracedCommandRegex = new Regex(
+            @"^\s*(Wait\s*(\d+)\s*ms|KeyPress\s*([A-Za-z0-9_]+)|KeyDown\s*([A-Za-z0-9_]+)|KeyUp\s*([A-Za-z0-9_]+))\s*$",
+            RegexOptions.IgnoreCase);
+
         public static bool TryParseTriggerKey(string triggerKeyString, out uint modifiers, out uint vkCode)
         {
             modifiers = NativeMethods.MOD_NONE;
@@ -71,70 +78,130 @@ namespace UnoraLaunchpad
             var actions = new List<MacroAction>();
             if (string.IsNullOrWhiteSpace(sequence)) return actions;
 
-            // Regex to find commands like SendText "text", Wait Nms, KeyPress VK_CODE, KeyDown VK_CODE, KeyUp VK_CODE
-            // Example: SendText "Hello World"{ENTER} Wait 500ms KeyPress LControlKey KeyPress C KeyUp C KeyUp LControlKey
-            // This is a simplified parser. A more robust one would handle escaping quotes within SendText etc.
-            var regex = new Regex(@"(SendText\s*""([^""]*)""|Wait\s*(\d+)\s*ms|KeyPress\s*([A-Za-z0-9_]+)|KeyDown\s*([A-Za-z0-9_]+)|KeyUp\s*([A-Za-z0-9_]+)|SendKey\s*([A-Za-z0-9_]+(?:{[A-Z]+})*))", RegexOptions.IgnoreCase);
-            var matches = regex.Matches(sequence);
-
-            foreach (Match match in matches)
+            int currentIndex = 0;
+            while (currentIndex < sequence.Length)
             {
-                if (match.Groups[1].Value.StartsWith("SendText", StringComparison.OrdinalIgnoreCase))
+                char currentChar = sequence[currentIndex];
+
+                if (char.IsWhiteSpace(currentChar))
                 {
-                    string text = match.Groups[2].Value;
-                    // Replace common placeholders like {ENTER}
-                    text = text.Replace("{ENTER}", "\n").Replace("{TAB}", "\t");
-                    actions.Add(new MacroAction { Type = MacroActionType.SendText, Argument = text });
+                    currentIndex++;
+                    continue; // Skip whitespace
                 }
-                else if (match.Groups[1].Value.StartsWith("Wait", StringComparison.OrdinalIgnoreCase))
+
+                if (currentChar == '{')
                 {
-                    if (int.TryParse(match.Groups[3].Value, out int delay))
+                    int closingBraceIndex = sequence.IndexOf('}', currentIndex);
+                    if (closingBraceIndex == -1)
                     {
-                        actions.Add(new MacroAction { Type = MacroActionType.Wait, Argument = delay });
+                        System.Diagnostics.Debug.WriteLine($"[MacroParser] Mismatched '{{' at index {currentIndex}. Treating rest of sequence as literal characters.");
+                        // Add remaining characters as SendChar actions
+                        for (int i = currentIndex; i < sequence.Length; i++)
+                        {
+                            if (!char.IsWhiteSpace(sequence[i])) // Avoid adding whitespace if it was part of the unterminated block start
+                            {
+                                actions.Add(new MacroAction { Type = MacroActionType.SendChar, Argument = sequence[i] });
+                            }
+                        }
+                        break; // End parsing
                     }
+
+                    string commandBlock = sequence.Substring(currentIndex + 1, closingBraceIndex - currentIndex - 1);
+                    ParseAndAddBracedCommand(commandBlock, actions);
+                    currentIndex = closingBraceIndex + 1;
                 }
-                else if (match.Groups[1].Value.StartsWith("KeyPress", StringComparison.OrdinalIgnoreCase))
+                else
                 {
-                    if (Enum.TryParse<VirtualKeyCode>(match.Groups[4].Value, true, out var vk))
-                    {
-                        actions.Add(new MacroAction { Type = MacroActionType.KeyPress, Argument = vk });
-                    }
-                }
-                else if (match.Groups[1].Value.StartsWith("KeyDown", StringComparison.OrdinalIgnoreCase))
-                {
-                     if (Enum.TryParse<VirtualKeyCode>(match.Groups[5].Value, true, out var vk))
-                    {
-                        actions.Add(new MacroAction { Type = MacroActionType.KeyDown, Argument = vk });
-                    }
-                }
-                else if (match.Groups[1].Value.StartsWith("KeyUp", StringComparison.OrdinalIgnoreCase))
-                {
-                     if (Enum.TryParse<VirtualKeyCode>(match.Groups[6].Value, true, out var vk))
-                    {
-                        actions.Add(new MacroAction { Type = MacroActionType.KeyUp, Argument = vk });
-                    }
-                }
-                 else if (match.Groups[1].Value.StartsWith("SendKey", StringComparison.OrdinalIgnoreCase))
-                {
-                    // This is a more direct approach for simple single key presses or text with special keys
-                    // Example: SendKey A, SendKey {ENTER}, SendKey Hello{TAB}World
-                    // This will be handled by InputSimulator.Keyboard.TextEntry for sequences like "Hello"
-                    // and specific key presses for things like {ENTER}
-                    actions.Add(new MacroAction { Type = MacroActionType.SendKeySequence, Argument = match.Groups[7].Value });
+                    // Literal character to be pressed
+                    actions.Add(new MacroAction { Type = MacroActionType.SendChar, Argument = currentChar });
+                    currentIndex++;
                 }
             }
             return actions;
+        }
+
+        private static void ParseAndAddBracedCommand(string commandBlock, List<MacroAction> actions)
+        {
+            Match match = BracedCommandRegex.Match(commandBlock);
+
+            if (!match.Success)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MacroParser] Unknown or malformed command in braces: {{{commandBlock}}}. Interpreting as literal text.");
+                // Fallback: treat the content of unknown/malformed braces as literal characters
+                foreach (char c in commandBlock)
+                {
+                    if (!char.IsWhiteSpace(c)) // Avoid adding whitespace from the command block itself
+                    {
+                        actions.Add(new MacroAction { Type = MacroActionType.SendChar, Argument = c });
+                    }
+                }
+                return;
+            }
+
+            // Group 1 is the first part of the OR in regex, e.g., "Wait 500ms" or "KeyPress VK_A"
+            // Group 2 is (\d+) for Wait
+            // Group 3 is ([A-Za-z0-9_]+) for KeyPress
+            // Group 4 is ([A-Za-z0-9_]+) for KeyDown
+            // Group 5 is ([A-Za-z0-9_]+) for KeyUp
+
+            string commandTypeStr = match.Groups[1].Value; // Full matched command like "Wait 500ms" or "KeyPress VK_A"
+
+            if (commandTypeStr.StartsWith("Wait", StringComparison.OrdinalIgnoreCase))
+            {
+                if (int.TryParse(match.Groups[2].Value, out int delay))
+                {
+                    actions.Add(new MacroAction { Type = MacroActionType.Wait, Argument = delay });
+                }
+            }
+            else if (commandTypeStr.StartsWith("KeyPress", StringComparison.OrdinalIgnoreCase))
+            {
+                if (Enum.TryParse<VirtualKeyCode>(match.Groups[3].Value, true, out var vk))
+                {
+                    actions.Add(new MacroAction { Type = MacroActionType.KeyPress, Argument = vk });
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MacroParser] Failed to parse VirtualKeyCode for KeyPress: {match.Groups[3].Value}");
+                }
+            }
+            else if (commandTypeStr.StartsWith("KeyDown", StringComparison.OrdinalIgnoreCase))
+            {
+                 if (Enum.TryParse<VirtualKeyCode>(match.Groups[4].Value, true, out var vk))
+                {
+                    actions.Add(new MacroAction { Type = MacroActionType.KeyDown, Argument = vk });
+                }
+                 else
+                 {
+                     System.Diagnostics.Debug.WriteLine($"[MacroParser] Failed to parse VirtualKeyCode for KeyDown: {match.Groups[4].Value}");
+                 }
+            }
+            else if (commandTypeStr.StartsWith("KeyUp", StringComparison.OrdinalIgnoreCase))
+            {
+                 if (Enum.TryParse<VirtualKeyCode>(match.Groups[5].Value, true, out var vk))
+                {
+                    actions.Add(new MacroAction { Type = MacroActionType.KeyUp, Argument = vk });
+                }
+                 else
+                 {
+                     System.Diagnostics.Debug.WriteLine($"[MacroParser] Failed to parse VirtualKeyCode for KeyUp: {match.Groups[5].Value}");
+                 }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"[MacroParser] Unhandled matched command in ParseAndAddBracedCommand: {commandTypeStr}");
+            }
         }
     }
 
     public enum MacroActionType
     {
-        SendText,    // Argument is string
-        Wait,        // Argument is int (milliseconds)
-        KeyPress,    // Argument is VirtualKeyCode
-        KeyDown,     // Argument is VirtualKeyCode
-        KeyUp,       // Argument is VirtualKeyCode
-        SendKeySequence // Argument is string (e.g. "A", "{ENTER}", "Ctrl+C") - for more complex input sim
+        SendText,        // Argument is string (Legacy, prefer SendChar for new parser output)
+        Wait,            // Argument is int (milliseconds)
+        KeyPress,        // Argument is VirtualKeyCode
+        KeyDown,         // Argument is VirtualKeyCode
+        KeyUp,           // Argument is VirtualKeyCode
+        SendKeySequence, // Argument is string (Legacy, prefer SendChar/KeyPress for new parser output)
+        SendChar         // Argument is char
     }
 
     public struct MacroAction

@@ -15,10 +15,12 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Threading;
 using InputSimulatorStandard;
-using InputSimulatorStandard.Native; // Added for CancelEventArgs
-using UnoraLaunchpad; // Added for PasswordHelper and Character
+using InputSimulatorStandard.Native;
 using UnoraLaunchpad.Definitions;
 using Application = System.Windows.Application;
+using System.Windows.Interop; // Required for HwndSource
+using System.Collections.Generic; // Required for Dictionary
+// UnoraLaunchpad; // Added for PasswordHelper and Character - already in namespace
 using MessageBox = System.Windows.MessageBox;
 using MouseButton = System.Windows.Input.MouseButton;
 
@@ -30,13 +32,36 @@ namespace UnoraLaunchpad
 
         private readonly FileService FileService = new();
         private readonly UnoraClient UnoraClient = new();
-        private Settings _launcherSettings; // Added field for settings
+        private Settings _launcherSettings;
         private NotifyIcon NotifyIcon;
 
+        // === Fields for Global Hotkeys ===
+        private HwndSource _hwndSource;
+        private const int WM_HOTKEY = 0x0312;
+        private Dictionary<int, string> _registeredHotkeys; // ID -> ActionSequence
+        private int _currentHotkeyId = 9000; // Starting ID for hotkeys
+        // === End Fields for Global Hotkeys ===
+
         public ObservableCollection<GameUpdate> GameUpdates { get; } = new();
-        public bool SkipIntro { get; set; }
-        public bool UseDawndWindower { get; set; }
-        public bool UseLocalhost { get; set; }
+
+        // These properties are bound to settings, ensure they are updated when _launcherSettings changes.
+        // It might be better to bind directly to _launcherSettings properties in XAML if possible,
+        // or ensure these are consistently updated.
+        public bool SkipIntro
+        {
+            get => _launcherSettings?.SkipIntro ?? false;
+            set { if (_launcherSettings != null) _launcherSettings.SkipIntro = value; }
+        }
+        public bool UseDawndWindower
+        {
+            get => _launcherSettings?.UseDawndWindower ?? false;
+            set { if (_launcherSettings != null) _launcherSettings.UseDawndWindower = value; }
+        }
+        public bool UseLocalhost
+        {
+            get => _launcherSettings?.UseLocalhost ?? false;
+            set { if (_launcherSettings != null) _launcherSettings.UseLocalhost = value; }
+        }
         public ICommand OpenGameUpdateCommand { get; }
         public object Sync { get; } = new();
 
@@ -54,11 +79,147 @@ namespace UnoraLaunchpad
             InitializeTrayIcon();
             OpenGameUpdateCommand = new RelayCommand<GameUpdate>(OpenGameUpdate);
             DataContext = this;
+            _registeredHotkeys = new Dictionary<int, string>();
+            // Hook into SourceInitialized to set up WndProc hook
+            SourceInitialized += OnSourceInitialized;
         }
 
-        /// <summary>
-        /// Loads and applies launcher settings from disk.
-        /// </summary>
+
+        // === Global Hotkey System ===
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            _hwndSource = PresentationSource.FromVisual(this) as HwndSource;
+            _hwndSource?.AddHook(WndProc);
+            // Initial registration after settings are loaded (Launcher_Loaded calls ApplySettings then RegisterGlobalHotkeys)
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == WM_HOTKEY && _launcherSettings.IsMacroSystemEnabled)
+            {
+                int hotkeyId = wParam.ToInt32();
+                if (_registeredHotkeys.TryGetValue(hotkeyId, out string actionSequence))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Hotkey {hotkeyId} pressed, sequence: {actionSequence}");
+                    ExecuteMacroAction(actionSequence);
+                    handled = true;
+                }
+            }
+            return IntPtr.Zero;
+        }
+
+        private async void ExecuteMacroAction(string actionSequence)
+        {
+            // Attempt to find the Unora game window
+            // TODO: Make "Unora" configurable or more robust if window titles vary.
+            IntPtr gameWindowHandle = NativeMethods.FindWindow(null, "Unora"); // This might need to be more specific, e.g. class name
+
+            if (gameWindowHandle == IntPtr.Zero)
+            {
+                // Fallback: Try to find any window that might be a game client if main title fails
+                // This is a placeholder for more sophisticated game window detection logic.
+                // For now, if "Unora" isn't found, we won't send keys.
+                // Consider iterating processes named "Unora.exe" and checking their MainWindowHandle.
+                System.Diagnostics.Debug.WriteLine("Unora game window not found. Macro not executed.");
+                // Optionally, notify the user via a less intrusive method than MessageBox
+                // StatusLabel.Text = "Macro Error: Unora window not found.";
+                return;
+            }
+
+            NativeMethods.SetForegroundWindow(gameWindowHandle.ToInt32());
+            await Task.Delay(100); // Small delay to ensure window is focused
+
+            var inputSimulator = new InputSimulator();
+            var actions = MacroParser.ParseActionSequence(actionSequence);
+
+            foreach (var action in actions)
+            {
+                switch (action.Type)
+                {
+                    case MacroActionType.SendText:
+                        inputSimulator.Keyboard.TextEntry((string)action.Argument);
+                        break;
+                    case MacroActionType.Wait:
+                        await Task.Delay((int)action.Argument);
+                        break;
+                    case MacroActionType.KeyPress:
+                        inputSimulator.Keyboard.KeyPress((VirtualKeyCode)action.Argument);
+                        break;
+                    case MacroActionType.KeyDown:
+                        inputSimulator.Keyboard.KeyDown((VirtualKeyCode)action.Argument);
+                        break;
+                    case MacroActionType.KeyUp:
+                        inputSimulator.Keyboard.KeyUp((VirtualKeyCode)action.Argument);
+                        break;
+                    case MacroActionType.SendKeySequence:
+                        // This allows for sequences like "CTRL+C" or "{F5}" that TextEntry might not handle as directly
+                        // For simple text, TextEntry is better. For special keys/combos, this can be expanded.
+                        // The current MacroParser puts the raw string here.
+                        // InputSimulator.Keyboard.TextEntry can handle some special keys like {ENTER} if they are part of the text.
+                        // For more direct control over modifiers with keys, specific KeyDown/KeyUp/KeyPress is better.
+                        // Example: if action.Argument is "CTRL+V", we'd need to parse that further here or in MacroParser
+                        // For now, treating it as text input which might work for simple keys or TextEntry's special sequences.
+                        inputSimulator.Keyboard.TextEntry((string)action.Argument);
+                        System.Diagnostics.Debug.WriteLine($"Executing SendKeySequence: {(string)action.Argument}");
+                        break;
+                }
+                await Task.Delay(50); // Small delay between actions
+            }
+        }
+
+
+        private void RegisterGlobalHotkeys()
+        {
+            if (_hwndSource == null || _hwndSource.Handle == IntPtr.Zero)
+            {
+                System.Diagnostics.Debug.WriteLine("HwndSource not ready for hotkey registration.");
+                return;
+            }
+            UnregisterGlobalHotkeys(); // Clear existing before registering new ones
+
+            if (!_launcherSettings.IsMacroSystemEnabled || _launcherSettings.Macros == null)
+            {
+                return;
+            }
+
+            foreach (var macroEntry in _launcherSettings.Macros)
+            {
+                if (MacroParser.TryParseTriggerKey(macroEntry.Key, out uint modifiers, out uint vkCode))
+                {
+                    int hotkeyId = _currentHotkeyId++;
+                    if (NativeMethods.RegisterHotKey(_hwndSource.Handle, hotkeyId, modifiers, vkCode))
+                    {
+                        _registeredHotkeys.Add(hotkeyId, macroEntry.Value);
+                        System.Diagnostics.Debug.WriteLine($"Registered hotkey ID {hotkeyId} for {macroEntry.Key}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to register hotkey for {macroEntry.Key}. Error: {Marshal.GetLastWin32Error()}");
+                        // Consider notifying user or logging more formally
+                    }
+                }
+                else
+                {
+                     System.Diagnostics.Debug.WriteLine($"Could not parse trigger key: {macroEntry.Key}");
+                }
+            }
+        }
+
+        private void UnregisterGlobalHotkeys()
+        {
+            if (_hwndSource == null || _hwndSource.Handle == IntPtr.Zero) return;
+
+            foreach (var hotkeyId in _registeredHotkeys.Keys)
+            {
+                NativeMethods.UnregisterHotKey(_hwndSource.Handle, hotkeyId);
+                System.Diagnostics.Debug.WriteLine($"Unregistered hotkey ID {hotkeyId}");
+            }
+            _registeredHotkeys.Clear();
+        }
+        // === End Global Hotkey System ===
+
+
         /// <summary>
         /// Loads and applies launcher settings from disk.
         /// </summary>
@@ -69,6 +230,11 @@ namespace UnoraLaunchpad
             {
                 _launcherSettings = new Settings(); // Fallback to default settings if loading fails
             }
+             if (_launcherSettings.Macros == null) // Ensure Macros dictionary exists
+            {
+                _launcherSettings.Macros = new Dictionary<string, string>();
+            }
+
 
             // Ensure SavedCharacters list exists
             if (_launcherSettings.SavedCharacters == null)
@@ -107,9 +273,9 @@ namespace UnoraLaunchpad
                 SaveSettings(_launcherSettings); // Persist migrated passwords and cleared old fields
             }
 
-            UseDawndWindower = _launcherSettings.UseDawndWindower;
-            UseLocalhost = _launcherSettings.UseLocalhost;
-            SkipIntro = _launcherSettings.SkipIntro;
+            // UseDawndWindower = _launcherSettings.UseDawndWindower; // Now handled by property getter/setter
+            // SkipIntro = _launcherSettings.SkipIntro; // Now handled by property getter/setter
+            // UseLocalhost = _launcherSettings.UseLocalhost; // Now handled by property getter/setter
 
             var themeName = _launcherSettings.SelectedTheme;
             if (string.IsNullOrEmpty(themeName))
@@ -561,8 +727,13 @@ namespace UnoraLaunchpad
         protected override void OnStateChanged(EventArgs e)
         {
             if (WindowState == WindowState.Minimized)
-                Hide();
-
+            {
+                // Hide(); // Standard behavior is to hide to tray if NotifyIcon is used.
+                // If you want it to truly minimize and still be on taskbar, remove Hide()
+                // and ensure tray icon logic handles visibility correctly.
+                // For now, let's assume standard tray icon behavior: Hide() on minimize.
+                 Hide();
+            }
             base.OnStateChanged(e);
         }
 
@@ -570,6 +741,18 @@ namespace UnoraLaunchpad
         {
             if (e.ChangedButton == MouseButton.Left)
                 DragMove();
+        }
+
+        private void MacroButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_launcherSettings == null)
+            {
+                // Fallback if settings somehow not loaded
+                _launcherSettings = FileService.LoadSettings(LauncherSettingsPath) ?? new Settings();
+            }
+            var macroWindow = new MacroWindow(this, _launcherSettings);
+            macroWindow.Owner = this;
+            macroWindow.ShowDialog(); // ShowDialog to make it modal
         }
 
         #endregion
@@ -1125,6 +1308,7 @@ namespace UnoraLaunchpad
                 // Always restore UI, no matter what happened.
                 Dispatcher.BeginInvoke(new Action(SetUiStateComplete));
             }
+            RegisterGlobalHotkeys(); // Register hotkeys after initial load & update checks
         }
 
 
@@ -1175,15 +1359,31 @@ namespace UnoraLaunchpad
             FileService.SaveSettings(settings, LauncherSettingsPath);
             _launcherSettings = settings; // Update the local field
 
-            // Update MainWindow properties to reflect the newly saved settings
-            UseDawndWindower = _launcherSettings.UseDawndWindower;
-            UseLocalhost = _launcherSettings.UseLocalhost;
-            SkipIntro = _launcherSettings.SkipIntro;
-            // Note: SelectedTheme is handled by App.ChangeTheme and ApplySettings directly.
+            // MainWindow properties (UseDawndWindower, UseLocalhost, SkipIntro)
+            // are now getters/setters directly manipulating _launcherSettings.
+            // No need to update them separately here after _launcherSettings is assigned.
+            // Theme is applied via ApplySettings or App.ChangeTheme.
+        }
+
+        /// <summary>
+        /// Called by MacroWindow to apply macro settings, save all settings, and re-register hotkeys.
+        /// </summary>
+        public void ApplyMacroSettingsAndSave()
+        {
+            SaveSettings(_launcherSettings); // Saves all settings including those from MacroWindow
+            RegisterGlobalHotkeys();     // Re-register hotkeys with new settings
         }
         
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            UnregisterGlobalHotkeys(); // Clean up hotkeys
+            if (_hwndSource != null)
+            {
+                _hwndSource.RemoveHook(WndProc);
+                _hwndSource.Dispose();
+                _hwndSource = null;
+            }
+
             if (_launcherSettings != null)
             {
                 // Only save size and position if the window is in its normal state

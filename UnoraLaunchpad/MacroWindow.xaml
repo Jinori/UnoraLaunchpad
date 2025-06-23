@@ -1,0 +1,168 @@
+<Window x:Class="UnoraLaunchpad.MacroWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Macro Settings"
+        Height="550"
+        Width="450"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        TextElement.Foreground="{DynamicResource PrimaryTextColor}"
+        Background="{DynamicResource PrimaryBackgroundColor}"
+        BorderBrush="{DynamicResource PrimaryBorderColor}"
+        BorderThickness="2"
+        TextElement.FontWeight="Medium"
+        TextElement.FontSize="14"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        x:ClassModifier="internal"
+        Loaded="MacroWindow_Loaded">
+
+    <Window.Resources>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+            <Setter Property="Background" Value="{DynamicResource SecondaryBackgroundColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextColor}" />
+        </Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+            <Setter Property="Background" Value="{DynamicResource SecondaryBackgroundColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorderColor}" />
+        </Style>
+        <Style TargetType="ListBox" BasedOn="{StaticResource MaterialDesignListBox}">
+            <Setter Property="Background" Value="{DynamicResource SecondaryBackgroundColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorderColor}" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{DynamicResource PrimaryBackgroundColor}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" /> <!-- Custom Title Bar -->
+            <RowDefinition Height="*" /> <!-- Main Content -->
+            <RowDefinition Height="45" /> <!-- Bottom Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Custom Title Bar -->
+        <Grid Grid.Row="0"
+              Background="{DynamicResource TitleBarColor}"
+              MouseDown="TitleBar_MouseDown">
+            <Button HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource IconForegroundColor}"
+                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
+                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
+                    Padding="0"
+                    Margin="5"
+                    Cursor="Hand"
+                    Click="CloseButton_Click">
+                <materialDesign:PackIcon Kind="Close" />
+            </Button>
+            <Label Content="Macro Settings"
+                   Foreground="{DynamicResource TitleBarTextColor}"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Background="{DynamicResource SecondaryBackgroundColor}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10">
+
+                    <CheckBox x:Name="EnableMacrosCheckBox"
+                              Content="Enable Macro System"
+                              Foreground="{DynamicResource IconForegroundColor}"
+                              Background="{DynamicResource PrimaryTextColor}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="0,0,0,10"/>
+
+                    <GroupBox Header="Macros"
+                              Margin="0,10,0,0"
+                              Foreground="{DynamicResource PrimaryTextColor}"
+                              BorderBrush="{DynamicResource PrimaryBorderColor}">
+                        <StackPanel>
+                            <ListBox x:Name="MacrosListBox"
+                                     Height="150"
+                                     Margin="5"
+                                     SelectionChanged="MacrosListBox_SelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Key}" FontWeight="Bold" Margin="0,0,10,0" MinWidth="100"/>
+                                            <TextBlock Text="{Binding Value}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Grid Margin="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Trigger Key (e.g., F1, PageDown, Ctrl+Shift+A):" Foreground="{DynamicResource PrimaryTextColor}" />
+                                    <TextBox x:Name="MacroTriggerKeyTextBox" />
+                                    <TextBlock Text="Action Sequence (e.g., SendText Hello{ENTER}Wait 500ms):" Margin="0,5,0,0" Foreground="{DynamicResource PrimaryTextColor}" />
+                                    <TextBox x:Name="MacroActionSequenceTextBox" />
+                                </StackPanel>
+                                <Button x:Name="AddMacroButton"
+                                        Content="Add"
+                                        Grid.Column="1"
+                                        Click="AddMacroButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                                <Button x:Name="EditMacroButton"
+                                        Content="Update"
+                                        Grid.Column="2"
+                                        Click="EditMacroButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                                <Button x:Name="RemoveMacroButton"
+                                        Content="Remove"
+                                        Grid.Column="3"
+                                        Click="RemoveMacroButton_Click"
+                                        VerticalAlignment="Bottom"
+                                        Margin="5,0"
+                                        Style="{StaticResource MaterialDesignRaisedLightButton}"
+                                        Background="{DynamicResource ButtonBackgroundColor}"
+                                        Foreground="{DynamicResource ButtonForegroundColor}"
+                                        materialDesign:ButtonAssist.CornerRadius="5"/>
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Bottom Bar -->
+        <Grid Grid.Row="2" Background="{DynamicResource TitleBarColor}">
+            <Button x:Name="SaveAndCloseBtn"
+                    Click="SaveAndCloseBtn_Click"
+                    Width="120"
+                    Height="30"
+                    materialDesign:ButtonAssist.CornerRadius="5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource ButtonForegroundColor}"
+                    Background="{DynamicResource ButtonBackgroundColor}"
+                    Margin="0,0,20,0"
+                    Style="{StaticResource MaterialDesignRaisedLightButton}"
+                    ToolTip="Save macro settings and close.">
+                <TextBlock Text="Save &amp; Close" />
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

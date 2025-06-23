@@ -14,6 +14,6 @@ public sealed class Settings
     public double WindowTop { get; set; }
     public double WindowLeft { get; set; }
     public List<Character> SavedCharacters { get; set; } = [];
-    public Dictionary<string, string> Macros { get; set; } = [];
-    public bool IsMacroSystemEnabled { get; set; } = false;
+    public Dictionary<string, string> Combos { get; set; } = [];
+    public bool IsComboSystemEnabled { get; set; } = false;
 }

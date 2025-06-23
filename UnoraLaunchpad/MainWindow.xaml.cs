@@ -94,7 +94,7 @@ namespace UnoraLaunchpad
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg == WM_HOTKEY && _launcherSettings.IsMacroSystemEnabled)
+            if (msg == WM_HOTKEY && _launcherSettings.IsComboSystemEnabled)
             {
                 int hotkeyId = wParam.ToInt32();
                 if (_registeredHotkeys.TryGetValue(hotkeyId, out string actionSequence))
@@ -156,36 +156,36 @@ namespace UnoraLaunchpad
             await Task.Delay(50);
 
             var inputSimulator = new InputSimulator();
-            var actions = MacroParser.ParseActionSequence(actionSequence);
+            var actions = ComboParser.ParseActionSequence(actionSequence);
 
             foreach (var action in actions)
             {
                 switch (action.Type)
                 {
-                    case MacroActionType.SendText:
+                    case ComboActionType.SendText:
                         await SendStringAsKeyPressesAsync(inputSimulator, (string)action.Argument);
                         break;
-                    case MacroActionType.SendChar: // New case for individual characters
+                    case ComboActionType.SendChar: // New case for individual characters
                         if (action.Argument is char charToSend)
                         {
                             await SendCharAsync(inputSimulator.Keyboard, charToSend);
                         }
                         break;
-                    case MacroActionType.Wait:
+                    case ComboActionType.Wait:
                         await Task.Delay((int)action.Argument);
                         break;
-                    case MacroActionType.KeyPress:
+                    case ComboActionType.KeyPress:
                         inputSimulator.Keyboard.KeyPress((VirtualKeyCode)action.Argument);
                         break;
-                    case MacroActionType.KeyDown:
+                    case ComboActionType.KeyDown:
                         inputSimulator.Keyboard.KeyDown((VirtualKeyCode)action.Argument);
                         break;
-                    case MacroActionType.KeyUp:
+                    case ComboActionType.KeyUp:
                         inputSimulator.Keyboard.KeyUp((VirtualKeyCode)action.Argument);
                         break;
-                    case MacroActionType.SendKeySequence:
+                    case ComboActionType.SendKeySequence:
                         // This case might become obsolete or less used with the new parser,
-                        // but keeping it for now for any legacy macros or specific uses.
+                        // but keeping it for now for any legacy combos or specific uses.
                         await ProcessSendKeySequenceAsync(inputSimulator, (string)action.Argument);
                         System.Diagnostics.Debug.WriteLine($"Executing SendKeySequence: {(string)action.Argument}");
                         break;
@@ -259,30 +259,30 @@ namespace UnoraLaunchpad
             }
             UnregisterGlobalHotkeys(); // Clear existing before registering new ones
 
-            if (!_launcherSettings.IsMacroSystemEnabled || _launcherSettings.Macros == null)
+            if (!_launcherSettings.IsComboSystemEnabled || _launcherSettings.Combos == null)
             {
                 return;
             }
 
-            foreach (var macroEntry in _launcherSettings.Macros)
+            foreach (var comboEntry in _launcherSettings.Combos)
             {
-                if (MacroParser.TryParseTriggerKey(macroEntry.Key, out uint modifiers, out uint vkCode))
+                if (ComboParser.TryParseTriggerKey(comboEntry.Key, out uint modifiers, out uint vkCode))
                 {
                     int hotkeyId = _currentHotkeyId++;
                     if (NativeMethods.RegisterHotKey(_hwndSource.Handle, hotkeyId, modifiers, vkCode))
                     {
-                        _registeredHotkeys.Add(hotkeyId, macroEntry.Value);
-                        System.Diagnostics.Debug.WriteLine($"Registered hotkey ID {hotkeyId} for {macroEntry.Key}");
+                        _registeredHotkeys.Add(hotkeyId, comboEntry.Value);
+                        System.Diagnostics.Debug.WriteLine($"Registered hotkey ID {hotkeyId} for {comboEntry.Key}");
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"Failed to register hotkey for {macroEntry.Key}. Error: {Marshal.GetLastWin32Error()}");
+                        System.Diagnostics.Debug.WriteLine($"Failed to register hotkey for {comboEntry.Key}. Error: {Marshal.GetLastWin32Error()}");
                         // Consider notifying user or logging more formally
                     }
                 }
                 else
                 {
-                     System.Diagnostics.Debug.WriteLine($"Could not parse trigger key: {macroEntry.Key}");
+                     System.Diagnostics.Debug.WriteLine($"Could not parse trigger key: {comboEntry.Key}");
                 }
             }
         }
@@ -311,9 +311,9 @@ namespace UnoraLaunchpad
             {
                 _launcherSettings = new Settings(); // Fallback to default settings if loading fails
             }
-             if (_launcherSettings.Macros == null) // Ensure Macros dictionary exists
+             if (_launcherSettings.Combos == null) // Ensure Combos dictionary exists
             {
-                _launcherSettings.Macros = new Dictionary<string, string>();
+                _launcherSettings.Combos = new Dictionary<string, string>();
             }
 
 
@@ -826,15 +826,16 @@ namespace UnoraLaunchpad
 
         private void MacroButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_launcherSettings == null)
-            {
-                // Fallback if settings somehow not loaded
-                _launcherSettings = FileService.LoadSettings(LauncherSettingsPath) ?? new Settings();
-            }
-            var macroWindow = new MacroWindow(this, _launcherSettings);
-            macroWindow.Owner = this;
-            macroWindow.ShowDialog(); // ShowDialog to make it modal
+            // This button is being removed, functionality moved to SettingsWindow.
+            // This button is being removed, functionality moved to SettingsWindow.
+            // If this method is still called, it means the XAML was not updated.
+            // For now, we'll keep the method shell but it should ideally be removed if the button is gone from XAML.
+            // Update: The button will be removed from XAML, so this click handler might become dead code.
+            // Let's comment it out or remove it if we are sure the XAML part is also removed.
+            // For now, let's leave a message box as a fallback.
+             MessageBox.Show("The dedicated macro window has been removed. Please use the Settings window to manage combos.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+        // The MacroButton_Click handler above will be removed along with the button in XAML.
 
         #endregion
 
@@ -1454,14 +1455,6 @@ namespace UnoraLaunchpad
             // Theme is applied via ApplySettings or App.ChangeTheme.
         }
 
-        /// <summary>
-        /// Called by MacroWindow to apply macro settings, save all settings, and re-register hotkeys.
-        /// </summary>
-        public void ApplyMacroSettingsAndSave()
-        {
-            SaveSettings(_launcherSettings); // Saves all settings including those from MacroWindow
-            RegisterGlobalHotkeys();     // Re-register hotkeys with new settings
-        }
         
         private void Window_Closing(object sender, CancelEventArgs e)
         {

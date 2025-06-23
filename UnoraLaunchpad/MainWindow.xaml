@@ -138,18 +138,6 @@
                 <materialDesign:PackIcon Kind="MessageText" />
             </Button>
 
-            <!-- Macro Settings Button -->
-            <Button HorizontalAlignment="Right"
-                    Margin="0, 0, 147, 0"
-                    Click="MacroButton_Click"
-                    Background="{DynamicResource ButtonTransparentBackgroundColor}"
-                    Foreground="{DynamicResource IconForegroundColor}"
-                    BorderBrush="{DynamicResource ButtonTransparentBackgroundColor}"
-                    shell:WindowChrome.IsHitTestVisibleInChrome="True"
-                    ToolTip="Open Macro Settings">
-                <materialDesign:PackIcon Kind="KeyboardSettings" />
-            </Button>
-
             <!-- Settings Button -->
             <Button HorizontalAlignment="Right"
                     Margin="0, 0, 103, 0"

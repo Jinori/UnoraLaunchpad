@@ -59,7 +59,6 @@
                                     <Image Source="{Binding Thumbnail}" Height="80" Stretch="Uniform" Margin="0,0,0,5"/>
                                     <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" HorizontalAlignment="Center" FontSize="10" Foreground="{DynamicResource SecondaryTextColor}"/>
                                     <TextBlock Text="{Binding CreationDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" HorizontalAlignment="Center" FontSize="9" Foreground="{DynamicResource SecondaryTextColor}"/>
-                                    <TextBlock Text="{Binding MapName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding MapName}" HorizontalAlignment="Center" FontSize="9" Foreground="{DynamicResource AccentColor1}" Margin="0,2,0,0"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -87,8 +86,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0">
                 <TextBlock Text="Sort by:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource PrimaryTextColor}"/>
                 <Button x:Name="SortNewestButton" Content="Newest First" Click="SortNewestButton_Click" Style="{StaticResource BottomBarActionButtonStyle}" Margin="0,0,5,0"/>
-                <Button x:Name="SortOldestButton" Content="Oldest First" Click="SortOldestButton_Click" Style="{StaticResource BottomBarActionButtonStyle}" Margin="0,0,5,0"/>
-                <Button x:Name="SortMapNameButton" Content="Map Name" Click="SortMapNameButton_Click" Style="{StaticResource BottomBarActionButtonStyle}"/>
+                <Button x:Name="SortOldestButton" Content="Oldest First" Click="SortOldestButton_Click" Style="{StaticResource BottomBarActionButtonStyle}"/>
             </StackPanel>
 
             <TextBlock x:Name="StatusTextBlock" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource SecondaryTextColor}" Margin="5"/>

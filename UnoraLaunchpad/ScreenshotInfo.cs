@@ -13,13 +13,11 @@ namespace UnoraLaunchpad
         // public BitmapImage FullImage { get; set; }
         public DateTime CreationDate { get; set; }
         public string FileName => System.IO.Path.GetFileName(FilePath);
-        public string MapName { get; set; }
 
         public ScreenshotInfo(string filePath, DateTime creationDate)
         {
             FilePath = filePath;
             CreationDate = creationDate;
-            MapName = "Unknown"; // Default value
             // Thumbnail will be set after construction, typically during the loading process.
         }
     }

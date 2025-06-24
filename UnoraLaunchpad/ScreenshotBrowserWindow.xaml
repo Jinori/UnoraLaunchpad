@@ -96,7 +96,6 @@
                     HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,80,0"
                     ToolTip="Open Screenshots Folder">
                 <materialDesign:PackIcon Kind="FolderOpenOutline" Margin="0,0,5,0"/>
-                <TextBlock Text="Open Folder"/>
             </Button>
 
             <Button x:Name="RefreshButton" Click="RefreshButton_Click"
@@ -104,7 +103,6 @@
                     HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,200,0"
                     ToolTip="Refresh Screenshots">
                 <materialDesign:PackIcon Kind="Refresh" Margin="0,0,5,0"/>
-                <TextBlock Text="Refresh"/>
             </Button>
         </Grid>
     </Grid>

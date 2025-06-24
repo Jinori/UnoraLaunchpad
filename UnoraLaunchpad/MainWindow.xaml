@@ -119,7 +119,7 @@
               MouseDown="TitleBar_MouseDown">
             <!-- Screenshots Button -->
             <Button HorizontalAlignment="Right"
-                    Margin="0, 0, 195, 0" <!-- Adjusted margin for new button -->
+                    Margin="0, 0, 195, 0"
                     Click="ScreenshotsButton_Click"
                     ToolTip="Open Screenshot Browser"
                     Background="{DynamicResource ButtonTransparentBackgroundColor}"

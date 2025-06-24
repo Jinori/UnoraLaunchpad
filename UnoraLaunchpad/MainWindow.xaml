@@ -67,36 +67,6 @@
             </Border>
         </DataTemplate>
         
-        <!-- Reusable Style for Icon Buttons in Title Bar -->
-        <Style x:Key="TitleBarIconButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{DynamicResource ButtonTransparentBackgroundColor}" />
-            <Setter Property="Foreground" Value="{DynamicResource IconForegroundColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource ButtonTransparentBackgroundColor}" />
-            <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
-            <Setter Property="Margin" Value="0,0,0,0" />
-        </Style>
-
-        <!-- Reusable Style for Bottom Bar Action Buttons -->
-        <Style x:Key="BottomBarActionButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedLightButton}">
-            <Setter Property="Height" Value="30" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="5" />
-            <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundColor}" />
-            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundColor}" />
-        </Style>
-
-        <!-- Reusable Style for ComboBox in Bottom Bar -->
-        <Style x:Key="BottomBarComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
-            <Setter Property="Width" Value="120" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,5,0" />
-            <Setter Property="ToolTip" Value="Select a saved character or 'All'" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextColor}" />
-            <Setter Property="Background" Value="{DynamicResource PrimaryBackgroundColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorderColor}" />
-            <Setter Property="Padding" Value="5" />
-        </Style>
 
         <!-- Tray Icon Menu -->
     </Window.Resources>

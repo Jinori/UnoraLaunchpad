@@ -59,8 +59,6 @@
                                     <Image Source="{Binding Thumbnail}" Height="80" Stretch="Uniform" Margin="0,0,0,5"/>
                                     <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}" HorizontalAlignment="Center" FontSize="10" Foreground="{DynamicResource SecondaryTextColor}"/>
                                     <TextBlock Text="{Binding CreationDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" HorizontalAlignment="Center" FontSize="9" Foreground="{DynamicResource SecondaryTextColor}"/>
-                                    <TextBlock Text="{Binding ZoneName, FallbackValue='Zone: N/A', TargetNullValue='Zone: ---'}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ZoneName}" HorizontalAlignment="Center" FontSize="9" Foreground="{DynamicResource SecondaryTextColor}"/>
-                                    <TextBlock Text="{Binding CharacterId, FallbackValue='ID: N/A', TargetNullValue='ID: ---'}" TextTrimming="CharacterEllipsis" ToolTip="{Binding CharacterId}" HorizontalAlignment="Center" FontSize="9" Foreground="{DynamicResource SecondaryTextColor}"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -88,12 +86,10 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0">
                 <TextBlock Text="Sort by:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource PrimaryTextColor}"/>
                 <Button x:Name="SortNewestButton" Content="Newest First" Click="SortNewestButton_Click" Style="{StaticResource BottomBarActionButtonStyle}" Margin="0,0,5,0"/>
-                <Button x:Name="SortOldestButton" Content="Oldest First" Click="SortOldestButton_Click" Style="{StaticResource BottomBarActionButtonStyle}" Margin="0,0,5,0"/>
-                <Button x:Name="SortByZoneNameButton" Content="Zone Name" Click="SortByZoneNameButton_Click" Style="{StaticResource BottomBarActionButtonStyle}" Margin="0,0,5,0"/>
-                <Button x:Name="SortByCharacterIdButton" Content="Character ID" Click="SortByCharacterIdButton_Click" Style="{StaticResource BottomBarActionButtonStyle}"/>
+                <Button x:Name="SortOldestButton" Content="Oldest First" Click="SortOldestButton_Click" Style="{StaticResource BottomBarActionButtonStyle}"/>
             </StackPanel>
 
-            <TextBlock x:Name="StatusTextBlock" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource SecondaryTextColor}" Margin="5" TextWrapping="Wrap"/>
+            <TextBlock x:Name="StatusTextBlock" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource SecondaryTextColor}" Margin="5"/>
 
             <Button x:Name="OpenFolderButton" Click="OpenFolderButton_Click"
                     Style="{StaticResource BottomBarActionButtonStyle}"

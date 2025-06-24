@@ -13,8 +13,6 @@ namespace UnoraLaunchpad
         // public BitmapImage FullImage { get; set; }
         public DateTime CreationDate { get; set; }
         public string FileName => System.IO.Path.GetFileName(FilePath);
-        public string ZoneName { get; set; }
-        public string CharacterId { get; set; }
 
         public ScreenshotInfo(string filePath, DateTime creationDate)
         {

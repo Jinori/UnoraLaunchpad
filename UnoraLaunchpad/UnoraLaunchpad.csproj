@@ -82,7 +82,6 @@
     <Compile Include="EncryptionHelper.cs" />
     <Compile Include="UnoraClient.cs" />
 	<Compile Include="ComboParser.cs" />
-    <Compile Include="GameScreenshotProcessor.cs" />
     <Compile Include="Launcher\ClientVersion.cs" />
     <Compile Include="Launcher\Flags.cs" />
     <Compile Include="Launcher\NativeMethods.cs" />
@@ -177,9 +176,6 @@
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="8.0.0" />
     <PackageReference Include="WindowsInput" Version="1.0.6" />
-    <PackageReference Include="Microsoft.Windows.SDK.Contracts" Version="10.0.22621.2428">
-      <PrivateAssets>compile</PrivateAssets> <!-- Ensure it's used for compilation but not necessarily copied if not needed -->
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.manifest" />

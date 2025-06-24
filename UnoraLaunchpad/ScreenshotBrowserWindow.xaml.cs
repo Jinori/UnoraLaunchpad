@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,6 +16,7 @@ namespace UnoraLaunchpad
         public ObservableCollection<ScreenshotInfo> Screenshots { get; set; }
         private string _screenshotsFolderPath; // To be configured, e.g., "Unora/screenshots"
         private string _gameFolderName; // e.g., "Unora"
+        private GameScreenshotProcessor _screenshotProcessor;
 
         // Constructor that accepts the game folder name
         public ScreenshotBrowserWindow(string gameFolderName = "Unora") // Default to "Unora" for now
@@ -46,11 +48,23 @@ namespace UnoraLaunchpad
             ThumbnailsItemsControl.ItemsSource = Screenshots;
             DataContext = this; // Not strictly necessary here as ItemsSource is set directly
 
+            try
+            {
+                _screenshotProcessor = new GameScreenshotProcessor();
+            }
+            catch (Exception ex)
+            {
+                _screenshotProcessor = null; // Ensure it's null if initialization failed
+                StatusTextBlock.Text = $"OCR engine failed to initialize: {ex.Message}";
+                MessageBox.Show($"Failed to initialize OCR engine: {ex.Message}\nScreenshot text recognition will be unavailable.", "OCR Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                // OCR features will be implicitly disabled if _screenshotProcessor is null
+            }
+
             LoadScreenshots();
         }
 
 
-        private void LoadScreenshots()
+        private async Task LoadScreenshots()
         {
             Screenshots.Clear();
             LargePreviewImage.Source = null; // Clear previous large preview
@@ -99,16 +113,39 @@ namespace UnoraLaunchpad
                         thumbnail.EndInit();
                         thumbnail.Freeze(); // Important for performance in collections
                         screenshotInfo.Thumbnail = thumbnail;
+
+                        // Extract OCR data if processor is available
+                        if (_screenshotProcessor != null)
+                        {
+                            try
+                            {
+                                StatusTextBlock.Text = $"Processing OCR for {fileInfo.Name}...";
+                                var (zoneName, characterId) = await _screenshotProcessor.ExtractInfoFromFileAsync(fileInfo.FullName);
+                                screenshotInfo.ZoneName = zoneName;
+                                screenshotInfo.CharacterId = characterId;
+                            }
+                            catch (Exception ocrEx)
+                            {
+                                Debug.WriteLine($"OCR extraction failed for {fileInfo.FullName}: {ocrEx.Message}");
+                                screenshotInfo.ZoneName = "OCR Error";
+                                screenshotInfo.CharacterId = "OCR Error";
+                            }
+                        }
+                        else
+                        {
+                            screenshotInfo.ZoneName = "N/A"; // OCR not available
+                            screenshotInfo.CharacterId = "N/A";
+                        }
                         Screenshots.Add(screenshotInfo);
                     }
                     catch (Exception ex)
                     {
                         // Log or handle error for individual file loading
-                        Debug.WriteLine($"Error loading thumbnail for {fileInfo.FullName}: {ex.Message}");
+                        Debug.WriteLine($"Error loading thumbnail or processing OCR for {fileInfo.FullName}: {ex.Message}");
                         // Optionally, add a placeholder or skip this screenshot
                     }
                 }
-                StatusTextBlock.Text = $"Loaded {Screenshots.Count} screenshots.";
+                StatusTextBlock.Text = $"Loaded {Screenshots.Count} screenshots. OCR processing complete.";
                 if (Screenshots.Any())
                 {
                     // Display the first screenshot's full image by default
@@ -171,9 +208,39 @@ namespace UnoraLaunchpad
             if (Screenshots.Any()) DisplayFullImage(Screenshots.First());
         }
 
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        private void SortByZoneNameButton_Click(object sender, RoutedEventArgs e)
         {
-            LoadScreenshots();
+            if (_screenshotProcessor == null)
+            {
+                StatusTextBlock.Text = "OCR not available for sorting by zone name.";
+                MessageBox.Show("OCR engine is not initialized. Cannot sort by zone name.", "OCR Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var sortedScreenshots = new ObservableCollection<ScreenshotInfo>(Screenshots.OrderBy(s => s.ZoneName ?? string.Empty));
+            Screenshots.Clear();
+            foreach (var s in sortedScreenshots) Screenshots.Add(s);
+            StatusTextBlock.Text = "Sorted by Zone Name.";
+            if (Screenshots.Any()) DisplayFullImage(Screenshots.First());
+        }
+
+        private void SortByCharacterIdButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_screenshotProcessor == null)
+            {
+                StatusTextBlock.Text = "OCR not available for sorting by character ID.";
+                MessageBox.Show("OCR engine is not initialized. Cannot sort by character ID.", "OCR Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            var sortedScreenshots = new ObservableCollection<ScreenshotInfo>(Screenshots.OrderBy(s => s.CharacterId ?? string.Empty));
+            Screenshots.Clear();
+            foreach (var s in sortedScreenshots) Screenshots.Add(s);
+            StatusTextBlock.Text = "Sorted by Character ID.";
+            if (Screenshots.Any()) DisplayFullImage(Screenshots.First());
+        }
+
+        private async void RefreshButton_Click(object sender, RoutedEventArgs e) // Made async
+        {
+            await LoadScreenshots(); // Now awaited
         }
 
         private void OpenFolderButton_Click(object sender, RoutedEventArgs e)

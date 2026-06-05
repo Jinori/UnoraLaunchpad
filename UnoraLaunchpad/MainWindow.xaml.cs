@@ -59,11 +59,6 @@ namespace UnoraLaunchpad
             get => _launcherSettings?.UseLocalhost ?? false;
             set { if (_launcherSettings != null) _launcherSettings.UseLocalhost = value; }
         }
-        public bool UseChaosClient
-        {
-            get => _launcherSettings?.UseChaosClient ?? false;
-            set { if (_launcherSettings != null) _launcherSettings.UseChaosClient = value; }
-        }
         public ICommand OpenGameUpdateCommand { get; }
         public object Sync { get; } = new();
 
@@ -865,7 +860,7 @@ namespace UnoraLaunchpad
             var (lobbyHost, lobbyPort) = GetLobbyEndpoint(UseLocalhost);
             var installRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CONSTANTS.UNORA_FOLDER_NAME);
 
-            if (UseChaosClient && !VerifyChaosClientPresent(installRoot))
+            if (!VerifyChaosClientPresent(installRoot))
                 return;
 
             var context = new LaunchContext(
@@ -875,9 +870,7 @@ namespace UnoraLaunchpad
                 skipIntro:         SkipIntro,
                 useDawndWindower:  UseDawndWindower);
 
-            IGameLauncher launcher = UseChaosClient
-                ? (IGameLauncher)new ChaosClientLauncher()
-                : new LegacyDarkAgesLauncher();
+            var launcher = new ChaosClientLauncher();
 
             try
             {
@@ -1046,7 +1039,7 @@ namespace UnoraLaunchpad
                 var (lobbyHost, lobbyPort) = GetLobbyEndpoint(UseLocalhost);
                 var installRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, CONSTANTS.UNORA_FOLDER_NAME);
 
-                if (UseChaosClient && !VerifyChaosClientPresent(installRoot))
+                if (!VerifyChaosClientPresent(installRoot))
                     return;
 
                 var context = new LaunchContext(
@@ -1056,9 +1049,7 @@ namespace UnoraLaunchpad
                     skipIntro:         true, // auto-login always wants intro skipped for stable timing
                     useDawndWindower:  UseDawndWindower);
 
-                IGameLauncher launcher = UseChaosClient
-                    ? (IGameLauncher)new ChaosClientLauncher()
-                    : new LegacyDarkAgesLauncher();
+                var launcher = new ChaosClientLauncher();
                 var gameProcess = await launcher.LaunchAsync(context);
 
                 // This method already waits for MainWindowHandle to be available

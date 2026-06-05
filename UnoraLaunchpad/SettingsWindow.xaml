@@ -72,6 +72,7 @@
                                   Content="Use Dawnd Windower"
                                   Foreground="{DynamicResource IconForegroundColor}"
                                   Background="{DynamicResource PrimaryTextColor}"
+                                  IsEnabled="False"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center" />
 
@@ -80,6 +81,7 @@
                                   Foreground="{DynamicResource IconForegroundColor}"
                                   Background="{DynamicResource PrimaryTextColor}"
                                   Margin="0,10,0,0"
+                                  IsEnabled="False"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center" />
 
@@ -120,16 +122,6 @@
                                   Content="Localhost"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center" />
-
-                        <CheckBox x:Name="UseChaosClientCheckBox"
-                                  Content="Use Chaos Client"
-                                  Foreground="{DynamicResource IconForegroundColor}"
-                                  Background="{DynamicResource PrimaryTextColor}"
-                                  Margin="0,10,0,0"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Checked="UseChaosClientCheckBox_Changed"
-                                  Unchecked="UseChaosClientCheckBox_Changed" />
                     </StackPanel>
 
                     <!-- New Account Management Section -->

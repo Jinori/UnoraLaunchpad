@@ -53,8 +53,6 @@ internal sealed partial class SettingsWindow : Window
         DawndCheckBox.IsChecked = _settings.UseDawndWindower;
         SkipIntroCheckBox.IsChecked = _settings.SkipIntro;
         LocalhostCheckBox.IsChecked = _settings.UseLocalhost;
-        UseChaosClientCheckBox.IsChecked = _settings.UseChaosClient;
-        ApplyChaosClientCheckboxState(); // sync initial enabled state of Dawnd/SkipIntro
 
         var currentTheme = string.IsNullOrEmpty(_settings.SelectedTheme) ? "Dark" : _settings.SelectedTheme;
         _settings.SelectedTheme = currentTheme; // Ensure it's set for persistence
@@ -112,7 +110,6 @@ internal sealed partial class SettingsWindow : Window
         _settings.UseDawndWindower = DawndCheckBox.IsChecked ?? false;
         _settings.SkipIntro = SkipIntroCheckBox.IsChecked ?? false;
         _settings.UseLocalhost = LocalhostCheckBox.IsChecked ?? false;
-        _settings.UseChaosClient = UseChaosClientCheckBox.IsChecked ?? false;
         _settings.IsComboSystemEnabled = EnableComboSystemCheckBox.IsChecked ?? false; // Save checkbox state
 
         if (ThemeComboBox.SelectedItem is ComboBoxItem selectedThemeItem)
@@ -136,18 +133,6 @@ internal sealed partial class SettingsWindow : Window
     {
         if (e.ChangedButton == MouseButton.Left)
             DragMove();
-    }
-
-    private void UseChaosClientCheckBox_Changed(object sender, RoutedEventArgs e)
-    {
-        ApplyChaosClientCheckboxState();
-    }
-
-    private void ApplyChaosClientCheckboxState()
-    {
-        var on = UseChaosClientCheckBox.IsChecked ?? false;
-        DawndCheckBox.IsEnabled     = !on;
-        SkipIntroCheckBox.IsEnabled = !on;
     }
 
     // New event handlers

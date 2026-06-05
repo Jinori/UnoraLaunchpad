@@ -46,16 +46,15 @@ The startup order is load-bearing:
 ## Settings & persistence
 
 `Settings.cs` is a flat POCO; persisted to `LauncherSettings/settings.json` via `FileService.LoadSettings`/`SaveSettings` (Newtonsoft.Json, indented). Notable fields:
-- `UseChaosClient` — toggles between the legacy DarkAges client (suspended-process + binary patching) and ChaosClient (custom C# client; env-var driven, no patching). When `true`, `Use Dawnd Windower` and `Skip Intro` are visually disabled in Settings (their stored values are preserved).
 - `SavedCharacters` — list of `Character` with **DPAPI-encrypted** passwords (`PasswordHelper` + `EncryptionHelper`, `DataProtectionScope.CurrentUser`). Plaintext passwords must never be written to settings.
 - `Combos` — dictionary of hotkey-name → macro string consumed by `ComboParser`.
-- `IsComboSystemEnabled`, `SkipIntro`, `UseDawndWindower`, `UseLocalhost` — feature toggles read by the legacy launch flow (`SkipIntro` and `UseDawndWindower` are ignored when `UseChaosClient` is on).
+- `IsComboSystemEnabled`, `SkipIntro`, `UseDawndWindower`, `UseLocalhost` — feature toggles. ChaosClient is now the only launch path, so `SkipIntro` and `UseDawndWindower` are effectively dead (their checkboxes are shown disabled in Settings, stored values preserved); they would only matter to the dormant `LegacyDarkAgesLauncher`.
 
 ## Game launching
 
-`MainWindow.Launch` and `MainWindow.LaunchAndLogin` build a `LaunchContext` (install root, lobby host/port, skip-intro, dawnd-windower flag) and dispatch to one of two `IGameLauncher` implementations based on `Settings.UseChaosClient`:
+`MainWindow.Launch` and `MainWindow.LaunchAndLogin` build a `LaunchContext` (install root, lobby host/port, skip-intro, dawnd-windower flag) and always launch via **`ChaosClientLauncher`**. The `IGameLauncher` abstraction and the `LegacyDarkAgesLauncher` (plus `SuspendedProcess`, `ProcessMemoryStream`, `RuntimePatcher`, and the DLL-injection code) remain in the tree but are **dormant** — nothing instantiates the legacy launcher anymore. Both implementations are documented below for reference:
 
-- **`LegacyDarkAgesLauncher`** — the original DarkAges 7.41 flow:
+- **`LegacyDarkAgesLauncher`** (dormant) — the original DarkAges 7.41 flow:
   1. `SuspendedProcess.Start` → Win32 `CreateProcess` with `CREATE_SUSPENDED`.
   2. `ProcessMemoryStream` exposes a `Stream` over the suspended process's address space using `VmRead`/`VmWrite` rights.
   3. `RuntimePatcher` writes binary patches **at hardcoded addresses for DarkAges 7.41** (server hostname ≈`0x4333C2`, server port ≈`0x4333E4`, skip-intro, allow-multiple-instances, fix-darkness, hide-walls). **These addresses are version-specific — do not change them without confirming the target client version.**
